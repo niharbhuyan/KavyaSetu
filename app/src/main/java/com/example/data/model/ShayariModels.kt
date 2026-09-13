@@ -19,14 +19,15 @@ enum class Emotion(
     val hindiLabel: String,
     val odiaLabel: String,
     val code: String,
-    val emoji: String
+    val emoji: String,
+    val subtitle: String = ""
 ) {
-    ISHQ("Love", "इश्क़", "ପ୍ରେମ", "ishq", "❤️"),
-    DARD("Heartbreak", "दर्द", "ବିରହ", "dard", "🥀"),
-    HAUSLA("Courage", "हौसला", "ପ୍ରେରଣା", "hausla", "🦅"),
-    DOSTI("Friendship", "दोस्ती", "ମିତ୍ରତା", "dosti", "🤝"),
-    SUFI("Mystic", "रूहानी", "ଆଧ୍ୟାତ୍ମିକ", "sufi", "🕊️"),
-    YAADEIN("Nostalgia", "यादें", "ସ୍ମୃତି", "yaadein", "🌙");
+    ISHQ("Love", "इश्क़", "ପ୍ରେମ", "ishq", "❤️", "Romance & Devotion"),
+    DARD("Sad", "दर्द", "ବିରହ", "dard", "🥀", "Heartbreak & Melancholy"),
+    HAUSLA("Inspirational", "हौसला", "ପ୍ରେରଣା", "hausla", "🦅", "Courage & Resilience"),
+    DOSTI("Friendship", "दोस्ती", "ମିତ୍ରତା", "dosti", "🤝", "Bonds & Camaraderie"),
+    SUFI("Mystic", "रूहानी", "ଆଧ୍ୟାତ୍ମିକ", "sufi", "🕊️", "Spiritual Peace"),
+    YAADEIN("Nostalgia", "यादें", "ସ୍ମୃତି", "yaadein", "🌙", "Memories & Solitude");
 
     fun getDisplayName(lang: Language): String = when (lang) {
         Language.HINDI -> "$hindiLabel $emoji"
@@ -35,8 +36,21 @@ enum class Emotion(
     }
 
     companion object {
-        fun fromCode(code: String): Emotion =
-            entries.find { it.code.equals(code, ignoreCase = true) } ?: ISHQ
+        fun fromCode(code: String): Emotion {
+            val normalized = code.lowercase().trim()
+            return when (normalized) {
+                "ishq", "love", "romance", "prem" -> ISHQ
+                "dard", "sad", "heartbreak", "gam", "biraha" -> DARD
+                "hausla", "inspirational", "inspiration", "courage", "motivation", "prerana" -> HAUSLA
+                "dosti", "friendship", "yaari", "mitrata" -> DOSTI
+                "sufi", "mystic", "spiritual", "roohani", "adhyatmika" -> SUFI
+                "yaadein", "nostalgia", "memories", "yaad", "smruti" -> YAADEIN
+                else -> entries.find {
+                    it.code.equals(code, ignoreCase = true) ||
+                    it.englishLabel.equals(code, ignoreCase = true)
+                } ?: ISHQ
+            }
+        }
     }
 }
 

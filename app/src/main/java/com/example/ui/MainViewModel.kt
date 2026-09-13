@@ -131,12 +131,23 @@ class MainViewModel(private val repository: ShayariRepository) : ViewModel() {
                 Language.ALL -> true
                 else -> shayari.language.equals(lang.code, ignoreCase = true)
             }
-            val matchesEmotion = emotion == null || shayari.emotion.equals(emotion.code, ignoreCase = true)
+            val matchesEmotion = emotion == null ||
+                    shayari.emotion.equals(emotion.code, ignoreCase = true) ||
+                    shayari.emotion.equals(emotion.englishLabel, ignoreCase = true) ||
+                    Emotion.fromCode(shayari.emotion) == emotion
+
+            val emotionObj = Emotion.fromCode(shayari.emotion)
             val matchesQuery = query.isBlank() ||
                     shayari.lines.contains(query, ignoreCase = true) ||
                     shayari.author.contains(query, ignoreCase = true) ||
                     shayari.penName.contains(query, ignoreCase = true) ||
-                    shayari.translationEnglish.contains(query, ignoreCase = true)
+                    shayari.translationEnglish.contains(query, ignoreCase = true) ||
+                    shayari.translationHindi.contains(query, ignoreCase = true) ||
+                    shayari.translationOdia.contains(query, ignoreCase = true) ||
+                    shayari.emotion.contains(query, ignoreCase = true) ||
+                    emotionObj.englishLabel.contains(query, ignoreCase = true) ||
+                    emotionObj.hindiLabel.contains(query, ignoreCase = true) ||
+                    emotionObj.odiaLabel.contains(query, ignoreCase = true)
 
             matchesLang && matchesEmotion && matchesQuery
         }
@@ -170,6 +181,16 @@ class MainViewModel(private val repository: ShayariRepository) : ViewModel() {
 
     fun onEmotionSelected(emotion: Emotion?) {
         selectedEmotion.value = emotion
+    }
+
+    fun clearEmotionFilter() {
+        selectedEmotion.value = null
+    }
+
+    fun clearAllFilters() {
+        selectedEmotion.value = null
+        selectedLanguage.value = Language.ALL
+        searchQuery.value = ""
     }
 
     fun onSearchQueryChanged(query: String) {

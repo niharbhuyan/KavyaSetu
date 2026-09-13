@@ -483,6 +483,62 @@ class ShayariRepository(
                 poeticAnalysis = "Sufic epiphany in English couplet rhythm.",
                 isTrending = false
             ),
+            Shayari(
+                id = "sh_hi_6",
+                lines = "दिल से रोए मगर होंठों से मुस्कुरा बैठे,\nयूँ ही हम किसी से वफ़ा निभा बैठे।",
+                author = "Sahir Ludhianvi",
+                penName = "Sahir",
+                language = "hindi",
+                emotion = "dard",
+                likesCount = 365,
+                timestamp = now - 900000,
+                translationEnglish = "The heart wept in anguish yet the lips offered a smile; this is how faithfully we loved, enduring all in silence.",
+                translationOdia = "ହୃଦୟ କାନ୍ଦିଲା କିନ୍ତୁ ଓଠରେ ହସ ଥିଲା, ଏମିତି ହିଁ ଆମେ ପ୍ରେମର ପ୍ରତିଶ୍ରୁତି ପାଳିଲୁ।",
+                poeticAnalysis = "Iconic expression of unrequited love and poignant stoicism.",
+                isTrending = true
+            ),
+            Shayari(
+                id = "sh_hi_7",
+                lines = "हो गई है पीर पर्वत-सी पिघलनी चाहिए,\nइस हिमालय से कोई गंगा निकलनी चाहिए।",
+                author = "Dushyant Kumar",
+                penName = "Dushyant",
+                language = "hindi",
+                emotion = "hausla",
+                likesCount = 580,
+                timestamp = now - 1100000,
+                translationEnglish = "This pain, huge as a mountain, must melt away now; from this very Himalaya, a Ganges must flow.",
+                translationOdia = "ଏଇ ଦୁଃଖର ପାହାଡ଼ ଏବେ ତରଳିବା ଦରକାର, ହିମାଳୟରୁ ନୂଆ ଗଙ୍ଗା ବହିବା ଦରକାର।",
+                poeticAnalysis = "Epoch-defining revolutionary Hindi ghazal igniting hope and righteous transformation.",
+                isTrending = true
+            ),
+            Shayari(
+                id = "sh_or_5",
+                lines = "ଲୁହରେ ଭିଜିଲା ଆଖିର ପଲକ କହେ ଅଶ୍ରୁଳ ବେଦନା,\nଯାହାକୁ ସାଇତି ରଖିଲି ମନେ ସେ ତ ବୁଝିଲାନି ଯନ୍ତ୍ରଣା।",
+                author = "Radhanath Ray",
+                penName = "କବିବର",
+                language = "odia",
+                emotion = "dard",
+                likesCount = 312,
+                timestamp = now - 1300000,
+                translationEnglish = "Tears soak the lashes telling a tale of unuttered sorrow; the one treasured in heart never perceived the pain.",
+                translationHindi = "आँसुओं से भीगी पलकें कहती हैं बेपनाह दर्द, जिसे चाहा उसने कभी ये तड़प समझी नहीं।",
+                poeticAnalysis = "Soulful Odia classical verse tracing the silent ache of unexpressed grief.",
+                isTrending = false
+            ),
+            Shayari(
+                id = "sh_en_4",
+                lines = "She walks in beauty, like the night\nOf cloudless climes and starry skies.",
+                author = "Lord Byron",
+                penName = "Byron",
+                language = "english",
+                emotion = "ishq",
+                likesCount = 440,
+                timestamp = now - 1700000,
+                translationHindi = "वो हुस्न की मल्लिका रातों की तरह चलती है, जैसे बे-अब्र फलक पर तारों की महफ़िल सजती है।",
+                translationOdia = "ସେ ଚାଲେ ସୌନ୍ଦର୍ଯ୍ୟର ପରିଭାଷା ହୋଇ, ତାରାଖଚିତ ନିର୍ମଳ ଆକାଶର ନୀରବତା ପରି।",
+                poeticAnalysis = "Harmonious romantic hymn celebrating pure, incandescent grace.",
+                isTrending = true
+            ),
             // --- MODERATION QUEUE SEED SUBMISSIONS (FOR ADMIN REVIEW) ---
             Shayari(
                 id = "mod_pend_1",

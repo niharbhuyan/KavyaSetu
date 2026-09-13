@@ -1,0 +1,1068 @@
+package com.example.ui.screens
+
+import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DeleteForever
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.Explore
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.automirrored.filled.Login
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.NotificationsActive
+import androidx.compose.material.icons.filled.Timeline
+import androidx.compose.material.icons.filled.VerifiedUser
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.data.model.ActivityType
+import com.example.data.model.Emotion
+import com.example.data.model.Language
+import com.example.data.model.Shayari
+import com.example.data.model.UserActivityItem
+import com.example.ui.MainViewModel
+import com.example.ui.components.AudioReciter
+import com.example.ui.components.CardStudioDialog
+import com.example.ui.components.ChangePasswordDialog
+import com.example.ui.components.DeleteAccountDialog
+import com.example.ui.components.EditProfileDialog
+import com.example.ui.components.ForgotPasswordDialog
+import com.example.ui.components.ShayariCard
+import com.example.ui.components.SignInDialog
+import com.example.ui.components.SignUpDialog
+import com.example.ui.theme.AntiqueGold
+import com.example.ui.theme.DeepMidnight
+import com.example.ui.theme.SoftGold
+import com.example.ui.theme.VelvetRose
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ProfileScreen(
+    viewModel: MainViewModel,
+    audioReciter: AudioReciter,
+    onNavigateToAiStudio: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    val profile by viewModel.userProfile.collectAsStateWithLifecycle()
+    val savedShayaris by viewModel.savedShayaris.collectAsStateWithLifecycle()
+    val activities by viewModel.userActivities.collectAsStateWithLifecycle()
+    val isAuthLoading by viewModel.isAuthLoading.collectAsStateWithLifecycle()
+    val authError by viewModel.authError.collectAsStateWithLifecycle()
+    val authSuccessMessage by viewModel.authSuccessMessage.collectAsStateWithLifecycle()
+
+    var selectedTab by remember { mutableIntStateOf(0) }
+    var selectedSavedLanguageFilter by remember { mutableStateOf("all") }
+    var cardStudioShayari by remember { mutableStateOf<Shayari?>(null) }
+
+    // Dialog state controllers
+    var showSignInDialog by remember { mutableStateOf(false) }
+    var showSignUpDialog by remember { mutableStateOf(false) }
+    var showForgotPasswordDialog by remember { mutableStateOf(false) }
+    var showChangePasswordDialog by remember { mutableStateOf(false) }
+    var showEditProfileDialog by remember { mutableStateOf(false) }
+    var showDeleteAccountDialog by remember { mutableStateOf(false) }
+
+    if (cardStudioShayari != null) {
+        CardStudioDialog(
+            shayari = cardStudioShayari!!,
+            onDismiss = { cardStudioShayari = null }
+        )
+    }
+
+    if (showSignInDialog) {
+        SignInDialog(
+            isLoading = isAuthLoading,
+            onDismiss = { showSignInDialog = false },
+            onSignIn = { email, pass ->
+                viewModel.signInWithEmail(email, pass)
+                showSignInDialog = false
+            },
+            onNavigateToSignUp = {
+                showSignInDialog = false
+                showSignUpDialog = true
+            },
+            onForgotPassword = {
+                showSignInDialog = false
+                showForgotPasswordDialog = true
+            }
+        )
+    }
+
+    if (showSignUpDialog) {
+        SignUpDialog(
+            isLoading = isAuthLoading,
+            onDismiss = { showSignUpDialog = false },
+            onSignUp = { email, pass, name, penName ->
+                viewModel.signUpWithEmail(email, pass, name, penName)
+                showSignUpDialog = false
+            },
+            onNavigateToSignIn = {
+                showSignUpDialog = false
+                showSignInDialog = true
+            }
+        )
+    }
+
+    if (showForgotPasswordDialog) {
+        ForgotPasswordDialog(
+            isLoading = isAuthLoading,
+            initialEmail = profile.email ?: "",
+            onDismiss = { showForgotPasswordDialog = false },
+            onSendReset = { email ->
+                viewModel.sendPasswordReset(email)
+                showForgotPasswordDialog = false
+            }
+        )
+    }
+
+    if (showChangePasswordDialog) {
+        ChangePasswordDialog(
+            isLoading = isAuthLoading,
+            onDismiss = { showChangePasswordDialog = false },
+            onUpdatePassword = { newPass ->
+                viewModel.updatePassword(newPass)
+                showChangePasswordDialog = false
+            }
+        )
+    }
+
+    if (showEditProfileDialog) {
+        EditProfileDialog(
+            currentProfile = profile,
+            onDismiss = { showEditProfileDialog = false },
+            onSave = { updated ->
+                viewModel.updateUserProfile(updated)
+                showEditProfileDialog = false
+                Toast.makeText(context, "Profile updated successfully!", Toast.LENGTH_SHORT).show()
+            }
+        )
+    }
+
+    if (showDeleteAccountDialog) {
+        DeleteAccountDialog(
+            isLoading = isAuthLoading,
+            onDismiss = { showDeleteAccountDialog = false },
+            onConfirmDelete = {
+                viewModel.deleteAccount()
+                showDeleteAccountDialog = false
+            }
+        )
+    }
+
+    val filteredSavedShayaris = remember(savedShayaris, selectedSavedLanguageFilter) {
+        if (selectedSavedLanguageFilter == "all") {
+            savedShayaris
+        } else {
+            savedShayaris.filter { it.language.equals(selectedSavedLanguageFilter, ignoreCase = true) }
+        }
+    }
+
+    LazyColumn(
+        modifier = modifier
+            .fillMaxSize()
+            .testTag("profile_screen"),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // Feedback Banners
+        if (authError != null) {
+            item {
+                Card(
+                    shape = RoundedCornerShape(14.dp),
+                    colors = CardDefaults.cardColors(containerColor = VelvetRose.copy(alpha = 0.2f)),
+                    border = BorderStroke(1.dp, VelvetRose)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(Icons.Default.Error, contentDescription = null, tint = VelvetRose)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(text = authError!!, color = VelvetRose, fontSize = 13.sp)
+                        }
+                        IconButton(onClick = { viewModel.clearAuthMessages() }) {
+                            Icon(Icons.Default.Close, contentDescription = "Dismiss", tint = VelvetRose)
+                        }
+                    }
+                }
+            }
+        }
+
+        if (authSuccessMessage != null) {
+            item {
+                Card(
+                    shape = RoundedCornerShape(14.dp),
+                    colors = CardDefaults.cardColors(containerColor = AntiqueGold.copy(alpha = 0.2f)),
+                    border = BorderStroke(1.dp, AntiqueGold)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(Icons.Default.CheckCircle, contentDescription = null, tint = AntiqueGold)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(text = authSuccessMessage!!, color = AntiqueGold, fontSize = 13.sp)
+                        }
+                        IconButton(onClick = { viewModel.clearAuthMessages() }) {
+                            Icon(Icons.Default.Close, contentDescription = "Dismiss", tint = AntiqueGold)
+                        }
+                    }
+                }
+            }
+        }
+
+        // Primary Poet Hero Profile Card
+        item {
+            Card(
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                border = BorderStroke(1.dp, AntiqueGold.copy(alpha = 0.4f))
+            ) {
+                Column(modifier = Modifier.padding(20.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        // Avatar Badge
+                        Surface(
+                            shape = CircleShape,
+                            color = AntiqueGold.copy(alpha = 0.2f),
+                            border = BorderStroke(2.dp, AntiqueGold),
+                            modifier = Modifier.size(68.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text(
+                                    text = profile.displayName.take(1).uppercase(),
+                                    fontSize = 28.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = AntiqueGold
+                                )
+                            }
+                        }
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = profile.displayName,
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "Takhallus: '${profile.penName}'",
+                                fontSize = 14.sp,
+                                fontStyle = FontStyle.Italic,
+                                color = AntiqueGold
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+
+                            // Firebase Auth Status Indicator
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = if (profile.isGuest) AntiqueGold.copy(alpha = 0.15f) else VelvetRose.copy(alpha = 0.15f)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Icon(
+                                        if (profile.isGuest) Icons.Default.AccountCircle else Icons.Default.VerifiedUser,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(12.dp),
+                                        tint = if (profile.isGuest) AntiqueGold else VelvetRose
+                                    )
+                                    Text(
+                                        text = if (profile.isGuest) "Guest Poet (Local Mode)" else (profile.email ?: "Firebase Account"),
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = if (profile.isGuest) AntiqueGold else VelvetRose
+                                    )
+                                }
+                            }
+                        }
+
+                        IconButton(
+                            onClick = { showEditProfileDialog = true },
+                            modifier = Modifier.testTag("edit_profile_button")
+                        ) {
+                            Icon(Icons.Default.Edit, contentDescription = "Edit Profile", tint = AntiqueGold)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Text(
+                        text = "\"${profile.bio}\"",
+                        fontSize = 13.sp,
+                        fontStyle = FontStyle.Italic,
+                        lineHeight = 20.sp,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    // Daily Streak Banner
+                    Surface(
+                        shape = RoundedCornerShape(14.dp),
+                        color = AntiqueGold.copy(alpha = 0.12f),
+                        border = BorderStroke(1.dp, AntiqueGold.copy(alpha = 0.25f)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text(text = "🔥", fontSize = 20.sp)
+                                Column {
+                                    Text(
+                                        text = "${profile.streakDays} Day Reading Streak",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 13.sp,
+                                        color = AntiqueGold
+                                    )
+                                    Text(
+                                        text = "Engaging with daily wisdom across Hindi, Odia & English",
+                                        fontSize = 11.sp,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    // 4-Metrics Grid
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceAround
+                    ) {
+                        MetricItem(
+                            value = "${savedShayaris.size}",
+                            label = "Saved",
+                            testTag = "metric_saved_count"
+                        )
+                        MetricItem(
+                            value = "${profile.shayariCount}",
+                            label = "Composed",
+                            testTag = "metric_composed_count"
+                        )
+                        MetricItem(
+                            value = "${activities.count { it.type == ActivityType.LIKED } + 12}",
+                            label = "Likes Given",
+                            testTag = "metric_likes_count"
+                        )
+                        MetricItem(
+                            value = "${profile.streakDays}d",
+                            label = "Poet Streak",
+                            testTag = "metric_streak_count"
+                        )
+                    }
+                }
+            }
+        }
+
+        // Section Tabs
+        item {
+            PrimaryTabRow(
+                selectedTabIndex = selectedTab,
+                containerColor = MaterialTheme.colorScheme.surface,
+                contentColor = AntiqueGold
+            ) {
+                Tab(
+                    selected = selectedTab == 0,
+                    onClick = { selectedTab = 0 },
+                    text = { Text("Saved (${savedShayaris.size})") },
+                    modifier = Modifier.testTag("tab_saved_shayari")
+                )
+                Tab(
+                    selected = selectedTab == 1,
+                    onClick = { selectedTab = 1 },
+                    text = { Text("Activity & Insights") },
+                    modifier = Modifier.testTag("tab_activity_insights")
+                )
+                Tab(
+                    selected = selectedTab == 2,
+                    onClick = { selectedTab = 2 },
+                    text = { Text("Account & Auth") },
+                    modifier = Modifier.testTag("tab_account_auth")
+                )
+            }
+        }
+
+        // ================= TAB 0: SAVED SHAYARI =================
+        if (selectedTab == 0) {
+            // Language filters for saved verses
+            if (savedShayaris.isNotEmpty()) {
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        listOf(
+                            "all" to "All (${savedShayaris.size})",
+                            "hindi" to "हिंदी (${savedShayaris.count { it.language == "hindi" }})",
+                            "odia" to "ଓଡ଼ିଆ (${savedShayaris.count { it.language == "odia" }})",
+                            "english" to "English (${savedShayaris.count { it.language == "english" }})"
+                        ).forEach { (langCode, label) ->
+                            FilterChip(
+                                selected = selectedSavedLanguageFilter == langCode,
+                                onClick = { selectedSavedLanguageFilter = langCode },
+                                label = { Text(label, fontSize = 12.sp) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = AntiqueGold.copy(alpha = 0.25f),
+                                    selectedLabelColor = AntiqueGold
+                                )
+                            )
+                        }
+                    }
+                }
+            }
+
+            if (filteredSavedShayaris.isEmpty()) {
+                item {
+                    Card(
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 40.dp, horizontal = 20.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Surface(
+                                shape = CircleShape,
+                                color = AntiqueGold.copy(alpha = 0.15f),
+                                modifier = Modifier.size(60.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        Icons.Default.Bookmark,
+                                        contentDescription = null,
+                                        tint = AntiqueGold,
+                                        modifier = Modifier.size(30.dp)
+                                    )
+                                }
+                            }
+                            Text(
+                                text = if (savedShayaris.isEmpty()) "No saved couplets in your vault" else "No saved couplets in this language",
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                fontSize = 16.sp
+                            )
+                            Text(
+                                text = "Tap the bookmark icon on any Shayari card in the Feed or Explore tab to save it to your personal vault for offline reading.",
+                                fontSize = 13.sp,
+                                lineHeight = 19.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            } else {
+                items(
+                    items = filteredSavedShayaris,
+                    key = { it.id }
+                ) { shayari ->
+                    ShayariCard(
+                        shayari = shayari,
+                        onLikeClick = { viewModel.toggleLike(shayari) },
+                        onSaveClick = { viewModel.toggleSave(shayari) },
+                        onDownloadClick = { viewModel.toggleDownload(shayari) },
+                        onCardClick = { viewModel.openShayariDetail(shayari) },
+                        onReciteClick = { lines, lang ->
+                            audioReciter.speak(lines, lang)
+                            viewModel.recordUserActivity(
+                                ActivityType.RECITED,
+                                "Audio Recited",
+                                "Listened to: \"${lines.take(25)}...\""
+                            )
+                        },
+                        onOpenCardStudio = {
+                            cardStudioShayari = it
+                            viewModel.recordUserActivity(
+                                ActivityType.CARD_EXPORT,
+                                "Visual Card Studio",
+                                "Created quote art for ${it.author}"
+                            )
+                        },
+                        onAnalyzeWithGemini = {
+                            viewModel.analyzeWithHighThinking(it.lines, it.language)
+                            onNavigateToAiStudio()
+                        }
+                    )
+                }
+            }
+        }
+
+        // ================= TAB 1: ACTIVITY & INSIGHTS =================
+        if (selectedTab == 1) {
+            // Poetic Emotional Palette Breakdown
+            item {
+                Card(
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                    border = BorderStroke(1.dp, AntiqueGold.copy(alpha = 0.25f))
+                ) {
+                    Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Icon(Icons.Default.Favorite, contentDescription = null, tint = VelvetRose)
+                            Text(
+                                text = "Emotional Resonance Insights",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = AntiqueGold
+                            )
+                        }
+                        Text(
+                            text = "Analysis of the sentiments that inspire your reading and composition habits:",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+
+                        EmotionalDistributionBar("❤️ Ishq (Love & Devotion)", 0.45f, AntiqueGold)
+                        EmotionalDistributionBar("🥀 Dard (Solitude & Longing)", 0.25f, VelvetRose)
+                        EmotionalDistributionBar("🦅 Hausla (Courage & Resilience)", 0.18f, Color(0xFFE5A93C))
+                        EmotionalDistributionBar("🕊️ Sufi (Mystical Peace)", 0.12f, Color(0xFF64B5F6))
+                    }
+                }
+            }
+
+            // Language Engagement Breakdown
+            item {
+                Card(
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                ) {
+                    Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text(
+                            text = "Multilingual Exploration Bridge",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            LanguageChip("हिंदी (Hindi)", "50%", AntiqueGold)
+                            LanguageChip("ଓଡ଼ିଆ (Odia)", "35%", VelvetRose)
+                            LanguageChip("English", "15%", SoftGold)
+                        }
+                    }
+                }
+            }
+
+            // Activity Timeline Section
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(Icons.Default.Timeline, contentDescription = null, tint = AntiqueGold)
+                    Text(
+                        text = "Recent Poetic Activity Log",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+
+            if (activities.isEmpty()) {
+                item {
+                    Text(
+                        text = "No recent activity recorded yet.",
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            } else {
+                items(activities, key = { it.id }) { activity ->
+                    ActivityTimelineItem(activity = activity)
+                }
+            }
+        }
+
+        // ================= TAB 2: ACCOUNT & FIREBASE AUTH =================
+        if (selectedTab == 2) {
+            // Firebase Auth Status Overview
+            item {
+                Card(
+                    shape = RoundedCornerShape(22.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                    border = BorderStroke(1.dp, AntiqueGold.copy(alpha = 0.35f))
+                ) {
+                    Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column {
+                                Text(
+                                    text = "Firebase Auth Status",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = AntiqueGold
+                                )
+                                Text(
+                                    text = if (profile.isGuest) "Unauthenticated Guest Session" else "Authenticated Cloud Account",
+                                    fontSize = 12.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = if (profile.isGuest) Color(0xFF4A3E1E) else Color(0xFF1E3A2A)
+                            ) {
+                                Text(
+                                    text = if (profile.isGuest) "GUEST" else "FIREBASE AUTH",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (profile.isGuest) AntiqueGold else Color(0xFF81C784),
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                )
+                            }
+                        }
+
+                        HorizontalDivider(color = AntiqueGold.copy(alpha = 0.2f))
+
+                        AccountDetailRow(
+                            label = "Poet UID",
+                            value = profile.uid.take(16) + if (profile.uid.length > 16) "..." else ""
+                        )
+
+                        AccountDetailRow(
+                            label = "Registered Email",
+                            value = profile.email ?: "None (Guest mode)"
+                        )
+
+                        AccountDetailRow(
+                            label = "Auth Provider",
+                            value = when (profile.authProvider) {
+                                "password" -> "Firebase Email & Password"
+                                "google" -> "Google Identity Services"
+                                else -> "Anonymous / Local Guest"
+                            }
+                        )
+
+                        AccountDetailRow(
+                            label = "Email Verified",
+                            value = if (profile.isGuest) "N/A" else if (profile.isEmailVerified) "Verified ✓" else "Unverified ⚠️"
+                        )
+
+                        if (!profile.isGuest && !profile.isEmailVerified) {
+                            OutlinedButton(
+                                onClick = { viewModel.sendEmailVerification() },
+                                modifier = Modifier.fillMaxWidth().testTag("send_email_verification_button")
+                            ) {
+                                Icon(Icons.Default.Email, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Resend Email Verification Link")
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Authentication Actions: Sign In / Register OR Manage Account
+            if (profile.isGuest) {
+                item {
+                    Card(
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                        border = BorderStroke(1.dp, VelvetRose.copy(alpha = 0.4f))
+                    ) {
+                        Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Text(
+                                text = "Sign In to Sync Your Poetry",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = VelvetRose
+                            )
+                            Text(
+                                text = "Connect your account using Firebase Authentication to securely back up your saved verses, synchronized across devices, and share under your recognized pen name.",
+                                fontSize = 13.sp,
+                                lineHeight = 19.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Button(
+                                    onClick = { showSignInDialog = true },
+                                    colors = ButtonDefaults.buttonColors(containerColor = AntiqueGold, contentColor = DeepMidnight),
+                                    modifier = Modifier.weight(1f).testTag("profile_signin_button")
+                                ) {
+                                    Icon(Icons.AutoMirrored.Filled.Login, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("Sign In")
+                                }
+
+                                OutlinedButton(
+                                    onClick = { showSignUpDialog = true },
+                                    modifier = Modifier.weight(1f).testTag("profile_signup_button")
+                                ) {
+                                    Icon(Icons.Default.AccountCircle, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("Register")
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                // Logged-in Account Management actions
+                item {
+                    Card(
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                    ) {
+                        Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Text(
+                                text = "Account Security & Credentials",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = AntiqueGold
+                            )
+
+                            OutlinedButton(
+                                onClick = { showChangePasswordDialog = true },
+                                modifier = Modifier.fillMaxWidth().testTag("change_password_button")
+                            ) {
+                                Icon(Icons.Default.Lock, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Change Firebase Password")
+                            }
+
+                            OutlinedButton(
+                                onClick = { viewModel.signOut() },
+                                modifier = Modifier.fillMaxWidth().testTag("sign_out_button")
+                            ) {
+                                Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Sign Out of Firebase")
+                            }
+
+                            Button(
+                                onClick = { showDeleteAccountDialog = true },
+                                colors = ButtonDefaults.buttonColors(containerColor = VelvetRose.copy(alpha = 0.25f), contentColor = VelvetRose),
+                                modifier = Modifier.fillMaxWidth().testTag("delete_account_button")
+                            ) {
+                                Icon(Icons.Default.DeleteForever, contentDescription = null, modifier = Modifier.size(16.dp), tint = VelvetRose)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Delete Firebase Account")
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Morning Push Notifications Card
+            item {
+                Card(
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                ) {
+                    Column(modifier = Modifier.padding(18.dp)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(Icons.Default.NotificationsActive, contentDescription = null, tint = AntiqueGold)
+                            Text(
+                                text = "Morning Couplet Notification",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "Scheduled daily at 8:00 AM. Delivers trending verses in Hindi, Odia, and English directly to your notification shade.",
+                            fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Button(
+                            onClick = {
+                                viewModel.triggerTestNotification(context)
+                                Toast.makeText(context, "Morning Notification sent to status bar!", Toast.LENGTH_SHORT).show()
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = AntiqueGold, contentColor = DeepMidnight),
+                            modifier = Modifier.fillMaxWidth().testTag("profile_test_notification_button")
+                        ) {
+                            Icon(Icons.Default.NotificationsActive, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Send Morning Notification Now")
+                        }
+                    }
+                }
+            }
+
+            // App Information & Creator Attribution
+            item {
+                Card(
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                ) {
+                    Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            text = "KavyaSetu • काव्यसेतु • କାବ୍ୟସେତୁ",
+                            fontWeight = FontWeight.Bold,
+                            color = AntiqueGold,
+                            fontSize = 18.sp
+                        )
+                        Text(
+                            text = "Built by Nihar Sales",
+                            fontWeight = FontWeight.SemiBold,
+                            color = VelvetRose,
+                            fontSize = 13.sp
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "KavyaSetu bridges hearts across cultures with native support for:\n• Hindi (Devanagari script)\n• Odia (ଓଡ଼ିଆ ଲିପି)\n• English\n\nFeatures full Gemini AI generation, Prompt Library categorized by mood, metrical analysis, visual card studio export, homescreen widget, content moderation, and morning push inspiration.",
+                            fontSize = 13.sp,
+                            lineHeight = 20.sp,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+            }
+        }
+
+        item {
+            Spacer(modifier = Modifier.height(64.dp))
+        }
+    }
+}
+
+@Composable
+private fun MetricItem(
+    value: String,
+    label: String,
+    testTag: String
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.testTag(testTag)
+    ) {
+        Text(
+            text = value,
+            fontWeight = FontWeight.Bold,
+            fontSize = 18.sp,
+            color = AntiqueGold
+        )
+        Text(
+            text = label,
+            fontSize = 12.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
+private fun AccountDetailRow(label: String, value: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(text = label, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(text = value, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = AntiqueGold)
+    }
+}
+
+@Composable
+private fun EmotionalDistributionBar(title: String, percentage: Float, color: Color) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(text = title, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface)
+            Text(text = "${(percentage * 100).toInt()}%", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = color)
+        }
+        Spacer(modifier = Modifier.height(4.dp))
+        LinearProgressIndicator(
+            progress = { percentage },
+            color = color,
+            trackColor = MaterialTheme.colorScheme.surface,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(6.dp)
+                .clip(RoundedCornerShape(3.dp))
+        )
+    }
+}
+
+@Composable
+private fun LanguageChip(name: String, percentage: String, color: Color) {
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, color.copy(alpha = 0.5f))
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(text = name, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface)
+            Text(text = percentage, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = color)
+        }
+    }
+}
+
+@Composable
+private fun ActivityTimelineItem(activity: UserActivityItem) {
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Surface(
+                shape = CircleShape,
+                color = AntiqueGold.copy(alpha = 0.15f),
+                modifier = Modifier.size(44.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(text = activity.type.emoji, fontSize = 20.sp)
+                }
+            }
+
+            Column(modifier = Modifier.weight(1f)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = activity.title,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = AntiqueGold
+                    )
+                    Text(
+                        text = formatRelativeTime(activity.timestamp),
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = activity.description,
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    lineHeight = 16.sp
+                )
+            }
+        }
+    }
+}
+
+private fun formatRelativeTime(timestamp: Long): String {
+    val elapsed = System.currentTimeMillis() - timestamp
+    val minutes = elapsed / (1000 * 60)
+    val hours = elapsed / (1000 * 60 * 60)
+    val days = elapsed / (1000 * 60 * 60 * 24)
+
+    return when {
+        minutes < 2 -> "Just now"
+        minutes < 60 -> "${minutes}m ago"
+        hours < 24 -> "${hours}h ago"
+        days == 1L -> "Yesterday"
+        else -> "${days}d ago"
+    }
+}

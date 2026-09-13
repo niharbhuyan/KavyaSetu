@@ -1,0 +1,56 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Open poetic book base -->
+    <path
+        android:pathData="M32,68 C40,64 48,64 54,67 C60,64 68,64 76,68 L76,72 C68,68 60,68 54,71 C48,68 40,68 32,72 Z"
+        android:fillColor="#E6C687" />
+    <path
+        android:pathData="M33,48 C41,45 48,46 53,50 L53,68 C48,64 41,64 33,67 Z"
+        android:fillColor="#FFF8E7" />
+    <path
+        android:pathData="M75,48 C67,45 60,46 55,50 L55,68 C60,64 67,64 75,67 Z"
+        android:fillColor="#F4E8D0" />
+    <!-- Poetic script lines on book -->
+    <path
+        android:pathData="M37,53 C43,51 47,52 50,54 M37,58 C43,56 47,57 50,59 M37,63 C43,61 47,62 50,64"
+        android:strokeColor="#C5A059"
+        android:strokeWidth="1.2"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M58,54 C61,52 65,51 71,53 M58,59 C61,57 65,56 71,58 M58,64 C61,62 65,61 71,63"
+        android:strokeColor="#C5A059"
+        android:strokeWidth="1.2"
+        android:strokeLineCap="round" />
+    <!-- Elegant Feather Quill Pen slicing gracefully diagonally -->
+    <path
+        android:pathData="M73,26 C68,26 56,33 50,42 C46,47 44,53 43,58 L46,59 C48,53 52,48 57,44 C66,37 72,32 74,27 C75,26 74,25 73,26 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:angle="45"
+                android:startX="43"
+                android:startY="59"
+                android:endX="75"
+                android:endY="25"
+                android:type="linear">
+                <item android:color="#FCE09B" android:offset="0.0" />
+                <item android:color="#E5B247" android:offset="0.6" />
+                <item android:color="#FFD700" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <!-- Nib & ink point -->
+    <path
+        android:pathData="M43,58 L41,64 L46,59 Z"
+        android:fillColor="#F6C358" />
+    <path
+        android:pathData="M41,64 L40,67 L42,65 Z"
+        android:fillColor="#FFE599" />
+    <!-- Star / Sparkle of Poetic Inspiration -->
+    <path
+        android:pathData="M65,34 L66.5,38 L70.5,39.5 L66.5,41 L65,45 L63.5,41 L59.5,39.5 L63.5,38 Z"
+        android:fillColor="#FFF2A3" />
+</vector>

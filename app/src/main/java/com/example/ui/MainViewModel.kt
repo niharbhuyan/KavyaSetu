@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.data.model.ActivityType
+import com.example.data.model.Anthology
 import com.example.data.model.Emotion
 import com.example.data.model.Language
 import com.example.data.model.PoeticAnalysisResult
@@ -55,6 +56,13 @@ class MainViewModel(private val repository: ShayariRepository) : ViewModel() {
             }
         }
     }
+
+    val allShayaris: StateFlow<List<Shayari>> = repository.allShayaris
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
 
     val dailyPick: StateFlow<Shayari?> = repository.dailyPick
         .stateIn(
@@ -451,7 +459,7 @@ class MainViewModel(private val repository: ShayariRepository) : ViewModel() {
             val result = repository.signUpWithEmail(email, pass, displayName, penName)
             result.onSuccess { profile ->
                 _userProfileState.value = profile
-                authSuccessMessage.value = "Account created! Welcome to KavyaSetu, ${profile.displayName}."
+                authSuccessMessage.value = "Account created! Welcome to Kavya Setu, ${profile.displayName}."
             }.onFailure { e ->
                 authError.value = e.message ?: "Failed to create account. Please check inputs."
             }
@@ -560,6 +568,73 @@ class MainViewModel(private val repository: ShayariRepository) : ViewModel() {
     fun clearAuthMessages() {
         authError.value = null
         authSuccessMessage.value = null
+    }
+
+    // Anthologies / Curated Playlists
+    private val _anthologies = MutableStateFlow<List<Anthology>>(
+        listOf(
+            Anthology(
+                id = "anthology_ishq",
+                title = "Ishq-e-Haqiqi",
+                description = "Classic couplets exploring mystical & passionate devotion.",
+                icon = "❤️",
+                shayariIds = setOf("1", "4", "7")
+            ),
+            Anthology(
+                id = "anthology_monsoon",
+                title = "Barish Aur Bheege Lamhe",
+                description = "Monsoon petrichor, falling raindrops, and nostalgic verses.",
+                icon = "🌧️",
+                shayariIds = setOf("2", "5")
+            ),
+            Anthology(
+                id = "anthology_odia",
+                title = "Odia Pracheen Geeti",
+                description = "Timeless lyrical expressions in the musical Odia tradition.",
+                icon = "🦚",
+                shayariIds = setOf("3", "6")
+            ),
+            Anthology(
+                id = "anthology_midnight",
+                title = "Late Night Musings",
+                description = "Quiet couplets for contemplation under starlit solitude.",
+                icon = "🌙",
+                shayariIds = setOf("1", "2")
+            )
+        )
+    )
+    val anthologies: StateFlow<List<Anthology>> = _anthologies.asStateFlow()
+
+    fun createAnthology(title: String, description: String, icon: String = "📚") {
+        if (title.isBlank()) return
+        val newAnthology = Anthology(
+            id = "anthology_${System.currentTimeMillis()}",
+            title = title.trim(),
+            description = description.trim(),
+            icon = icon.ifBlank { "📚" },
+            shayariIds = emptySet()
+        )
+        _anthologies.value = _anthologies.value + newAnthology
+        recordUserActivity(ActivityType.SAVED, "New Anthology Created", "Created playlist \"$title\"")
+    }
+
+    fun deleteAnthology(anthologyId: String) {
+        _anthologies.value = _anthologies.value.filterNot { it.id == anthologyId }
+    }
+
+    fun toggleShayariInAnthology(anthologyId: String, shayariId: String) {
+        _anthologies.value = _anthologies.value.map { anthology ->
+            if (anthology.id == anthologyId) {
+                val updatedIds = if (anthology.shayariIds.contains(shayariId)) {
+                    anthology.shayariIds - shayariId
+                } else {
+                    anthology.shayariIds + shayariId
+                }
+                anthology.copy(shayariIds = updatedIds)
+            } else {
+                anthology
+            }
+        }
     }
 
     fun recordUserActivity(type: ActivityType, title: String, description: String) {

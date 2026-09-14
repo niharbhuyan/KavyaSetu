@@ -54,6 +54,15 @@ interface ShayariDao {
     @Query("UPDATE shayari_posts SET isSaved = :isSaved WHERE id = :id")
     suspend fun updateSaveStatus(id: String, isSaved: Boolean)
 
+    @Query("UPDATE shayari_posts SET category = :category, tags = :tags WHERE id = :id")
+    suspend fun updateCategoryAndTags(id: String, category: String, tags: String)
+
+    @Query("SELECT * FROM shayari_posts WHERE isSaved = 1 AND (category = :category OR tags LIKE '%' || :category || '%') ORDER BY timestamp DESC")
+    fun getSavedShayarisByCategory(category: String): Flow<List<ShayariEntity>>
+
+    @Query("SELECT * FROM shayari_posts WHERE isDownloaded = 1 AND (category = :category OR tags LIKE '%' || :category || '%') ORDER BY downloadedAt DESC, timestamp DESC")
+    fun getDownloadedShayarisByCategory(category: String): Flow<List<ShayariEntity>>
+
     @Query("UPDATE shayari_posts SET isDownloaded = :isDownloaded, downloadedAt = :downloadedAt WHERE id = :id")
     suspend fun updateDownloadStatus(id: String, isDownloaded: Boolean, downloadedAt: Long?)
 

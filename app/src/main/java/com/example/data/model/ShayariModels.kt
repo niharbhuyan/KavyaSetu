@@ -54,6 +54,123 @@ enum class Emotion(
     }
 }
 
+enum class PoemCategory(
+    val id: String,
+    val displayName: String,
+    val hindiName: String,
+    val odiaName: String,
+    val emoji: String,
+    val description: String,
+    val defaultTags: List<String>
+) {
+    ALL(
+        id = "all",
+        displayName = "All Categories",
+        hindiName = "सभी श्रेणियाँ",
+        odiaName = "ସମସ୍ତ ବର୍ଗ",
+        emoji = "✨",
+        description = "All poems across every category",
+        defaultTags = emptyList()
+    ),
+    LOVE(
+        id = "love",
+        displayName = "Love",
+        hindiName = "इश्क़ / प्रेम",
+        odiaName = "ପ୍ରେମ",
+        emoji = "❤️",
+        description = "Romance, affection, deep passion, longing & devotion",
+        defaultTags = listOf("love", "romance", "ishq", "prem", "heart", "longing")
+    ),
+    NATURE(
+        id = "nature",
+        displayName = "Nature",
+        hindiName = "प्रकृति / कुदरत",
+        odiaName = "ପ୍ରକୃତି",
+        emoji = "🍃",
+        description = "Rain, seasons, spring, rivers, sky, flowers & dawn",
+        defaultTags = listOf("nature", "rain", "kudrat", "monsoon", "prakriti", "flowers", "breeze")
+    ),
+    SORROW(
+        id = "sorrow",
+        displayName = "Sorrow",
+        hindiName = "दर्द / विरह",
+        odiaName = "ବିରହ / ଦୁଃଖ",
+        emoji = "🥀",
+        description = "Heartbreak, tears, grief, melancholy & separation",
+        defaultTags = listOf("sorrow", "dard", "heartbreak", "separation", "tears", "virah", "grief")
+    ),
+    INSPIRATION(
+        id = "inspiration",
+        displayName = "Inspiration",
+        hindiName = "हौसला / प्रेरणा",
+        odiaName = "ପ୍ରେରଣା",
+        emoji = "🦅",
+        description = "Courage, perseverance, resilience, fearless spirit & hope",
+        defaultTags = listOf("inspiration", "hausla", "courage", "strength", "hope", "fire", "prerana")
+    ),
+    MYSTIC(
+        id = "mystic",
+        displayName = "Mystic",
+        hindiName = "रूहानी / सूफ़ी",
+        odiaName = "ଆଧ୍ୟାତ୍ମିକ",
+        emoji = "🕊️",
+        description = "Sufi devotion, spiritual bliss, transcendence & divine peace",
+        defaultTags = listOf("mystic", "sufi", "spiritual", "peace", "divine", "soul", "roohani")
+    ),
+    FRIENDSHIP(
+        id = "friendship",
+        displayName = "Friendship",
+        hindiName = "दोस्ती / यारी",
+        odiaName = "ମିତ୍ରତା",
+        emoji = "🤝",
+        description = "Companionship, loyal camaraderie & shared paths",
+        defaultTags = listOf("friendship", "dosti", "yaari", "bonds", "companionship", "mitrata")
+    ),
+    PHILOSOPHY(
+        id = "philosophy",
+        displayName = "Philosophy",
+        hindiName = "फ़लसफ़ा / ज़िंदगी",
+        odiaName = "ଦର୍ଶନ",
+        emoji = "📜",
+        description = "Existential reflections, destiny, time & life wisdom",
+        defaultTags = listOf("philosophy", "life", "zindagi", "wisdom", "time", "darshan")
+    );
+
+    fun getDisplayName(lang: Language): String = when (lang) {
+        Language.HINDI -> "$hindiLabel $emoji"
+        Language.ODIA -> "$odiaName $emoji"
+        else -> "$displayName $emoji"
+    }
+
+    val hindiLabel: String get() = hindiName
+
+    companion object {
+        fun fromId(id: String?): PoemCategory {
+            if (id.isNullOrBlank()) return LOVE
+            val lower = id.trim().lowercase()
+            return entries.find {
+                it.id.equals(lower, ignoreCase = true) ||
+                it.displayName.equals(lower, ignoreCase = true) ||
+                it.name.equals(lower, ignoreCase = true)
+            } ?: fallbackFromKeyword(lower)
+        }
+
+        fun fallbackFromKeyword(keyword: String): PoemCategory {
+            val k = keyword.lowercase()
+            return when {
+                k.contains("nature") || k.contains("prakriti") || k.contains("kudrat") || k.contains("rain") || k.contains("spring") || k.contains("monsoon") || k.contains("barsha") || k.contains("flower") -> NATURE
+                k.contains("sorrow") || k.contains("sad") || k.contains("dard") || k.contains("virah") || k.contains("biraha") || k.contains("gam") || k.contains("tear") || k.contains("grief") || k.contains("dukh") -> SORROW
+                k.contains("inspire") || k.contains("inspiration") || k.contains("hausla") || k.contains("prerana") || k.contains("courage") || k.contains("motivation") || k.contains("hope") || k.contains("fire") -> INSPIRATION
+                k.contains("love") || k.contains("ishq") || k.contains("prem") || k.contains("romance") || k.contains("dil") || k.contains("pyar") -> LOVE
+                k.contains("mystic") || k.contains("sufi") || k.contains("spiritual") || k.contains("roohani") || k.contains("bhakti") -> MYSTIC
+                k.contains("friend") || k.contains("dosti") || k.contains("yaari") || k.contains("mitrata") -> FRIENDSHIP
+                k.contains("philosophy") || k.contains("life") || k.contains("zindagi") || k.contains("darshan") || k.contains("waqt") -> PHILOSOPHY
+                else -> LOVE
+            }
+        }
+    }
+}
+
 @JsonClass(generateAdapter = true)
 data class Shayari(
     val id: String,
@@ -62,6 +179,8 @@ data class Shayari(
     val penName: String = "",
     val language: String, // "hindi", "odia", "english"
     val emotion: String, // "ishq", "dard", etc.
+    val category: String = "love", // "love", "nature", "sorrow", "inspiration", "mystic", "friendship", "philosophy"
+    val tags: String = "", // comma-separated custom tags e.g. "nature, rain, monsoon"
     val likesCount: Int = 0,
     val isLiked: Boolean = false,
     val isSaved: Boolean = false,
@@ -79,7 +198,37 @@ data class Shayari(
     val moderationReason: String? = null,
     val moderationSeverity: String = "SAFE", // "SAFE", "SUSPICIOUS", "HIGH_RISK"
     val moderatedAt: Long? = null
-)
+) {
+    fun getCategoryEnum(): PoemCategory = PoemCategory.fromId(category)
+
+    fun getAllTags(): List<String> {
+        val list = mutableListOf<String>()
+        val cat = getCategoryEnum()
+        if (cat != PoemCategory.ALL) {
+            list.add(cat.displayName.lowercase())
+        }
+        if (tags.isNotBlank()) {
+            tags.split(",").map { it.trim().lowercase() }.filter { it.isNotEmpty() }.forEach {
+                if (!list.contains(it)) list.add(it)
+            }
+        }
+        return list
+    }
+
+    fun matchesCategory(categoryFilter: PoemCategory): Boolean {
+        if (categoryFilter == PoemCategory.ALL) return true
+        return getCategoryEnum() == categoryFilter || getAllTags().any { it.equals(categoryFilter.id, ignoreCase = true) || it.equals(categoryFilter.displayName, ignoreCase = true) }
+    }
+
+    fun matchesTag(tagQuery: String): Boolean {
+        if (tagQuery.isBlank()) return true
+        val query = tagQuery.trim().lowercase().removePrefix("#")
+        return getCategoryEnum().id.contains(query, ignoreCase = true) ||
+               getCategoryEnum().displayName.contains(query, ignoreCase = true) ||
+               getAllTags().any { it.contains(query, ignoreCase = true) } ||
+               lines.contains(query, ignoreCase = true)
+    }
+}
 
 enum class ModerationStatus(val displayName: String, val code: String) {
     PENDING("Pending Review", "PENDING"),
@@ -150,3 +299,14 @@ data class PoeticAnalysisResult(
     val emotionalWeight: String = "",
     val literaryCommentary: String = ""
 )
+
+@JsonClass(generateAdapter = true)
+data class Anthology(
+    val id: String,
+    val title: String,
+    val description: String,
+    val icon: String = "📚",
+    val shayariIds: Set<String> = emptySet(),
+    val createdAt: Long = System.currentTimeMillis()
+)
+

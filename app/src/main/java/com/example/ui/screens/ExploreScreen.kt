@@ -13,20 +13,27 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,6 +43,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -99,6 +107,75 @@ fun ExploreScreen(
             )
         }
 
+        // Quick Mood Filter Chips
+        item {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Filter by Mood",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = AntiqueGold
+                    )
+                    if (selectedEmotion != null) {
+                        TextButton(
+                            onClick = { viewModel.onEmotionSelected(null) },
+                            modifier = Modifier.testTag("clear_mood_filter_button")
+                        ) {
+                            Text("Reset", color = VelvetRose, fontSize = 12.sp)
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth().testTag("mood_filter_chips_row")
+                ) {
+                    item {
+                        FilterChip(
+                            selected = selectedEmotion == null,
+                            onClick = { viewModel.onEmotionSelected(null) },
+                            label = { Text("✨ All Moods") },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = AntiqueGold.copy(alpha = 0.2f),
+                                selectedLabelColor = AntiqueGold
+                            ),
+                            border = FilterChipDefaults.filterChipBorder(
+                                enabled = true,
+                                selected = selectedEmotion == null,
+                                selectedBorderColor = AntiqueGold
+                            ),
+                            modifier = Modifier.testTag("mood_filter_all")
+                        )
+                    }
+                    items(Emotion.entries) { emo ->
+                        val isSelected = selectedEmotion == emo
+                        FilterChip(
+                            selected = isSelected,
+                            onClick = {
+                                viewModel.onEmotionSelected(if (isSelected) null else emo)
+                            },
+                            label = { Text("${emo.emoji} ${emo.englishLabel}") },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = VelvetRose.copy(alpha = 0.25f),
+                                selectedLabelColor = VelvetRose
+                            ),
+                            border = FilterChipDefaults.filterChipBorder(
+                                enabled = true,
+                                selected = isSelected,
+                                selectedBorderColor = VelvetRose
+                            ),
+                            modifier = Modifier.testTag("mood_filter_${emo.code}")
+                        )
+                    }
+                }
+            }
+        }
+
         // Emotion Category Grid
         item {
             Column(modifier = Modifier.fillMaxWidth()) {
@@ -125,7 +202,8 @@ fun ExploreScreen(
                                     .clickable {
                                         viewModel.onEmotionSelected(if (isSelected) null else emo)
                                     }
-                                    .padding(vertical = 4.dp),
+                                    .padding(vertical = 4.dp)
+                                    .testTag("emotion_card_${emo.code}"),
                                 shape = RoundedCornerShape(16.dp),
                                 colors = CardDefaults.cardColors(
                                     containerColor = if (isSelected) VelvetRose.copy(alpha = 0.25f) else MaterialTheme.colorScheme.surfaceVariant
@@ -140,7 +218,7 @@ fun ExploreScreen(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                                 ) {
-                                    Text(text = emo.emoji, fontSize = 22.sp)
+                                    Text(text = emo.emoji, fontSize = 24.sp)
                                     Column {
                                         Text(
                                             text = emo.englishLabel,
@@ -153,6 +231,14 @@ fun ExploreScreen(
                                             fontSize = 11.sp,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
+                                        if (emo.subtitle.isNotBlank()) {
+                                            Text(
+                                                text = emo.subtitle,
+                                                fontSize = 10.sp,
+                                                color = AntiqueGold,
+                                                maxLines = 1
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -175,8 +261,58 @@ fun ExploreScreen(
                     else "All Curated Verses (${shayaris.size})",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.testTag("explore_results_header")
                 )
+                if (selectedEmotion != null) {
+                    TextButton(
+                        onClick = { viewModel.onEmotionSelected(null) },
+                        modifier = Modifier.testTag("clear_filter_header_btn")
+                    ) {
+                        Text("Show All", color = VelvetRose, fontSize = 12.sp)
+                    }
+                }
+            }
+        }
+
+        // Empty State
+        if (shayaris.isEmpty()) {
+            item {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = if (selectedEmotion != null) "${selectedEmotion!!.emoji}" else "🔍",
+                        fontSize = 40.sp
+                    )
+                    Text(
+                        text = if (selectedEmotion != null) "No verses found in ${selectedEmotion!!.englishLabel} yet"
+                        else "No verses matching your search",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        textAlign = TextAlign.Center
+                    )
+                    Text(
+                        text = "Try selecting another mood or clearing your search filter",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
+                    )
+                    OutlinedButton(
+                        onClick = {
+                            viewModel.onEmotionSelected(null)
+                            viewModel.onSearchQueryChanged("")
+                        },
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = AntiqueGold),
+                        modifier = Modifier.testTag("explore_reset_filter_btn")
+                    ) {
+                        Text("Reset All Filters")
+                    }
+                }
             }
         }
 

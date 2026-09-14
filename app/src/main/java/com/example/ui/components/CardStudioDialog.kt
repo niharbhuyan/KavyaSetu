@@ -46,8 +46,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -115,6 +117,19 @@ enum class CardFontChoice(val title: String, val fontFamily: FontFamily) {
     MONO("Literary Type", FontFamily.Monospace)
 }
 
+enum class CardAspectRatio(val title: String, val ratio: Float, val tag: String) {
+    SQUARE("1:1 Square", 1f, "Post"),
+    STORY("9:16 Story", 9f / 16f, "Reels / Stories"),
+    PORTRAIT("4:5 Portrait", 4f / 5f, "Feed")
+}
+
+enum class OrnamentalFrame(val title: String, val borderWidth: Float) {
+    MINIMAL_GOLD("Minimal Gold", 1.5f),
+    ROYAL_DOUBLE("Royal Double", 3f),
+    MUGHAL_ARCH("Mughal Border", 4f),
+    VELVET_GLOW("Velvet Glow", 2f)
+}
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun CardStudioDialog(
@@ -126,6 +141,11 @@ fun CardStudioDialog(
 
     var selectedTheme by remember { mutableStateOf(CardBackgroundTheme.MIDNIGHT_GOLD) }
     var selectedFont by remember { mutableStateOf(CardFontChoice.SERIF) }
+    var selectedRatio by remember { mutableStateOf(CardAspectRatio.SQUARE) }
+    var selectedFrame by remember { mutableStateOf(OrnamentalFrame.ROYAL_DOUBLE) }
+    var customSignature by remember { mutableStateOf(shayari.penName.ifBlank { shayari.author }) }
+    var showSignatureField by remember { mutableStateOf(false) }
+
     var selectedResolution by remember { mutableStateOf("1K") } // "1K", "2K", "4K"
     var aiGeneratedBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var isGeneratingAiImage by remember { mutableStateOf(false) }
@@ -184,9 +204,13 @@ fun CardStudioDialog(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .aspectRatio(1f)
+                        .aspectRatio(selectedRatio.ratio)
                         .clip(RoundedCornerShape(20.dp))
-                        .border(1.5.dp, selectedTheme.accentColor.copy(alpha = 0.5f), RoundedCornerShape(20.dp))
+                        .border(
+                            selectedFrame.borderWidth.dp,
+                            if (selectedFrame == OrnamentalFrame.VELVET_GLOW) VelvetRose else selectedTheme.accentColor.copy(alpha = 0.8f),
+                            RoundedCornerShape(20.dp)
+                        )
                         .background(selectedTheme.brush)
                         .testTag("preview_card_box"),
                     contentAlignment = Alignment.Center
@@ -207,11 +231,21 @@ fun CardStudioDialog(
                         )
                     }
 
+                    // Ornamental Inner Frame
+                    if (selectedFrame == OrnamentalFrame.ROYAL_DOUBLE || selectedFrame == OrnamentalFrame.MUGHAL_ARCH) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(8.dp)
+                                .border(1.dp, selectedTheme.accentColor.copy(alpha = 0.35f), RoundedCornerShape(14.dp))
+                        )
+                    }
+
                     // Card Content
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(24.dp),
+                            .padding(20.dp),
                         verticalArrangement = Arrangement.SpaceBetween,
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
@@ -242,37 +276,151 @@ fun CardStudioDialog(
                                 imageVector = Icons.Default.FormatQuote,
                                 contentDescription = null,
                                 tint = selectedTheme.accentColor.copy(alpha = 0.6f),
-                                modifier = Modifier.size(32.dp)
+                                modifier = Modifier.size(28.dp)
                             )
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(6.dp))
                             Text(
                                 text = shayari.lines,
-                                fontSize = 19.sp,
-                                lineHeight = 30.sp,
+                                fontSize = if (selectedRatio == CardAspectRatio.STORY) 17.sp else 18.sp,
+                                lineHeight = if (selectedRatio == CardAspectRatio.STORY) 26.sp else 28.sp,
                                 textAlign = TextAlign.Center,
                                 fontFamily = selectedFont.fontFamily,
                                 fontWeight = FontWeight.Medium,
                                 color = selectedTheme.textColor
                             )
-                            Spacer(modifier = Modifier.height(12.dp))
+                            Spacer(modifier = Modifier.height(10.dp))
                             Text(
-                                text = "— ${shayari.author}${if (shayari.penName.isNotBlank()) " '${shayari.penName}'" else ""}",
-                                fontSize = 14.sp,
+                                text = "— ${shayari.author}",
+                                fontSize = 13.sp,
                                 fontStyle = FontStyle.Italic,
                                 fontWeight = FontWeight.Normal,
                                 color = selectedTheme.accentColor
                             )
                         }
 
-                        // Bottom watermark
-                        Text(
-                            text = "Crafted with Shayari Global",
-                            fontSize = 10.sp,
-                            letterSpacing = 1.sp,
-                            color = selectedTheme.textColor.copy(alpha = 0.6f)
+                        // Bottom Signature & Takhallis Seal
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Crafted with Shayari Global",
+                                fontSize = 9.sp,
+                                letterSpacing = 1.sp,
+                                color = selectedTheme.textColor.copy(alpha = 0.6f)
+                            )
+
+                            // Custom Takhallis Stamp
+                            if (customSignature.isNotBlank()) {
+                                Surface(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = selectedTheme.accentColor.copy(alpha = 0.15f),
+                                    border = BorderStroke(0.8.dp, selectedTheme.accentColor.copy(alpha = 0.4f))
+                                ) {
+                                    Text(
+                                        text = "✍️ $customSignature",
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = selectedTheme.accentColor,
+                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Section: Canvas Format / Aspect Ratio
+                Text(
+                    text = "Canvas Format & Aspect Ratio",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    CardAspectRatio.entries.forEach { ratio ->
+                        FilterChip(
+                            selected = selectedRatio == ratio,
+                            onClick = { selectedRatio = ratio },
+                            label = { Text("${ratio.title} (${ratio.tag})", fontSize = 12.sp) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = AntiqueGold.copy(alpha = 0.2f),
+                                selectedLabelColor = AntiqueGold
+                            ),
+                            modifier = Modifier.weight(1f)
                         )
                     }
                 }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Section: Ornamental Frame Style
+                Text(
+                    text = "Ornamental Frame Style",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OrnamentalFrame.entries.forEach { frame ->
+                        FilterChip(
+                            selected = selectedFrame == frame,
+                            onClick = { selectedFrame = frame },
+                            label = { Text(frame.title, fontSize = 11.sp) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = AntiqueGold.copy(alpha = 0.2f),
+                                selectedLabelColor = AntiqueGold
+                            ),
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Section: Custom Pen Name / Takhallis Seal
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Poet's Takhallis (Signature Seal)",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    TextButton(onClick = { showSignatureField = !showSignatureField }) {
+                        Text(if (showSignatureField) "Done" else "Customize", color = AntiqueGold)
+                    }
+                }
+                if (showSignatureField) {
+                    OutlinedTextField(
+                        value = customSignature,
+                        onValueChange = { customSignature = it },
+                        label = { Text("Signature Stamp / Pen Name") },
+                        placeholder = { Text("e.g. 'Ghalib', 'Kabisurjya', Your Name") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        singleLine = true
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
 
                 Spacer(modifier = Modifier.height(20.dp))
 

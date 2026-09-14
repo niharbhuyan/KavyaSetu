@@ -6,6 +6,7 @@ import androidx.compose.ui.graphics.Color
 val DeepMidnight = Color(0xFF0D0B16)
 val RoyalPlum = Color(0xFF1B152A)
 val SurfaceCardDark = Color(0xFF221C34)
+val CharcoalElevated = Color(0xFF221C34)
 val SurfaceCardBorder = Color(0xFF382E54)
 
 val AntiqueGold = Color(0xFFE5B247)

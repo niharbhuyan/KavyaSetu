@@ -73,8 +73,16 @@ import com.example.data.model.Language
 import com.example.data.model.Shayari
 import com.example.ui.MainViewModel
 import com.example.ui.components.AudioReciter
+import com.example.ui.components.AmbientSoundscapePlayer
+import com.example.ui.components.CalligraphyStudioDialog
 import com.example.ui.components.CardStudioDialog
+import com.example.ui.components.DiwanPublisherDialog
+import com.example.ui.components.KalamEUstaadDialog
+import com.example.ui.components.LafzOMaaniDialog
+import com.example.ui.components.MushairaStudioDialog
 import com.example.ui.components.ShayariCard
+import com.example.ui.components.TarannumModeDialog
+import com.example.ui.components.VirtualMehfilDialog
 import com.example.ui.theme.AntiqueGold
 import com.example.ui.theme.DeepMidnight
 import com.example.ui.theme.RoyalPlum
@@ -94,13 +102,79 @@ fun FeedScreen(
     val selectedEmotion by viewModel.selectedEmotion.collectAsStateWithLifecycle()
 
     var cardStudioShayari by remember { mutableStateOf<Shayari?>(null) }
+    var mushairaStudioShayari by remember { mutableStateOf<Shayari?>(null) }
+    val ambientPlayer = remember { AmbientSoundscapePlayer() }
+
+    var showVirtualMehfil by remember { mutableStateOf(false) }
+    var showKalamEUstaad by remember { mutableStateOf(false) }
+    var tarannumShayari by remember { mutableStateOf<Shayari?>(null) }
+    var showCalligraphy by remember { mutableStateOf(false) }
+    var showLafzOMaani by remember { mutableStateOf(false) }
+    var showDiwanPublisher by remember { mutableStateOf(false) }
 
     val isOfflineSimulated by viewModel.isOfflineSimulated.collectAsStateWithLifecycle()
+
+    if (showVirtualMehfil) {
+        VirtualMehfilDialog(
+            allShayaris = shayaris,
+            audioReciter = audioReciter,
+            onDismiss = { showVirtualMehfil = false }
+        )
+    }
+
+    if (showKalamEUstaad) {
+        val initialText = dailyPick?.lines ?: shayaris.firstOrNull()?.lines ?: ""
+        KalamEUstaadDialog(
+            initialDraft = initialText,
+            audioReciter = audioReciter,
+            onDismiss = { showKalamEUstaad = false }
+        )
+    }
+
+    if (tarannumShayari != null) {
+        TarannumModeDialog(
+            shayari = tarannumShayari!!,
+            audioReciter = audioReciter,
+            onDismiss = { tarannumShayari = null }
+        )
+    }
+
+    if (showCalligraphy) {
+        val initialVerse = dailyPick?.lines ?: shayaris.firstOrNull()?.lines ?: ""
+        CalligraphyStudioDialog(
+            initialVerse = initialVerse,
+            onDismiss = { showCalligraphy = false }
+        )
+    }
+
+    if (showLafzOMaani) {
+        val initialVerse = dailyPick?.lines ?: shayaris.firstOrNull()?.lines ?: ""
+        LafzOMaaniDialog(
+            initialCoupletToScan = initialVerse,
+            audioReciter = audioReciter,
+            onDismiss = { showLafzOMaani = false }
+        )
+    }
+
+    if (showDiwanPublisher) {
+        DiwanPublisherDialog(
+            allShayaris = shayaris,
+            onDismiss = { showDiwanPublisher = false }
+        )
+    }
 
     if (cardStudioShayari != null) {
         CardStudioDialog(
             shayari = cardStudioShayari!!,
             onDismiss = { cardStudioShayari = null }
+        )
+    }
+
+    if (mushairaStudioShayari != null) {
+        MushairaStudioDialog(
+            shayari = mushairaStudioShayari!!,
+            ambientPlayer = ambientPlayer,
+            onDismiss = { mushairaStudioShayari = null }
         )
     }
 
@@ -359,6 +433,167 @@ fun FeedScreen(
             }
         }
 
+        // Cultural Poetry & Classical Studio Suite
+        item(key = "cultural_mushaira_hub") {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Classical Poetry Studio & Arts",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = AntiqueGold
+                    )
+                    Text(
+                        text = "محفل و کلام",
+                        fontSize = 12.sp,
+                        color = VelvetRose
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    // 1. Virtual Mehfil
+                    item {
+                        Card(
+                            modifier = Modifier
+                                .width(155.dp)
+                                .clickable { showVirtualMehfil = true }
+                                .testTag("hub_virtual_mehfil_card"),
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFF1F1230)),
+                            shape = RoundedCornerShape(14.dp),
+                            border = BorderStroke(1.dp, AntiqueGold.copy(alpha = 0.5f))
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text("🌙", fontSize = 22.sp)
+                                    Surface(
+                                        shape = RoundedCornerShape(6.dp),
+                                        color = Color.Green.copy(alpha = 0.15f)
+                                    ) {
+                                        Text("LIVE", fontSize = 9.sp, color = Color(0xFF81C784), fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp))
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text("Virtual Mehfil", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = AntiqueGold)
+                                Text("Midnight salon with live applause & shama", fontSize = 10.sp, color = Color.LightGray, lineHeight = 13.sp)
+                            }
+                        }
+                    }
+
+                    // 2. Kalam-e-Ustaad (Master AI Persona)
+                    item {
+                        Card(
+                            modifier = Modifier
+                                .width(155.dp)
+                                .clickable { showKalamEUstaad = true }
+                                .testTag("hub_kalam_ustaad_card"),
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFF231024)),
+                            shape = RoundedCornerShape(14.dp),
+                            border = BorderStroke(1.dp, VelvetRose.copy(alpha = 0.5f))
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Text("🎭", fontSize = 22.sp)
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text("Kalam-e-Ustaad", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = VelvetRose)
+                                Text("Ghalib & Upendra Bhanja islah review", fontSize = 10.sp, color = Color.LightGray, lineHeight = 13.sp)
+                            }
+                        }
+                    }
+
+                    // 3. Tarannum Mode
+                    item {
+                        Card(
+                            modifier = Modifier
+                                .width(155.dp)
+                                .clickable {
+                                    tarannumShayari = dailyPick ?: shayaris.firstOrNull()
+                                }
+                                .testTag("hub_tarannum_card"),
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFF141F30)),
+                            shape = RoundedCornerShape(14.dp),
+                            border = BorderStroke(1.dp, AntiqueGold.copy(alpha = 0.4f))
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Text("🪕", fontSize = 22.sp)
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text("Tarannum Mode", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = AntiqueGold)
+                                Text("Melodic ghazal chanting with Raga scales", fontSize = 10.sp, color = Color.LightGray, lineHeight = 13.sp)
+                            }
+                        }
+                    }
+
+                    // 4. Qalam Calligraphy Studio
+                    item {
+                        Card(
+                            modifier = Modifier
+                                .width(155.dp)
+                                .clickable { showCalligraphy = true }
+                                .testTag("hub_calligraphy_card"),
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFF261D15)),
+                            shape = RoundedCornerShape(14.dp),
+                            border = BorderStroke(1.dp, Color(0xFFD4A373).copy(alpha = 0.6f))
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Text("📜", fontSize = 22.sp)
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text("Qalam Studio", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color(0xFFE8C88B))
+                                Text("Nastaliq & Odia palm-leaf reed brush", fontSize = 10.sp, color = Color.LightGray, lineHeight = 13.sp)
+                            }
+                        }
+                    }
+
+                    // 5. Lafz-o-Maani Etymology
+                    item {
+                        Card(
+                            modifier = Modifier
+                                .width(155.dp)
+                                .clickable { showLafzOMaani = true }
+                                .testTag("hub_lafz_maani_card"),
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFF152226)),
+                            shape = RoundedCornerShape(14.dp),
+                            border = BorderStroke(1.dp, AntiqueGold.copy(alpha = 0.4f))
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Text("🔍", fontSize = 22.sp)
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text("Lafz-o-Maani", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = AntiqueGold)
+                                Text("Arabic, Persian & Sanskrit roots lexicon", fontSize = 10.sp, color = Color.LightGray, lineHeight = 13.sp)
+                            }
+                        }
+                    }
+
+                    // 6. Poet's Diwan Publisher
+                    item {
+                        Card(
+                            modifier = Modifier
+                                .width(155.dp)
+                                .clickable { showDiwanPublisher = true }
+                                .testTag("hub_diwan_publisher_card"),
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFF281122)),
+                            shape = RoundedCornerShape(14.dp),
+                            border = BorderStroke(1.dp, VelvetRose.copy(alpha = 0.6f))
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Text("📖", fontSize = 22.sp)
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text("Diwan Publisher", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = VelvetRose)
+                                Text("Publish & export illustrated PDF e-book", fontSize = 10.sp, color = Color.LightGray, lineHeight = 13.sp)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         // Language Filter Tabs (All • हिंदी • ଓଡ଼ିଆ • English)
         item(key = "language_filter_row") {
             Column(modifier = Modifier.fillMaxWidth()) {
@@ -460,6 +695,7 @@ fun FeedScreen(
                     audioReciter.speak(lines, lang)
                 },
                 onOpenCardStudio = { cardStudioShayari = it },
+                onOpenMushairaStudio = { mushairaStudioShayari = it },
                 onAnalyzeWithGemini = {
                     viewModel.analyzeWithHighThinking(it.lines, it.language)
                     onNavigateToAiStudio()

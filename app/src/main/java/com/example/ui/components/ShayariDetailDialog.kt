@@ -91,9 +91,15 @@ fun ShayariDetailDialog(
     isAnalyzing: Boolean = false
 ) {
     val context = LocalContext.current
+    val audioReciter = remember { AudioReciter(context) }
     var showEnglishTranslation by remember { mutableStateOf(true) }
     val emotion = Emotion.fromCode(shayari.emotion)
     val lang = Language.fromCode(shayari.language)
+
+    var showTarannum by remember { mutableStateOf(false) }
+    var showLafzOMaani by remember { mutableStateOf(false) }
+    var showCalligraphy by remember { mutableStateOf(false) }
+    var showUstaadIslah by remember { mutableStateOf(false) }
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -361,6 +367,72 @@ fun ShayariDetailDialog(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
+                // Classical & Cultural Poetry Suite
+                Surface(
+                    shape = RoundedCornerShape(14.dp),
+                    color = Color(0xFF22152C),
+                    border = BorderStroke(1.dp, AntiqueGold.copy(alpha = 0.35f)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Text(
+                            text = "Classical Poetry Studio & Arts:",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = AntiqueGold
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            // Tarannum Singing
+                            Button(
+                                onClick = { showTarannum = true },
+                                colors = ButtonDefaults.buttonColors(containerColor = VelvetRose),
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.weight(1f),
+                                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 6.dp)
+                            ) {
+                                Text("🪕 Tarannum", fontSize = 11.sp, maxLines = 1)
+                            }
+
+                            // Lafz-o-Maani Word Roots
+                            Button(
+                                onClick = { showLafzOMaani = true },
+                                colors = ButtonDefaults.buttonColors(containerColor = AntiqueGold),
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.weight(1f),
+                                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 6.dp)
+                            ) {
+                                Text("🔍 Lafz Roots", fontSize = 11.sp, color = DeepMidnight, fontWeight = FontWeight.Bold, maxLines = 1)
+                            }
+
+                            // Qalam Calligraphy
+                            FilledTonalButton(
+                                onClick = { showCalligraphy = true },
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.weight(1f),
+                                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 6.dp)
+                            ) {
+                                Text("📜 Qalam", fontSize = 11.sp, maxLines = 1)
+                            }
+
+                            // Master Ustaad Islah
+                            FilledTonalButton(
+                                onClick = { showUstaadIslah = true },
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.weight(1f),
+                                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 6.dp)
+                            ) {
+                                Text("🎭 Islah", fontSize = 11.sp, maxLines = 1)
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
                 // Secondary Tool Row (Like, Save, Offline Download, Share, Copy, Gemini Analysis)
                 HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
                 Spacer(modifier = Modifier.height(10.dp))
@@ -472,5 +544,36 @@ fun ShayariDetailDialog(
                 }
             }
         }
+    }
+
+    if (showTarannum) {
+        TarannumModeDialog(
+            shayari = shayari,
+            audioReciter = audioReciter,
+            onDismiss = { showTarannum = false }
+        )
+    }
+
+    if (showLafzOMaani) {
+        LafzOMaaniDialog(
+            initialCoupletToScan = shayari.lines,
+            audioReciter = audioReciter,
+            onDismiss = { showLafzOMaani = false }
+        )
+    }
+
+    if (showCalligraphy) {
+        CalligraphyStudioDialog(
+            initialVerse = shayari.lines,
+            onDismiss = { showCalligraphy = false }
+        )
+    }
+
+    if (showUstaadIslah) {
+        KalamEUstaadDialog(
+            initialDraft = shayari.lines,
+            audioReciter = audioReciter,
+            onDismiss = { showUstaadIslah = false }
+        )
     }
 }

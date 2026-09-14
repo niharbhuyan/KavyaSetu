@@ -44,6 +44,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
@@ -88,6 +89,14 @@ import com.example.ui.components.PromptLibraryDialog
 import com.example.data.remote.GeminiClient
 import com.example.ui.MainViewModel
 import com.example.ui.components.AudioReciter
+import com.example.ui.components.KalamEUstaadDialog
+import com.example.ui.components.LafzOMaaniDialog
+import com.example.ui.components.MeterAnalysisResult
+import com.example.ui.components.PoeticMeterAnalyzer
+import com.example.ui.components.SherBaaziGameDialog
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.Casino
 import com.example.ui.theme.AntiqueGold
 import com.example.ui.theme.DeepMidnight
 import com.example.ui.theme.VelvetRose
@@ -103,7 +112,36 @@ fun AiStudioScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var selectedTab by remember { mutableIntStateOf(0) }
-    val tabs = listOf("Compose (Flash)", "High Thinking (Pro)", "Rhymes (Lite)", "Card Art (3 Pro)")
+    var showSherBaaziDialog by remember { mutableStateOf(false) }
+    var showKalamEUstaad by remember { mutableStateOf(false) }
+    var showLafzOMaani by remember { mutableStateOf(false) }
+    val allShayaris by viewModel.allShayaris.collectAsStateWithLifecycle()
+
+    val tabs = listOf("Compose (Flash)", "High Thinking (Pro)", "Rhymes (Lite)", "Card Art (3 Pro)", "Meter & Beher")
+
+    if (showSherBaaziDialog) {
+        SherBaaziGameDialog(
+            allShayaris = allShayaris,
+            audioReciter = audioReciter,
+            onDismiss = { showSherBaaziDialog = false }
+        )
+    }
+
+    if (showKalamEUstaad) {
+        val sampleVerse = allShayaris.firstOrNull()?.lines ?: ""
+        KalamEUstaadDialog(
+            initialDraft = sampleVerse,
+            audioReciter = audioReciter,
+            onDismiss = { showKalamEUstaad = false }
+        )
+    }
+
+    if (showLafzOMaani) {
+        LafzOMaaniDialog(
+            audioReciter = audioReciter,
+            onDismiss = { showLafzOMaani = false }
+        )
+    }
 
     Column(
         modifier = modifier
@@ -123,11 +161,108 @@ fun AiStudioScreen(
                     text = {
                         Text(
                             text = title,
-                            fontSize = 12.sp,
+                            fontSize = 11.sp,
                             fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Normal
                         )
                     }
                 )
+            }
+        }
+
+        // Sher Baazi Antakshari Quick Banner
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .clickable { showSherBaaziDialog = true }
+                .testTag("sher_baazi_banner"),
+            shape = RoundedCornerShape(14.dp),
+            color = VelvetRose.copy(alpha = 0.15f),
+            border = BorderStroke(1.dp, VelvetRose.copy(alpha = 0.4f))
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(text = "⚔️", fontSize = 20.sp)
+                    Column {
+                        Text(
+                            text = "Play Sher Baazi (Couplet Duel)",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp,
+                            color = VelvetRose
+                        )
+                        Text(
+                            text = "Classical Antakshari match against AI Sukhanwar",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = VelvetRose
+                ) {
+                    Text(
+                        text = "Play Now",
+                        color = Color.White,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                    )
+                }
+            }
+        }
+
+        // Classical Mentorship & Lexicon Quick Bar
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Surface(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable { showKalamEUstaad = true },
+                color = Color(0xFF261224),
+                border = BorderStroke(1.dp, VelvetRose.copy(alpha = 0.5f))
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text("🎭", fontSize = 16.sp)
+                    Column {
+                        Text("Kalam-e-Ustaad", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = VelvetRose)
+                        Text("Master Islah & Critique", fontSize = 9.sp, color = Color.LightGray)
+                    }
+                }
+            }
+
+            Surface(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable { showLafzOMaani = true },
+                color = Color(0xFF142226),
+                border = BorderStroke(1.dp, AntiqueGold.copy(alpha = 0.5f))
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text("🔍", fontSize = 16.sp)
+                    Column {
+                        Text("Lafz-o-Maani", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = AntiqueGold)
+                        Text("Roots & Lexicon", fontSize = 9.sp, color = Color.LightGray)
+                    }
+                }
             }
         }
 
@@ -143,6 +278,7 @@ fun AiStudioScreen(
                 1 -> HighThinkingTab(viewModel)
                 2 -> RhymeAssistantTab(viewModel)
                 3 -> ImageGeneratorTab()
+                4 -> MeterTutorTab(audioReciter)
             }
             Spacer(modifier = Modifier.height(50.dp))
         }
@@ -160,6 +296,7 @@ private fun ComposeTab(viewModel: MainViewModel, audioReciter: AudioReciter) {
     var showPromptLibraryDialog by remember { mutableStateOf(false) }
     var inlineSelectedMood by remember { mutableStateOf<PromptMood?>(null) }
     var activePromptTitle by remember { mutableStateOf<String?>(null) }
+    var showIslahForComposed by remember { mutableStateOf(false) }
 
     val isComposing by viewModel.isComposing.collectAsStateWithLifecycle()
     val resultText by viewModel.composedResult.collectAsStateWithLifecycle()
@@ -447,8 +584,25 @@ private fun ComposeTab(viewModel: MainViewModel, audioReciter: AudioReciter) {
                         Text("Publish to Feed")
                     }
                 }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                FilledTonalButton(
+                    onClick = { showIslahForComposed = true },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("🎭 Seek Master's Islah (Ustaad Review)", fontWeight = FontWeight.Bold, color = VelvetRose)
+                }
             }
         }
+    }
+
+    if (showIslahForComposed && resultText != null) {
+        KalamEUstaadDialog(
+            initialDraft = resultText!!,
+            audioReciter = audioReciter,
+            onDismiss = { showIslahForComposed = false }
+        )
     }
 
     if (showPromptLibraryDialog) {
@@ -802,6 +956,297 @@ private fun ImageGeneratorTab() {
                         .clip(RoundedCornerShape(14.dp)),
                     contentScale = ContentScale.Crop
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun MeterTutorTab(audioReciter: AudioReciter) {
+    var coupletText by remember {
+        mutableStateOf(
+            "हज़ारों ख़्वाहिशें ऐसी कि हर ख़्वाहिश पे दम निकले\nबहुत निकले मिरे अरमान लेकिन फिर भी कम निकले"
+        )
+    }
+
+    val sampleCouplets = listOf(
+        "Mirza Ghalib" to "हज़ारों ख़्वाहिशें ऐसी कि हर ख़्वाहिश पे दम निकले\nबहुत निकले मिरे अरमान लेकिन फिर भी कम निकले",
+        "Kabir Das" to "बड़ा हुआ तो क्या हुआ जैसे पेड़ खजूर\nपंथी को छाया नहीं फल लागे अति दूर",
+        "Upendra Bhanja (Odia)" to "କୋଟି ବ୍ରହ୍ମାଣ୍ଡ ସୁନ୍ଦରୀ ଗୋ ତୋ ରୂପ ଅନୁପମା\nନୟନ ତୋଷିଣୀ ମନ ମୋହିନୀ ରମା",
+        "Allama Iqbal" to "ख़ुदी को कर बुलंद इतना कि हर तक़दीर से पहले\nख़ुदा बंदे से ख़ुद पूछे बता तेरी रज़ा क्या है"
+    )
+
+    val analysis = remember(coupletText) {
+        PoeticMeterAnalyzer.analyzeCouplet(coupletText)
+    }
+
+    Card(
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        border = BorderStroke(1.dp, AntiqueGold.copy(alpha = 0.3f))
+    ) {
+        Column(modifier = Modifier.padding(18.dp)) {
+            Text(
+                text = "Interactive Poetic Meter & Beher Tutor",
+                style = MaterialTheme.typography.titleLarge,
+                color = AntiqueGold,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = "Analyze Beher, Chhanda, Matra weights, Qafiya & Radif cadence balance",
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Presets row
+            Text(
+                text = "Load Classic Meter Reference:",
+                fontSize = 11.sp,
+                color = AntiqueGold,
+                fontWeight = FontWeight.SemiBold
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                sampleCouplets.forEach { (poet, verse) ->
+                    FilterChip(
+                        selected = coupletText.trim() == verse.trim(),
+                        onClick = { coupletText = verse },
+                        label = { Text(poet, fontSize = 11.sp) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = AntiqueGold.copy(alpha = 0.2f),
+                            selectedLabelColor = AntiqueGold
+                        )
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            OutlinedTextField(
+                value = coupletText,
+                onValueChange = { coupletText = it },
+                label = { Text("Couplet / Sher (Misra 1 & Misra 2)") },
+                placeholder = { Text("Line 1 (Misra-e-Ula)\nLine 2 (Misra-e-Sani)") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("meter_couplet_input"),
+                minLines = 3,
+                maxLines = 5,
+                shape = RoundedCornerShape(14.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = AntiqueGold,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                )
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                TextButton(
+                    onClick = { audioReciter.speak(coupletText, "hindi") }
+                ) {
+                    Icon(Icons.Default.VolumeUp, contentDescription = null, tint = AntiqueGold, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Recite Rhythm Aloud", color = AntiqueGold, fontSize = 12.sp)
+                }
+            }
+        }
+    }
+
+    // Analysis Result Card
+    Card(
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        border = BorderStroke(1.5.dp, VelvetRose.copy(alpha = 0.4f)),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(18.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Cadence & Symmetry Analysis",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp,
+                    color = VelvetRose
+                )
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = if (analysis.symmetryScore >= 80) AntiqueGold else VelvetRose
+                ) {
+                    Text(
+                        text = "${analysis.symmetryScore}% Balanced",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = DeepMidnight,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            LinearProgressIndicator(
+                progress = { analysis.symmetryScore / 100f },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(6.dp)
+                    .clip(RoundedCornerShape(3.dp)),
+                color = AntiqueGold,
+                trackColor = MaterialTheme.colorScheme.surface
+            )
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Identified Meter Tag
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = AntiqueGold.copy(alpha = 0.12f),
+                border = BorderStroke(1.dp, AntiqueGold.copy(alpha = 0.3f)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text(
+                        text = "Identified Meter / Beher:",
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = analysis.detectedBeherOrChhanda,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = AntiqueGold
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Syllable & Matra breakdown
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                // Line 1
+                Card(
+                    shape = RoundedCornerShape(14.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Text("Misra 1 (Line 1)", fontWeight = FontWeight.SemiBold, fontSize = 12.sp, color = AntiqueGold)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text("• Syllables: ${analysis.line1Syllables}", fontSize = 13.sp)
+                        Text("• Matras: ${analysis.line1Matras}", fontSize = 13.sp)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text("Weight Pattern:", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(
+                            text = analysis.line1Pattern,
+                            fontSize = 11.sp,
+                            fontFamily = FontFamily.Monospace,
+                            color = VelvetRose
+                        )
+                    }
+                }
+
+                // Line 2
+                Card(
+                    shape = RoundedCornerShape(14.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Text("Misra 2 (Line 2)", fontWeight = FontWeight.SemiBold, fontSize = 12.sp, color = AntiqueGold)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text("• Syllables: ${analysis.line2Syllables}", fontSize = 13.sp)
+                        Text("• Matras: ${analysis.line2Matras}", fontSize = 13.sp)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text("Weight Pattern:", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(
+                            text = analysis.line2Pattern,
+                            fontSize = 11.sp,
+                            fontFamily = FontFamily.Monospace,
+                            color = VelvetRose
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Qafiya & Radif Banner
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.surface,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        Text("Qafiya (Rhyme Pair)", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(
+                            text = if (analysis.identifiedQafiya != null)
+                                "${analysis.identifiedQafiya.first} ⟷ ${analysis.identifiedQafiya.second}"
+                            else "Not matched",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = VelvetRose
+                        )
+                    }
+
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text("Radif (Refrain)", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(
+                            text = analysis.identifiedRadif ?: "None (Aazaad)",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = AntiqueGold
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = analysis.rhythmBalanceComment,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+            if (analysis.poeticSuggestions.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(10.dp))
+                Text(
+                    text = "Tutor Suggestions:",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = AntiqueGold
+                )
+                analysis.poeticSuggestions.forEach { tip ->
+                    Text(
+                        text = "• $tip",
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 2.dp)
+                    )
+                }
             }
         }
     }

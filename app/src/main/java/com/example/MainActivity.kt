@@ -68,6 +68,7 @@ import com.example.ui.components.AudioReciter
 import com.example.ui.components.CardStudioDialog
 import com.example.ui.components.FcmNotificationDialog
 import com.example.ui.components.ShayariDetailDialog
+import com.example.ui.components.VirtualMehfilDialog
 import com.example.ui.screens.AiStudioScreen
 import com.example.ui.screens.ExploreScreen
 import com.example.ui.screens.FeedScreen
@@ -145,6 +146,7 @@ fun MainAppContainer(
 
     var currentNavigationTab by remember { mutableIntStateOf(0) }
     var showFcmDialog by remember { mutableStateOf(false) }
+    var showVirtualMehfil by remember { mutableStateOf(false) }
     var detailCardStudioShayari by remember { mutableStateOf<Shayari?>(null) }
 
     val selectedDetail by viewModel.selectedDetailShayari.collectAsStateWithLifecycle()
@@ -191,7 +193,7 @@ fun MainAppContainer(
                 title = {
                     Column {
                         Text(
-                            text = "KavyaSetu • काव्यसेतु • କାବ୍ୟସେତୁ",
+                            text = "Kavya Setu • काव्यसेतु • କାବ୍ୟସେତୁ",
                             style = MaterialTheme.typography.titleLarge.copy(
                                 fontFamily = FontFamily.Serif,
                                 fontWeight = FontWeight.Bold,
@@ -249,6 +251,14 @@ fun MainAppContainer(
                                 tint = if (currentNavigationTab == 3) VelvetRose else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
+                    }
+
+                    // Live Virtual Mehfil Room
+                    IconButton(
+                        onClick = { showVirtualMehfil = true },
+                        modifier = Modifier.testTag("appbar_mehfil_action")
+                    ) {
+                        Text("🌙", fontSize = 18.sp)
                     }
 
                     // Firebase Cloud Messaging & Morning Notification Center
@@ -480,6 +490,16 @@ fun MainAppContainer(
                     onOpenDetailsDirectly = {
                         viewModel.openShayariDetailById("daily_pick")
                     }
+                )
+            }
+
+            // Virtual Mehfil Dialog
+            if (showVirtualMehfil) {
+                val allShayaris by viewModel.allShayaris.collectAsStateWithLifecycle()
+                VirtualMehfilDialog(
+                    allShayaris = allShayaris,
+                    audioReciter = audioReciter,
+                    onDismiss = { showVirtualMehfil = false }
                 )
             }
         }

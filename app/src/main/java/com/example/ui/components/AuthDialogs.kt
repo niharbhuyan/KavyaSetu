@@ -190,7 +190,7 @@ fun SignUpDialog(
             ) {
                 Icon(Icons.Default.AccountCircle, contentDescription = null, tint = AntiqueGold)
                 Text(
-                    text = "Join KavyaSetu",
+                    text = "Join Kavya Setu",
                     style = MaterialTheme.typography.titleLarge,
                     color = AntiqueGold,
                     fontWeight = FontWeight.Bold

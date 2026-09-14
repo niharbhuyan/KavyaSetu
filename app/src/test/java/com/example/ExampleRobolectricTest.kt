@@ -20,7 +20,7 @@ class ExampleRobolectricTest {
   fun `read app name string from context`() {
     val context = ApplicationProvider.getApplicationContext<Context>()
     val appName = context.getString(R.string.app_name)
-    assertEquals("KavyaSetu", appName)
+    assertEquals("Kavya Setu", appName)
   }
 
   @Test
@@ -85,5 +85,47 @@ class ExampleRobolectricTest {
     )
     val pick = com.example.data.repository.ShayariOfTheDayManager.selectDailyShayari(list)
     assertNotNull(pick)
+  }
+
+  @Test
+  fun `verify LafzOMaani lexicon root lookups`() {
+    val entries = com.example.data.repository.LafzOMaaniData.vocabulary
+    assertNotNull(entries)
+    assertEquals(true, entries.size >= 8)
+
+    val hijrEntry = com.example.data.repository.LafzOMaaniData.search("Hijr").firstOrNull()
+    assertNotNull(hijrEntry)
+    assertEquals(true, hijrEntry?.rootDerivation?.contains("H-J-R") == true)
+
+    val matches = com.example.data.repository.LafzOMaaniData.findMatchingWordsInText("शब-ए-विसाल बहुत कम है आसमाँ के लिए")
+    assertEquals(true, matches.isNotEmpty())
+  }
+
+  @Test
+  fun `verify Ustaad Mentor personas critique generation`() {
+    val personas = com.example.data.repository.UstaadMentorRepository.personas
+    assertEquals(true, personas.size >= 4)
+
+    val ghalib = personas.first { it.id == com.example.data.model.UstaadId.GHALIB }
+    val critique = com.example.data.repository.UstaadMentorRepository.generateOfflineCritique(
+      persona = ghalib,
+      coupletText = "Tere aane ki khabar sun ke bahar aayi hai"
+    )
+    assertNotNull(critique)
+    assertEquals(true, critique.persona.name.contains("Ghalib"))
+    assertEquals(true, critique.critique.isNotBlank())
+    assertEquals(true, critique.wordReplacements.isNotEmpty())
+  }
+
+  @Test
+  fun `verify Tarannum Ragas and swara frequencies`() {
+    val ragas = com.example.data.model.RagaTarannum.entries
+    assertEquals(true, ragas.size >= 4)
+
+    val yaman = com.example.data.model.RagaTarannum.YAMAN
+    assertEquals("Raag Yaman", yaman.ragaName)
+    assertEquals(true, yaman.scaleSwaras.isNotEmpty())
+    assertEquals(true, yaman.scaleFrequencies.isNotEmpty())
+    assertEquals(138.59, yaman.rootPitchHz, 0.1)
   }
 }

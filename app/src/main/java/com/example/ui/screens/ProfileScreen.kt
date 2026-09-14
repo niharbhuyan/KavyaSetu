@@ -39,10 +39,17 @@ import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Timeline
 import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.PlaylistAdd
+import androidx.compose.material.icons.filled.CollectionsBookmark
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -53,10 +60,16 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import com.example.data.model.Anthology
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -110,10 +123,15 @@ fun ProfileScreen(
     val isAuthLoading by viewModel.isAuthLoading.collectAsStateWithLifecycle()
     val authError by viewModel.authError.collectAsStateWithLifecycle()
     val authSuccessMessage by viewModel.authSuccessMessage.collectAsStateWithLifecycle()
+    val anthologies by viewModel.anthologies.collectAsStateWithLifecycle()
+    val allShayaris by viewModel.allShayaris.collectAsStateWithLifecycle()
 
     var selectedTab by remember { mutableIntStateOf(0) }
     var selectedSavedLanguageFilter by remember { mutableStateOf("all") }
     var cardStudioShayari by remember { mutableStateOf<Shayari?>(null) }
+    var showCreateAnthologyDialog by remember { mutableStateOf(false) }
+    var selectedAnthologyForDetail by remember { mutableStateOf<Anthology?>(null) }
+    var shayariForAnthologyPicker by remember { mutableStateOf<Shayari?>(null) }
 
     // Dialog state controllers
     var showSignInDialog by remember { mutableStateOf(false) }
@@ -122,6 +140,39 @@ fun ProfileScreen(
     var showChangePasswordDialog by remember { mutableStateOf(false) }
     var showEditProfileDialog by remember { mutableStateOf(false) }
     var showDeleteAccountDialog by remember { mutableStateOf(false) }
+
+    if (showCreateAnthologyDialog) {
+        CreateAnthologyDialog(
+            onDismiss = { showCreateAnthologyDialog = false },
+            onCreate = { title, desc, icon ->
+                viewModel.createAnthology(title, desc, icon)
+                showCreateAnthologyDialog = false
+            }
+        )
+    }
+
+    if (selectedAnthologyForDetail != null) {
+        AnthologyDetailDialog(
+            anthology = selectedAnthologyForDetail!!,
+            allShayaris = allShayaris,
+            audioReciter = audioReciter,
+            onDismiss = { selectedAnthologyForDetail = null },
+            onRemoveShayari = { sId ->
+                viewModel.toggleShayariInAnthology(selectedAnthologyForDetail!!.id, sId)
+            }
+        )
+    }
+
+    if (shayariForAnthologyPicker != null) {
+        AddToAnthologyDialog(
+            shayari = shayariForAnthologyPicker!!,
+            anthologies = anthologies,
+            onDismiss = { shayariForAnthologyPicker = null },
+            onToggleAnthology = { aId ->
+                viewModel.toggleShayariInAnthology(aId, shayariForAnthologyPicker!!.id)
+            }
+        )
+    }
 
     if (cardStudioShayari != null) {
         CardStudioDialog(
@@ -455,12 +506,18 @@ fun ProfileScreen(
                 Tab(
                     selected = selectedTab == 1,
                     onClick = { selectedTab = 1 },
-                    text = { Text("Activity & Insights") },
-                    modifier = Modifier.testTag("tab_activity_insights")
+                    text = { Text("Anthologies (${anthologies.size})") },
+                    modifier = Modifier.testTag("tab_anthologies")
                 )
                 Tab(
                     selected = selectedTab == 2,
                     onClick = { selectedTab = 2 },
+                    text = { Text("Activity & Insights") },
+                    modifier = Modifier.testTag("tab_activity_insights")
+                )
+                Tab(
+                    selected = selectedTab == 3,
+                    onClick = { selectedTab = 3 },
                     text = { Text("Account & Auth") },
                     modifier = Modifier.testTag("tab_account_auth")
                 )
@@ -571,12 +628,207 @@ fun ProfileScreen(
                             onNavigateToAiStudio()
                         }
                     )
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        TextButton(
+                            onClick = { shayariForAnthologyPicker = shayari }
+                        ) {
+                            Icon(Icons.Default.PlaylistAdd, contentDescription = null, tint = AntiqueGold, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Add to Anthology", color = AntiqueGold, fontSize = 12.sp)
+                        }
+                    }
                 }
             }
         }
 
-        // ================= TAB 1: ACTIVITY & INSIGHTS =================
+        // ================= TAB 1: CURATED ANTHOLOGIES =================
         if (selectedTab == 1) {
+            item {
+                Card(
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                    border = BorderStroke(1.dp, AntiqueGold.copy(alpha = 0.35f))
+                ) {
+                    Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Icon(Icons.Default.CollectionsBookmark, contentDescription = null, tint = AntiqueGold)
+                                Text(
+                                    text = "Curated Poetic Anthologies",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = AntiqueGold
+                                )
+                            }
+                            Button(
+                                onClick = { showCreateAnthologyDialog = true },
+                                colors = ButtonDefaults.buttonColors(containerColor = AntiqueGold, contentColor = DeepMidnight),
+                                shape = RoundedCornerShape(10.dp),
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+                            ) {
+                                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("New Anthology", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                        Text(
+                            text = "Group verses into personalized anthologies for focused reading and sequential recital sessions.",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+
+            if (anthologies.isEmpty()) {
+                item {
+                    Text(
+                        text = "No anthologies yet. Tap '+ New Anthology' to create your first themed playlist.",
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+            } else {
+                items(anthologies, key = { it.id }) { anthology ->
+                    val containedShayaris = remember(anthology.shayariIds, allShayaris) {
+                        allShayaris.filter { anthology.shayariIds.contains(it.id) }
+                    }
+                    Card(
+                        shape = RoundedCornerShape(18.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)),
+                        modifier = Modifier.fillMaxWidth().testTag("anthology_card_${anthology.id}")
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    Surface(
+                                        shape = CircleShape,
+                                        color = AntiqueGold.copy(alpha = 0.15f),
+                                        modifier = Modifier.size(42.dp)
+                                    ) {
+                                        Box(contentAlignment = Alignment.Center) {
+                                            Text(text = anthology.icon, fontSize = 20.sp)
+                                        }
+                                    }
+                                    Column {
+                                        Text(
+                                            text = anthology.title,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 15.sp,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                        Text(
+                                            text = "${containedShayaris.size} Couplets",
+                                            fontSize = 12.sp,
+                                            color = AntiqueGold,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    }
+                                }
+                                IconButton(
+                                    onClick = { viewModel.deleteAnthology(anthology.id) }
+                                ) {
+                                    Icon(Icons.Default.DeleteForever, contentDescription = "Delete anthology", tint = VelvetRose.copy(alpha = 0.7f), modifier = Modifier.size(20.dp))
+                                }
+                            }
+
+                            if (anthology.description.isNotBlank()) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = anthology.description,
+                                    fontSize = 12.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    lineHeight = 16.sp
+                                )
+                            }
+
+                            if (containedShayaris.isNotEmpty()) {
+                                Spacer(modifier = Modifier.height(10.dp))
+                                Surface(
+                                    shape = RoundedCornerShape(10.dp),
+                                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.6f),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                        containedShayaris.take(2).forEach { s ->
+                                            Text(
+                                                text = "• \"${s.lines.lineSequence().firstOrNull() ?: s.lines}\"",
+                                                fontSize = 11.sp,
+                                                fontStyle = FontStyle.Italic,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                maxLines = 1
+                                            )
+                                        }
+                                        if (containedShayaris.size > 2) {
+                                            Text(
+                                                text = "+ ${containedShayaris.size - 2} more verses...",
+                                                fontSize = 10.sp,
+                                                color = AntiqueGold
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                OutlinedButton(
+                                    onClick = {
+                                        if (containedShayaris.isNotEmpty()) {
+                                            val fullSequence = containedShayaris.joinToString("\n\n... ... ...\n\n") { it.lines }
+                                            audioReciter.speak(fullSequence, "hindi")
+                                            viewModel.recordUserActivity(
+                                                ActivityType.RECITED,
+                                                "Anthology Recital",
+                                                "Reciting: ${anthology.title}"
+                                            )
+                                        } else {
+                                            Toast.makeText(context, "No verses in this anthology yet.", Toast.LENGTH_SHORT).show()
+                                        }
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                    shape = RoundedCornerShape(10.dp)
+                                ) {
+                                    Icon(Icons.Default.VolumeUp, contentDescription = null, modifier = Modifier.size(16.dp), tint = AntiqueGold)
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("Recite All", fontSize = 12.sp, color = AntiqueGold)
+                                }
+
+                                Button(
+                                    onClick = { selectedAnthologyForDetail = anthology },
+                                    modifier = Modifier.weight(1f),
+                                    shape = RoundedCornerShape(10.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = VelvetRose.copy(alpha = 0.2f), contentColor = VelvetRose)
+                                ) {
+                                    Icon(Icons.Default.CollectionsBookmark, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("View Verses", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // ================= TAB 2: ACTIVITY & INSIGHTS =================
+        if (selectedTab == 2) {
             // Poetic Emotional Palette Breakdown
             item {
                 Card(
@@ -665,8 +917,8 @@ fun ProfileScreen(
             }
         }
 
-        // ================= TAB 2: ACCOUNT & FIREBASE AUTH =================
-        if (selectedTab == 2) {
+        // ================= TAB 3: ACCOUNT & FIREBASE AUTH =================
+        if (selectedTab == 3) {
             // Firebase Auth Status Overview
             item {
                 Card(
@@ -893,7 +1145,7 @@ fun ProfileScreen(
                 ) {
                     Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(
-                            text = "KavyaSetu • काव्यसेतु • କାବ୍ୟସେତୁ",
+                            text = "Kavya Setu • काव्यसेतु • କାବ୍ୟସେତୁ",
                             fontWeight = FontWeight.Bold,
                             color = AntiqueGold,
                             fontSize = 18.sp
@@ -906,7 +1158,7 @@ fun ProfileScreen(
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "KavyaSetu bridges hearts across cultures with native support for:\n• Hindi (Devanagari script)\n• Odia (ଓଡ଼ିଆ ଲିପି)\n• English\n\nFeatures full Gemini AI generation, Prompt Library categorized by mood, metrical analysis, visual card studio export, homescreen widget, content moderation, and morning push inspiration.",
+                            text = "Kavya Setu bridges hearts across cultures with native support for:\n• Hindi (Devanagari script)\n• Odia (ଓଡ଼ିଆ ଲିପି)\n• English\n\nFeatures full Gemini AI generation, Prompt Library categorized by mood, metrical analysis, visual card studio export, homescreen widget, content moderation, and morning push inspiration.",
                             fontSize = 13.sp,
                             lineHeight = 20.sp,
                             color = MaterialTheme.colorScheme.onSurface
@@ -1064,5 +1316,397 @@ private fun formatRelativeTime(timestamp: Long): String {
         hours < 24 -> "${hours}h ago"
         days == 1L -> "Yesterday"
         else -> "${days}d ago"
+    }
+}
+
+@Composable
+fun CreateAnthologyDialog(
+    onDismiss: () -> Unit,
+    onCreate: (title: String, description: String, icon: String) -> Unit
+) {
+    var title by remember { mutableStateOf("") }
+    var description by remember { mutableStateOf("") }
+    var selectedIcon by remember { mutableStateOf("❤️") }
+    val availableIcons = listOf("❤️", "🌧️", "🦚", "🌙", "🕊️", "🥀", "🦅", "📜", "☕", "🌌")
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Card(
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            border = BorderStroke(1.dp, AntiqueGold),
+            modifier = Modifier
+                .padding(24.dp)
+                .fillMaxWidth()
+                .testTag("create_anthology_dialog")
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Create Anthology",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = AntiqueGold
+                    )
+                    IconButton(onClick = onDismiss) {
+                        Icon(Icons.Default.Close, contentDescription = "Close", tint = AntiqueGold)
+                    }
+                }
+
+                Text(
+                    text = "Pick an Emblem / Mood Icon:",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    availableIcons.take(5).forEach { icon ->
+                        Surface(
+                            shape = CircleShape,
+                            color = if (selectedIcon == icon) AntiqueGold.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surfaceVariant,
+                            border = if (selectedIcon == icon) BorderStroke(2.dp, AntiqueGold) else null,
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clickable { selectedIcon = icon }
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text(text = icon, fontSize = 18.sp)
+                            }
+                        }
+                    }
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    availableIcons.drop(5).forEach { icon ->
+                        Surface(
+                            shape = CircleShape,
+                            color = if (selectedIcon == icon) AntiqueGold.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surfaceVariant,
+                            border = if (selectedIcon == icon) BorderStroke(2.dp, AntiqueGold) else null,
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clickable { selectedIcon = icon }
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text(text = icon, fontSize = 18.sp)
+                            }
+                        }
+                    }
+                }
+
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    label = { Text("Anthology Title (e.g. Shaam-e-Ghazal)") },
+                    modifier = Modifier.fillMaxWidth().testTag("anthology_title_input"),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = AntiqueGold,
+                        focusedLabelColor = AntiqueGold
+                    )
+                )
+
+                OutlinedTextField(
+                    value = description,
+                    onValueChange = { description = it },
+                    label = { Text("Description or Thematic Note") },
+                    modifier = Modifier.fillMaxWidth().testTag("anthology_desc_input"),
+                    shape = RoundedCornerShape(12.dp),
+                    minLines = 2,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = AntiqueGold,
+                        focusedLabelColor = AntiqueGold
+                    )
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(onClick = onDismiss) {
+                        Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Button(
+                        onClick = {
+                            if (title.isNotBlank()) {
+                                onCreate(title, description, selectedIcon)
+                            }
+                        },
+                        enabled = title.isNotBlank(),
+                        colors = ButtonDefaults.buttonColors(containerColor = AntiqueGold, contentColor = DeepMidnight),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.testTag("save_anthology_button")
+                    ) {
+                        Text("Create", fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun AnthologyDetailDialog(
+    anthology: Anthology,
+    allShayaris: List<Shayari>,
+    audioReciter: AudioReciter,
+    onDismiss: () -> Unit,
+    onRemoveShayari: (String) -> Unit
+) {
+    val verses = remember(anthology.shayariIds, allShayaris) {
+        allShayaris.filter { anthology.shayariIds.contains(it.id) }
+    }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Card(
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            border = BorderStroke(1.dp, AntiqueGold),
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth()
+                .testTag("anthology_detail_dialog")
+        ) {
+            Column(
+                modifier = Modifier.padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text(text = anthology.icon, fontSize = 28.sp)
+                        Column {
+                            Text(
+                                text = anthology.title,
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = AntiqueGold
+                            )
+                            Text(
+                                text = "${verses.size} couplets curated",
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    IconButton(onClick = onDismiss) {
+                        Icon(Icons.Default.Close, contentDescription = "Close", tint = AntiqueGold)
+                    }
+                }
+
+                if (anthology.description.isNotBlank()) {
+                    Text(
+                        text = anthology.description,
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontStyle = FontStyle.Italic
+                    )
+                }
+
+                if (verses.isNotEmpty()) {
+                    Button(
+                        onClick = {
+                            val fullSequence = verses.joinToString("\n\n... ... ...\n\n") { it.lines }
+                            audioReciter.speak(fullSequence, "hindi")
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = AntiqueGold, contentColor = DeepMidnight),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Default.VolumeUp, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Recite All Sequentially (Mushaira Mode)", fontWeight = FontWeight.Bold)
+                    }
+                }
+
+                HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+
+                if (verses.isEmpty()) {
+                    Text(
+                        text = "No verses assigned to this anthology yet.\nGo to the 'Saved' tab and tap 'Add to Anthology' under any verse!",
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(vertical = 24.dp)
+                    )
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f, fill = false),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        items(verses, key = { it.id }) { s ->
+                            Card(
+                                shape = RoundedCornerShape(12.dp),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = s.lines,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontWeight = FontWeight.Medium,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Text(
+                                            text = "— ${s.author} (${s.language})",
+                                            fontSize = 11.sp,
+                                            color = AntiqueGold
+                                        )
+                                    }
+                                    IconButton(onClick = { onRemoveShayari(s.id) }) {
+                                        Icon(
+                                            Icons.Default.Close,
+                                            contentDescription = "Remove from anthology",
+                                            tint = VelvetRose,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun AddToAnthologyDialog(
+    shayari: Shayari,
+    anthologies: List<Anthology>,
+    onDismiss: () -> Unit,
+    onToggleAnthology: (String) -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            shape = RoundedCornerShape(22.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            border = BorderStroke(1.dp, AntiqueGold),
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth()
+                .testTag("add_to_anthology_dialog")
+        ) {
+            Column(
+                modifier = Modifier.padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Add to Anthology",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = AntiqueGold
+                    )
+                    IconButton(onClick = onDismiss) {
+                        Icon(Icons.Default.Close, contentDescription = "Close", tint = AntiqueGold)
+                    }
+                }
+
+                Text(
+                    text = "\"${shayari.lines.lineSequence().firstOrNull() ?: shayari.lines}\"",
+                    fontSize = 12.sp,
+                    fontStyle = FontStyle.Italic,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2
+                )
+
+                HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+
+                if (anthologies.isEmpty()) {
+                    Text(
+                        text = "No anthologies created yet. Create one first in the Anthologies tab!",
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        items(anthologies, key = { it.id }) { anthology ->
+                            val isIncluded = anthology.shayariIds.contains(shayari.id)
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .clickable { onToggleAnthology(anthology.id) }
+                                    .padding(vertical = 6.dp, horizontal = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Text(text = anthology.icon, fontSize = 20.sp)
+                                    Column {
+                                        Text(
+                                            text = anthology.title,
+                                            fontWeight = FontWeight.SemiBold,
+                                            fontSize = 14.sp,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                        Text(
+                                            text = "${anthology.shayariIds.size} couplets",
+                                            fontSize = 11.sp,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                                Checkbox(
+                                    checked = isIncluded,
+                                    onCheckedChange = { onToggleAnthology(anthology.id) },
+                                    colors = CheckboxDefaults.colors(
+                                        checkedColor = AntiqueGold,
+                                        checkmarkColor = DeepMidnight
+                                    )
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Button(
+                    onClick = onDismiss,
+                    colors = ButtonDefaults.buttonColors(containerColor = AntiqueGold, contentColor = DeepMidnight),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Done", fontWeight = FontWeight.Bold)
+                }
+            }
+        }
     }
 }

@@ -37,6 +37,7 @@ import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.FileDownloadDone
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Translate
@@ -87,6 +88,7 @@ fun ShayariCard(
     onAnalyzeWithGemini: (Shayari) -> Unit,
     onDownloadClick: (() -> Unit)? = null,
     onCardClick: (() -> Unit)? = null,
+    onOpenMushairaStudio: ((Shayari) -> Unit)? = null,
     isAnalyzing: Boolean = false,
     modifier: Modifier = Modifier
 ) {
@@ -405,6 +407,20 @@ fun ShayariCard(
                         contentDescription = "Recite Shayari",
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                }
+
+                // Mushaira Studio Recital Recorder
+                if (onOpenMushairaStudio != null) {
+                    IconButton(
+                        onClick = { onOpenMushairaStudio(shayari) },
+                        modifier = Modifier.testTag("mushaira_button_${shayari.id}")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Mic,
+                            contentDescription = "Record Recital in Mushaira Studio",
+                            tint = VelvetRose
+                        )
+                    }
                 }
 
                 // Bookmark / Save button

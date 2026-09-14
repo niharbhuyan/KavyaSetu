@@ -110,13 +110,17 @@ class ShayariRepository(
 
     suspend fun initializeSeedDataIfNeeded() = withContext(Dispatchers.IO) {
         val count = dao.getCount()
+        val seeds = getCuratedSeedShayaris()
         if (count == 0) {
-            val seeds = getCuratedSeedShayaris()
             dao.insertShayaris(seeds.map { ShayariEntity.fromDomain(it) })
-            // Set initial daily pick
             val first = seeds.firstOrNull { it.moderationStatus == "APPROVED" }
             if (first != null) {
                 dao.setDailyPick(first.id)
+            }
+        } else {
+            // Upsert curated seed poems to ensure category and tag metadata are fresh
+            seeds.filter { it.isSaved }.forEach { seed ->
+                dao.insertShayari(ShayariEntity.fromDomain(seed))
             }
         }
     }
@@ -258,7 +262,7 @@ class ShayariRepository(
         val result = firebaseService.signUpWithEmail(email, pass, displayName, penName)
         result.onSuccess { profile ->
             dao.insertUserProfile(UserProfileEntity.fromDomain(profile))
-            recordActivity(ActivityType.LOGIN, "Account Created", "Welcome to KavyaSetu, ${profile.displayName}!")
+            recordActivity(ActivityType.LOGIN, "Account Created", "Welcome to Kavya Setu, ${profile.displayName}!")
         }
     }
 
@@ -289,6 +293,11 @@ class ShayariRepository(
     fun signOutUser() {
         firebaseService.signOut()
         recordActivity(ActivityType.LOGIN, "Signed Out", "Switched to local offline guest mode")
+    }
+
+    suspend fun updatePoemCategoryAndTags(id: String, category: String, tags: String) = withContext(Dispatchers.IO) {
+        dao.updateCategoryAndTags(id, category, tags)
+        recordActivity(ActivityType.SAVED, "Updated Category", "Categorized poem under ${category.replaceFirstChar { it.uppercase() }} [${tags}]")
     }
 
     suspend fun checkAndUpdateDailyTrending(forceRefresh: Boolean = false): Shayari? = withContext(Dispatchers.IO) {

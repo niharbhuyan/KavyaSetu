@@ -126,14 +126,23 @@ enum class PoemCategory(
         description = "Companionship, loyal camaraderie & shared paths",
         defaultTags = listOf("friendship", "dosti", "yaari", "bonds", "companionship", "mitrata")
     ),
+    LIFE(
+        id = "life",
+        displayName = "Life",
+        hindiName = "ज़िंदगी / जीवन",
+        odiaName = "ଜୀବନ",
+        emoji = "🌱",
+        description = "Daily journeys, realities, struggles, hope & life reflections",
+        defaultTags = listOf("life", "zindagi", "jeevan", "journey", "struggles", "destiny", "reality")
+    ),
     PHILOSOPHY(
         id = "philosophy",
         displayName = "Philosophy",
-        hindiName = "फ़लसफ़ा / ज़िंदगी",
+        hindiName = "फ़लसफ़ा / दर्शन",
         odiaName = "ଦର୍ଶନ",
         emoji = "📜",
-        description = "Existential reflections, destiny, time & life wisdom",
-        defaultTags = listOf("philosophy", "life", "zindagi", "wisdom", "time", "darshan")
+        description = "Existential reflections, truth, wisdom, cosmos & human existence",
+        defaultTags = listOf("philosophy", "falsafa", "wisdom", "truth", "darshan", "time")
     );
 
     fun getDisplayName(lang: Language): String = when (lang) {
@@ -164,12 +173,104 @@ enum class PoemCategory(
                 k.contains("love") || k.contains("ishq") || k.contains("prem") || k.contains("romance") || k.contains("dil") || k.contains("pyar") -> LOVE
                 k.contains("mystic") || k.contains("sufi") || k.contains("spiritual") || k.contains("roohani") || k.contains("bhakti") -> MYSTIC
                 k.contains("friend") || k.contains("dosti") || k.contains("yaari") || k.contains("mitrata") -> FRIENDSHIP
-                k.contains("philosophy") || k.contains("life") || k.contains("zindagi") || k.contains("darshan") || k.contains("waqt") -> PHILOSOPHY
+                k.contains("life") || k.contains("zindagi") || k.contains("jeevan") || k.contains("journey") -> LIFE
+                k.contains("philosophy") || k.contains("falsafa") || k.contains("darshan") || k.contains("wisdom") || k.contains("waqt") -> PHILOSOPHY
                 else -> LOVE
             }
         }
     }
 }
+
+enum class PoetryStyle(
+    val id: String,
+    val displayName: String,
+    val hindiName: String,
+    val odiaName: String,
+    val emoji: String,
+    val description: String,
+    val promptInstruction: String
+) {
+    GHAZAL(
+        id = "ghazal",
+        displayName = "Ghazal",
+        hindiName = "ग़ज़ल",
+        odiaName = "ଗଜଲ",
+        emoji = "🪕",
+        description = "Classical rhyming couplets with Matla, Maqta, Radif, and Qafiya.",
+        promptInstruction = "Classical Ghazal structure: Create paired couplets (shers) adhering to authentic Urdu/Hindi meter (bahr), with a recurring refrain (radif) preceded by a consistent rhyming sound (qafiya)."
+    ),
+    HAIKU(
+        id = "haiku",
+        displayName = "Haiku",
+        hindiName = "हाइकु",
+        odiaName = "ହାଇକୁ",
+        emoji = "🌸",
+        description = "Evocative 3-line nature poem with 5-7-5 syllable essence.",
+        promptInstruction = "Strict Haiku format: Exactly 3 lines capturing an evocative snapshot of nature, emotion, or transience, following the 5-7-5 syllable essence."
+    ),
+    FREE_VERSE(
+        id = "free_verse",
+        displayName = "Free Verse",
+        hindiName = "नज़्म-ए-आज़ाद",
+        odiaName = "ମୁକ୍ତକ ଛନ୍ଦ",
+        emoji = "🕊️",
+        description = "Modern lyrical expression unconstrained by rigid meter.",
+        promptInstruction = "Modern Free Verse (Nazam-e-Azad / Muktaka): Fluid, lyrical, unrhymed or slant-rhymed open-form poetry driven by organic rhythm, vivid sensory imagery, and poignant metaphorical resonance."
+    ),
+    COUPLET(
+        id = "couplet",
+        displayName = "Sher / Couplet",
+        hindiName = "शेर / बैत",
+        odiaName = "ଦ୍ୱିପଦୀ",
+        emoji = "✨",
+        description = "Intense 2-line standalone poetic couplet.",
+        promptInstruction = "High-impact 2-line couplet (Sher / Bait): Compressed, memorable, and thought-provoking with a setup line and a devastating emotional punchline."
+    ),
+    RUBAI(
+        id = "rubai",
+        displayName = "Rubai",
+        hindiName = "रुबाई",
+        odiaName = "ରୁବାଇ",
+        emoji = "📜",
+        description = "4-line quatrain with AABA rhyming scheme.",
+        promptInstruction = "Classical Rubaiyat quatrain: Exactly 4 lines following the timeless AABA rhyme scheme, meditating on life, love, or existential mystery."
+    ),
+    DOHA(
+        id = "doha",
+        displayName = "Doha",
+        hindiName = "दोहा",
+        odiaName = "ଦୋହା",
+        emoji = "🪔",
+        description = "Philosophical 24-matra rhyming couplet (Kabir / Tulsidas style).",
+        promptInstruction = "Traditional Hindi/Braj/Odia Doha: 2-line self-contained philosophical couplet with 13-11 matra rhythm and end-rhyme, offering timeless wisdom."
+    );
+
+    companion object {
+        fun fromId(id: String?): PoetryStyle {
+            if (id.isNullOrBlank()) return GHAZAL
+            val lower = id.trim().lowercase()
+            return entries.find {
+                it.id.equals(lower, ignoreCase = true) ||
+                it.displayName.equals(lower, ignoreCase = true) ||
+                it.name.equals(lower, ignoreCase = true)
+            } ?: GHAZAL
+        }
+    }
+}
+
+@JsonClass(generateAdapter = true)
+data class GeneratedPoemItem(
+    val id: String,
+    val topic: String,
+    val styleId: String,
+    val styleDisplayName: String,
+    val styleEmoji: String,
+    val emotion: String,
+    val language: String,
+    val penName: String,
+    val content: String,
+    val timestamp: Long = System.currentTimeMillis()
+)
 
 @JsonClass(generateAdapter = true)
 data class Shayari(

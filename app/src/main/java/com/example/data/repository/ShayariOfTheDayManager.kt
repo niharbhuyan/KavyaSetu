@@ -25,13 +25,16 @@ object ShayariOfTheDayManager {
 
     /**
      * Deterministically select today's featured verse from any given shayari list.
+     * Rotates once every 24 hours based on the calendar dateKey, with optional offset support.
      */
     fun selectDailyShayari(
         list: List<Shayari>,
-        dateKey: String = SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(Date())
+        dateKey: String = SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(Date()),
+        offset: Int = 0
     ): Shayari? {
         if (list.isEmpty()) return null
-        val selectedIndex = (dateKey.hashCode() and 0x7FFFFFFF) % list.size
+        val baseIndex = (dateKey.hashCode() and 0x7FFFFFFF) % list.size
+        val selectedIndex = ((baseIndex + offset) % list.size + list.size) % list.size
         return list[selectedIndex].copy(isDailyPick = true)
     }
 
@@ -41,15 +44,15 @@ object ShayariOfTheDayManager {
     suspend fun resolveDailyPick(
         context: Context,
         database: AppDatabase,
-        forceNext: Boolean = false
+        offset: Int = 0
     ): Shayari? = withContext(Dispatchers.IO) {
         val dao = database.shayariDao()
         val approvedList = dao.getAllApprovedShayaris().firstOrNull() ?: emptyList()
         if (approvedList.isEmpty()) return@withContext null
 
         val domainList = approvedList.map { it.toDomain() }
-        val dateKey = if (forceNext) System.currentTimeMillis().toString() else SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(Date())
-        val selected = selectDailyShayari(domainList, dateKey) ?: return@withContext null
+        val dateKey = SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(Date())
+        val selected = selectDailyShayari(domainList, dateKey, offset) ?: return@withContext null
 
         dao.clearDailyPicks()
         dao.setDailyPick(selected.id)

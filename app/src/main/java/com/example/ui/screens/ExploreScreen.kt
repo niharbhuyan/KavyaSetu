@@ -52,6 +52,7 @@ import com.example.data.model.Shayari
 import com.example.ui.MainViewModel
 import com.example.ui.components.AudioReciter
 import com.example.ui.components.CardStudioDialog
+import com.example.ui.components.CategorizePoemDialog
 import com.example.ui.components.ShayariCard
 import com.example.ui.theme.AntiqueGold
 import com.example.ui.theme.VelvetRose
@@ -66,7 +67,22 @@ fun ExploreScreen(
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val shayaris by viewModel.displayedShayaris.collectAsStateWithLifecycle()
     val selectedEmotion by viewModel.selectedEmotion.collectAsStateWithLifecycle()
+    val poetryFontSizeSp by viewModel.poetryFontSizeSp.collectAsStateWithLifecycle()
+    val poetryLineHeightMult by viewModel.poetryLineHeightMult.collectAsStateWithLifecycle()
+    val poetryFontFamilyType by viewModel.poetryFontFamilyType.collectAsStateWithLifecycle()
     var cardStudioShayari by remember { mutableStateOf<Shayari?>(null) }
+    var categorizeShayari by remember { mutableStateOf<Shayari?>(null) }
+
+    if (categorizeShayari != null) {
+        CategorizePoemDialog(
+            shayari = categorizeShayari!!,
+            onDismiss = { categorizeShayari = null },
+            onSaveCategory = { newCategory, newTags ->
+                viewModel.updatePoemCategoryAndTags(categorizeShayari!!.id, newCategory, newTags)
+                categorizeShayari = null
+            }
+        )
+    }
 
     if (cardStudioShayari != null) {
         CardStudioDialog(
@@ -328,6 +344,10 @@ fun ExploreScreen(
                 onDownloadClick = { viewModel.toggleDownload(shayari) },
                 onReciteClick = { lines, lang -> audioReciter.speak(lines, lang) },
                 onOpenCardStudio = { cardStudioShayari = it },
+                poetryFontSizeSp = poetryFontSizeSp,
+                poetryLineHeightMult = poetryLineHeightMult,
+                poetryFontFamilyType = poetryFontFamilyType,
+                onEditCategoryClick = { categorizeShayari = it },
                 onAnalyzeWithGemini = {
                     viewModel.analyzeWithHighThinking(it.lines, it.language)
                     onNavigateToAiStudio()

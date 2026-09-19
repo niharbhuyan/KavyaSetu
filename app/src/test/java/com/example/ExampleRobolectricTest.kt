@@ -7,6 +7,7 @@ import com.example.data.model.Language
 import com.example.data.model.Shayari
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -127,5 +128,128 @@ class ExampleRobolectricTest {
     assertEquals(true, yaman.scaleSwaras.isNotEmpty())
     assertEquals(true, yaman.scaleFrequencies.isNotEmpty())
     assertEquals(138.59, yaman.rootPitchHz, 0.1)
+  }
+
+  @Test
+  fun `verify poem category enum and emoji mappings`() {
+    val love = com.example.data.model.PoemCategory.LOVE
+    assertEquals("Love", love.displayName)
+    assertEquals("❤️", love.emoji)
+
+    val nature = com.example.data.model.PoemCategory.NATURE
+    assertEquals("Nature", nature.displayName)
+    assertEquals("🍃", nature.emoji)
+
+    val sorrow = com.example.data.model.PoemCategory.SORROW
+    assertEquals("Sorrow", sorrow.displayName)
+    assertEquals("🥀", sorrow.emoji)
+
+    val inspiration = com.example.data.model.PoemCategory.INSPIRATION
+    assertEquals("Inspiration", inspiration.displayName)
+    assertEquals("🦅", inspiration.emoji)
+
+    assertEquals(com.example.data.model.PoemCategory.LOVE, com.example.data.model.PoemCategory.fromId("love"))
+    assertEquals(com.example.data.model.PoemCategory.NATURE, com.example.data.model.PoemCategory.fromId("nature"))
+  }
+
+  @Test
+  fun `verify poetry display preferences persistence`() {
+    val context = ApplicationProvider.getApplicationContext<Context>()
+    com.example.data.local.PoetryDisplayPreferences.saveSettings(
+      context = context,
+      fontSizeSp = 24f,
+      lineHeightMult = 1.8f,
+      fontFamilyType = "serif"
+    )
+
+    assertEquals(24f, com.example.data.local.PoetryDisplayPreferences.getFontSizeSp(context), 0.01f)
+    assertEquals(1.8f, com.example.data.local.PoetryDisplayPreferences.getLineHeightMult(context), 0.01f)
+    assertEquals("serif", com.example.data.local.PoetryDisplayPreferences.getFontFamilyType(context))
+  }
+
+  @Test
+  fun `verify Daily Pick widget string resources`() {
+    val context = ApplicationProvider.getApplicationContext<Context>()
+    val widgetName = context.getString(R.string.widget_name)
+    val widgetDesc = context.getString(R.string.widget_description)
+    val widgetHeader = context.getString(R.string.widget_header_title)
+
+    assertEquals("Daily Pick", widgetName)
+    assertEquals("Displays a featured poem from the collection, updating once every 24 hours.", widgetDesc)
+    assertEquals("✨ Daily Pick", widgetHeader)
+  }
+
+  @Test
+  fun `verify Daily Pick 24-hour cycle date rotation and offset`() {
+    val collection = listOf(
+      Shayari(id = "p1", lines = "Poem 1", author = "Poet A", language = "hindi", emotion = "ishq"),
+      Shayari(id = "p2", lines = "Poem 2", author = "Poet B", language = "odia", emotion = "dard"),
+      Shayari(id = "p3", lines = "Poem 3", author = "Poet C", language = "english", emotion = "sukoon")
+    )
+
+    val day1Pick = com.example.data.repository.ShayariOfTheDayManager.selectDailyShayari(collection, dateKey = "20260918", offset = 0)
+    val day1SameDay = com.example.data.repository.ShayariOfTheDayManager.selectDailyShayari(collection, dateKey = "20260918", offset = 0)
+    val day1OffsetPick = com.example.data.repository.ShayariOfTheDayManager.selectDailyShayari(collection, dateKey = "20260918", offset = 1)
+
+    assertNotNull(day1Pick)
+    assertNotNull(day1SameDay)
+    assertNotNull(day1OffsetPick)
+
+    // Within the same 24-hour period, deterministic selection remains identical
+    assertEquals(day1Pick?.id, day1SameDay?.id)
+    assertEquals(true, day1Pick?.isDailyPick)
+
+    // Offset rotates through the collection
+    assertEquals(true, day1Pick?.id != day1OffsetPick?.id)
+  }
+
+  @Test
+  fun `verify social share intent creation with ACTION_SEND`() {
+    val sampleText = "✨ Dil se jo baat nikalti hai asar rakhti hai\n— Allama Iqbal"
+    val subject = "Verse by Allama Iqbal"
+
+    val intent = com.example.util.SocialShareHelper.createShareIntent(sampleText, subject)
+
+    assertEquals(android.content.Intent.ACTION_SEND, intent.action)
+    assertEquals("text/plain", intent.type)
+    assertEquals(sampleText, intent.getStringExtra(android.content.Intent.EXTRA_TEXT))
+    assertEquals(subject, intent.getStringExtra(android.content.Intent.EXTRA_SUBJECT))
+  }
+
+  @Test
+  fun `verify poem format for social media sharing`() {
+    val formatted = com.example.util.SocialShareHelper.formatPoemForSocial(
+      lines = "Hazaron khwahishen aisi ke har khwahish pe dam nikle",
+      author = "Mirza Ghalib",
+      language = "hindi",
+      emotion = "ishq",
+      category = "love",
+      penName = "Ghalib",
+      id = "ghalib_123"
+    )
+
+    assertTrue(formatted.contains("Hazaron khwahishen aisi"))
+    assertTrue(formatted.contains("Mirza Ghalib"))
+    assertTrue(formatted.contains("#HindiShayari"))
+    assertTrue(formatted.contains("#KavyaSetu"))
+    assertTrue(formatted.contains("shayari://detail?id=ghalib_123"))
+  }
+
+  @Test
+  fun `verify Gemini AI shayari format for social media sharing`() {
+    val formatted = com.example.util.SocialShareHelper.formatGeminiPoemForSocial(
+      lines = "सितारों से आगे जहाँ और भी हैं\nअभी इश्क़ के इम्तिहाँ और भी हैं",
+      emotion = "inspiration",
+      language = "hindi",
+      author = "Sahir",
+      topic = "Cosmic journey and resilience"
+    )
+
+    assertTrue(formatted.contains("सितारों से आगे जहाँ और भी हैं"))
+    assertTrue(formatted.contains("Sahir"))
+    assertTrue(formatted.contains("Composed with Gemini AI on Kavya Setu"))
+    assertTrue(formatted.contains("Cosmic journey and resilience"))
+    assertTrue(formatted.contains("#GeminiAI"))
+    assertTrue(formatted.contains("#AIShayari"))
   }
 }

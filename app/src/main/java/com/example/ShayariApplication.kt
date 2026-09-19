@@ -23,6 +23,7 @@ class ShayariApplication : Application() {
 
         DailyNotificationManager.createNotificationChannel(this)
         DailyNotificationManager.scheduleDailyMorningAlarm(this)
+        com.example.widget.ShayariDailyWidgetProvider.schedule24HourUpdate(this)
 
         database = AppDatabase.getDatabase(this)
         firebaseService = FirebaseService()
@@ -32,6 +33,7 @@ class ShayariApplication : Application() {
         CoroutineScope(Dispatchers.IO).launch {
             repository.initializeSeedDataIfNeeded()
             repository.checkAndUpdateDailyTrending()
+            com.example.data.repository.ShayariOfTheDayManager.resolveDailyPick(this@ShayariApplication, database)
         }
     }
 

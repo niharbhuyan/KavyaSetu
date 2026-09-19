@@ -24,14 +24,22 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.BookmarkBorder
+import androidx.compose.material.icons.filled.Category
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DownloadDone
 import androidx.compose.material.icons.filled.DownloadForOffline
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FolderSpecial
+import androidx.compose.material.icons.filled.FormatSize
+import androidx.compose.material.icons.filled.Label
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SignalWifiOff
 import androidx.compose.material.icons.filled.Storage
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -46,6 +54,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -69,10 +79,13 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.model.Emotion
 import com.example.data.model.Language
+import com.example.data.model.PoemCategory
 import com.example.data.model.Shayari
 import com.example.ui.MainViewModel
 import com.example.ui.components.AudioReciter
 import com.example.ui.components.CardStudioDialog
+import com.example.ui.components.CategorizePoemDialog
+import com.example.ui.components.PoetrySettingsDialog
 import com.example.ui.components.ShayariCard
 import com.example.ui.theme.AntiqueGold
 import com.example.ui.theme.DeepMidnight
@@ -86,20 +99,81 @@ fun OfflineScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val savedShayaris by viewModel.savedShayaris.collectAsStateWithLifecycle()
     val downloadedShayaris by viewModel.downloadedShayaris.collectAsStateWithLifecycle()
     val isOfflineSimulated by viewModel.isOfflineSimulated.collectAsStateWithLifecycle()
-    var selectedLanguage by remember { mutableStateOf(Language.ALL) }
-    var selectedEmotion by remember { mutableStateOf<Emotion?>(null) }
-    var cardStudioShayari by remember { mutableStateOf<Shayari?>(null) }
-    var showClearDialog by remember { mutableStateOf(false) }
+    val poetryFontSizeSp by viewModel.poetryFontSizeSp.collectAsStateWithLifecycle()
+    val poetryLineHeightMult by viewModel.poetryLineHeightMult.collectAsStateWithLifecycle()
+    val poetryFontFamilyType by viewModel.poetryFontFamilyType.collectAsStateWithLifecycle()
+    val readingProgress by viewModel.readingProgress.collectAsStateWithLifecycle()
 
-    val filteredList = downloadedShayaris.filter { item ->
+    var vaultFilterTab by remember { mutableStateOf("saved") } // "saved" or "downloaded"
+    var selectedCategory by remember { mutableStateOf(PoemCategory.ALL) }
+    var selectedLanguage by remember { mutableStateOf(Language.ALL) }
+    var tagSearchQuery by remember { mutableStateOf("") }
+    var cardStudioShayari by remember { mutableStateOf<Shayari?>(null) }
+    var categorizeShayari by remember { mutableStateOf<Shayari?>(null) }
+    var showClearDialog by remember { mutableStateOf(false) }
+    var showSettingsDialog by remember { mutableStateOf(false) }
+
+    val sourceList = if (vaultFilterTab == "saved") savedShayaris else downloadedShayaris
+
+    val categoryCounts = remember(sourceList) {
+        PoemCategory.entries.associateWith { cat ->
+            if (cat == PoemCategory.ALL) {
+                sourceList.size
+            } else {
+                sourceList.count { it.getCategoryEnum() == cat || it.category.equals(cat.id, ignoreCase = true) }
+            }
+        }
+    }
+
+    val filteredList = sourceList.filter { item ->
         val matchLang = when (selectedLanguage) {
             Language.ALL -> true
             else -> item.language.equals(selectedLanguage.code, ignoreCase = true)
         }
-        val matchEmotion = selectedEmotion == null || item.emotion.equals(selectedEmotion?.code, ignoreCase = true)
-        matchLang && matchEmotion
+        val itemCat = item.getCategoryEnum()
+        val matchCategory = when (selectedCategory) {
+            PoemCategory.ALL -> true
+            else -> itemCat == selectedCategory || item.category.equals(selectedCategory.id, ignoreCase = true)
+        }
+        val matchTag = if (tagSearchQuery.isBlank()) {
+            true
+        } else {
+            val q = tagSearchQuery.trim().lowercase().removePrefix("#")
+            item.tags.contains(q, ignoreCase = true) ||
+            item.category.contains(q, ignoreCase = true) ||
+            itemCat.displayName.contains(q, ignoreCase = true) ||
+            item.lines.contains(q, ignoreCase = true) ||
+            item.author.contains(q, ignoreCase = true)
+        }
+        matchLang && matchCategory && matchTag
+    }
+
+    if (categorizeShayari != null) {
+        CategorizePoemDialog(
+            shayari = categorizeShayari!!,
+            onDismiss = { categorizeShayari = null },
+            onSaveCategory = { newCategory, newTags ->
+                viewModel.updatePoemCategoryAndTags(categorizeShayari!!.id, newCategory, newTags)
+                Toast.makeText(context, "Updated to ${newCategory.displayName} with tags", Toast.LENGTH_SHORT).show()
+                categorizeShayari = null
+            }
+        )
+    }
+
+    if (showSettingsDialog) {
+        PoetrySettingsDialog(
+            initialFontSizeSp = poetryFontSizeSp,
+            initialLineHeightMult = poetryLineHeightMult,
+            initialFontFamily = poetryFontFamilyType,
+            onDismiss = { showSettingsDialog = false },
+            onApplySettings = { newSize, newMult, newFont ->
+                viewModel.updatePoetryDisplaySettings(context, newSize, newMult, newFont)
+                Toast.makeText(context, "Readability settings updated!", Toast.LENGTH_SHORT).show()
+            }
+        )
     }
 
     if (cardStudioShayari != null) {
@@ -200,24 +274,38 @@ fun OfflineScreen(
                                         color = Color.White
                                     )
                                     Text(
-                                        text = "${downloadedShayaris.size} couplets • ~${(downloadedShayaris.size * 2.2).toInt()} KB in SQLite",
+                                        text = "${sourceList.size} verses • ~${(downloadedShayaris.size * 2.2).toInt()} KB in SQLite",
                                         fontSize = 12.sp,
                                         color = Color.White.copy(alpha = 0.7f)
                                     )
                                 }
                             }
 
-                            if (downloadedShayaris.isNotEmpty()) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
                                 IconButton(
-                                    onClick = { showClearDialog = true },
-                                    modifier = Modifier.size(36.dp).testTag("clear_offline_button")
+                                    onClick = { showSettingsDialog = true },
+                                    modifier = Modifier.size(36.dp).testTag("open_font_settings_btn")
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Default.Delete,
-                                        contentDescription = "Clear cache",
-                                        tint = VelvetRose,
+                                        imageVector = Icons.Default.FormatSize,
+                                        contentDescription = "Font & Readability Settings",
+                                        tint = AntiqueGold,
                                         modifier = Modifier.size(20.dp)
                                     )
+                                }
+
+                                if (downloadedShayaris.isNotEmpty()) {
+                                    IconButton(
+                                        onClick = { showClearDialog = true },
+                                        modifier = Modifier.size(36.dp).testTag("clear_offline_button")
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Delete,
+                                            contentDescription = "Clear cache",
+                                            tint = VelvetRose,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -283,7 +371,324 @@ fun OfflineScreen(
             }
         }
 
-        // Quick Download Packs Center
+        // Vault View Selection (Saved in Vault vs All Downloaded Cache)
+        item(key = "vault_tabs") {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                    .padding(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Surface(
+                    onClick = { vaultFilterTab = "saved" },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(10.dp),
+                    color = if (vaultFilterTab == "saved") AntiqueGold else Color.Transparent
+                ) {
+                    Row(
+                        modifier = Modifier.padding(vertical = 10.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Bookmark,
+                            contentDescription = null,
+                            tint = if (vaultFilterTab == "saved") DeepMidnight else MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "Saved Vault (${savedShayaris.size})",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (vaultFilterTab == "saved") DeepMidnight else MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+
+                Surface(
+                    onClick = { vaultFilterTab = "downloaded" },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(10.dp),
+                    color = if (vaultFilterTab == "downloaded") AntiqueGold else Color.Transparent
+                ) {
+                    Row(
+                        modifier = Modifier.padding(vertical = 10.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.DownloadDone,
+                            contentDescription = null,
+                            tint = if (vaultFilterTab == "downloaded") DeepMidnight else MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "Downloaded (${downloadedShayaris.size})",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (vaultFilterTab == "downloaded") DeepMidnight else MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+            }
+        }
+
+        // LAST READ BOOKMARK / RESUME READING BANNER
+        if (readingProgress.hasBookmark) {
+            item(key = "last_read_bookmark_banner") {
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = AntiqueGold.copy(alpha = 0.12f),
+                    border = BorderStroke(1.dp, AntiqueGold.copy(alpha = 0.5f)),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("last_read_bookmark_banner")
+                ) {
+                    Column(modifier = Modifier.padding(14.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Text("📌", fontSize = 16.sp)
+                                Text(
+                                    text = "Pick Up Where You Left Off",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = AntiqueGold
+                                )
+                            }
+                            IconButton(
+                                onClick = { viewModel.clearBookmark(context) },
+                                modifier = Modifier.size(24.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Clear,
+                                    contentDescription = "Clear Bookmark",
+                                    tint = AntiqueGold.copy(alpha = 0.7f),
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "\"${readingProgress.lastReadSnippet}\"",
+                            fontSize = 13.sp,
+                            fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 2
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "— ${readingProgress.lastReadAuthor ?: "Master"} • ${readingProgress.lastReadCategory?.replaceFirstChar { it.uppercase() } ?: "Verse"}",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            FilledTonalButton(
+                                onClick = {
+                                    val targetId = readingProgress.lastReadPoemId
+                                    if (!targetId.isNullOrBlank()) {
+                                        viewModel.openShayariDetailById(targetId)
+                                    }
+                                },
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                                shape = RoundedCornerShape(8.dp),
+                                colors = ButtonDefaults.filledTonalButtonColors(
+                                    containerColor = AntiqueGold,
+                                    contentColor = DeepMidnight
+                                )
+                            ) {
+                                Text("Resume Reading", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // CATEGORY FILTER SYSTEM FOR OFFLINE VAULT
+        item(key = "category_filters") {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Category,
+                            contentDescription = null,
+                            tint = AntiqueGold,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Text(
+                            text = "Filter by Category & Theme",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                    if (selectedCategory != PoemCategory.ALL || tagSearchQuery.isNotBlank()) {
+                        TextButton(
+                            onClick = {
+                                selectedCategory = PoemCategory.ALL
+                                tagSearchQuery = ""
+                            }
+                        ) {
+                            Text("Reset", fontSize = 12.sp, color = AntiqueGold)
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    PoemCategory.entries.forEach { category ->
+                        val isSelected = selectedCategory == category
+                        val count = categoryCounts[category] ?: 0
+                        FilterChip(
+                            selected = isSelected,
+                            onClick = { selectedCategory = category },
+                            label = {
+                                Text(
+                                    text = "${category.emoji} ${category.displayName} ($count)",
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                    fontSize = 12.sp
+                                )
+                            },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = AntiqueGold.copy(alpha = 0.25f),
+                                selectedLabelColor = AntiqueGold
+                            ),
+                            border = FilterChipDefaults.filterChipBorder(
+                                enabled = true,
+                                selected = isSelected,
+                                borderColor = if (isSelected) AntiqueGold else MaterialTheme.colorScheme.outline.copy(alpha = 0.35f)
+                            ),
+                            modifier = Modifier.testTag("vault_cat_chip_${category.id}")
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // TAG SEARCH BAR
+                OutlinedTextField(
+                    value = tagSearchQuery,
+                    onValueChange = { tagSearchQuery = it },
+                    placeholder = { Text("Search by tag (e.g. rain, courage, monsoon, heartbreak)...", fontSize = 12.sp) },
+                    leadingIcon = {
+                        Icon(Icons.Default.Label, contentDescription = "Tag search", tint = AntiqueGold, modifier = Modifier.size(18.dp))
+                    },
+                    trailingIcon = {
+                        if (tagSearchQuery.isNotBlank()) {
+                            IconButton(onClick = { tagSearchQuery = "" }) {
+                                Icon(Icons.Default.Clear, contentDescription = "Clear tag", modifier = Modifier.size(16.dp))
+                            }
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("tag_search_field"),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = AntiqueGold,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.35f)
+                    ),
+                    singleLine = true
+                )
+
+                // Quick Clickable Tag Suggestions
+                val suggestedTags = when (selectedCategory) {
+                    PoemCategory.NATURE -> listOf("rain", "monsoon", "clouds", "flowers", "hills", "earth")
+                    PoemCategory.LOVE -> listOf("love", "passion", "ghalib", "beauty", "heart", "ishq")
+                    PoemCategory.SORROW -> listOf("sorrow", "dard", "heartbreak", "tears", "loss", "gham")
+                    PoemCategory.INSPIRATION -> listOf("inspiration", "courage", "resilience", "storm", "defiance")
+                    PoemCategory.LIFE -> listOf("life", "zindagi", "jeevan", "journey", "struggle", "destiny")
+                    PoemCategory.PHILOSOPHY -> listOf("philosophy", "falsafa", "wisdom", "truth", "darshan", "time")
+                    else -> listOf("rain", "courage", "monsoon", "heartbreak", "ghalib", "zindagi", "falsafa")
+                }
+                Spacer(modifier = Modifier.height(6.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text(
+                        text = "Tags:",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.align(Alignment.CenterVertically)
+                    )
+                    suggestedTags.forEach { tag ->
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = if (tagSearchQuery.contains(tag, ignoreCase = true)) AntiqueGold.copy(alpha = 0.25f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                            border = BorderStroke(0.5.dp, if (tagSearchQuery.contains(tag, ignoreCase = true)) AntiqueGold else MaterialTheme.colorScheme.outline.copy(alpha = 0.25f)),
+                            onClick = {
+                                tagSearchQuery = if (tagSearchQuery.contains(tag, ignoreCase = true)) "" else tag
+                            }
+                        ) {
+                            Text(
+                                text = "#$tag",
+                                fontSize = 11.sp,
+                                color = if (tagSearchQuery.contains(tag, ignoreCase = true)) AntiqueGold else MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // Language Filter
+        item(key = "offline_language_filters") {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Language.entries.forEach { lang ->
+                    val isSelected = selectedLanguage == lang
+                    FilterChip(
+                        selected = isSelected,
+                        onClick = { selectedLanguage = lang },
+                        label = { Text("${lang.scriptSample} ${lang.displayName}") },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = AntiqueGold.copy(alpha = 0.25f),
+                            selectedLabelColor = AntiqueGold
+                        )
+                    )
+                }
+            }
+        }
+
+        // Curated Content Packs Carousel
         item(key = "offline_packs") {
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text(
@@ -327,6 +732,16 @@ fun OfflineScreen(
                         }
                     )
                     OfflinePackCard(
+                        title = "Nature & Rain",
+                        subtitle = "Monsoon, green hills & earth",
+                        icon = "🍃",
+                        onClick = {
+                            viewModel.downloadCuratedPack("all")
+                            selectedCategory = PoemCategory.NATURE
+                            Toast.makeText(context, "Downloaded Nature verses pack", Toast.LENGTH_SHORT).show()
+                        }
+                    )
+                    OfflinePackCard(
                         title = "Love & Ishq",
                         subtitle = "Passionate romantic ghazals",
                         icon = "❤️",
@@ -348,30 +763,7 @@ fun OfflineScreen(
             }
         }
 
-        // Filter by language inside offline storage
-        item(key = "offline_filters") {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Language.entries.forEach { lang ->
-                    val isSelected = selectedLanguage == lang
-                    FilterChip(
-                        selected = isSelected,
-                        onClick = { selectedLanguage = lang },
-                        label = { Text("${lang.scriptSample} ${lang.displayName}") },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = AntiqueGold.copy(alpha = 0.25f),
-                            selectedLabelColor = AntiqueGold
-                        )
-                    )
-                }
-            }
-        }
-
-        // Downloaded Shayaris List
+        // Shayaris List with typography settings applied
         if (filteredList.isEmpty()) {
             item {
                 Surface(
@@ -379,7 +771,7 @@ fun OfflineScreen(
                     color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 24.dp)
+                        .padding(vertical = 20.dp)
                 ) {
                     Column(
                         modifier = Modifier.padding(24.dp),
@@ -393,48 +785,138 @@ fun OfflineScreen(
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
-                            text = if (downloadedShayaris.isEmpty()) "No verses downloaded yet" else "No downloaded verses match this filter",
+                            text = if (sourceList.isEmpty()) {
+                                if (vaultFilterTab == "saved") "No saved poems in vault yet" else "No verses downloaded yet"
+                            } else {
+                                "No poems match '${selectedCategory.displayName}' or tag '${tagSearchQuery}'"
+                            },
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
-                            text = "Download your favorite shayaris or tap a pack above to enjoy poetry without internet.",
+                            text = if (sourceList.isEmpty()) {
+                                "Tap the bookmark icon on any poem to save it to your offline vault."
+                            } else {
+                                "Try choosing another category or clearing your tag search query."
+                            },
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Spacer(modifier = Modifier.height(14.dp))
-                        Button(
-                            onClick = {
-                                viewModel.downloadCuratedPack("all")
-                                Toast.makeText(context, "Downloaded starter poetry pack!", Toast.LENGTH_SHORT).show()
-                            },
-                            colors = ButtonDefaults.buttonColors(containerColor = AntiqueGold),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Text("Download All Curated Verses", color = DeepMidnight, fontWeight = FontWeight.Bold)
+                        if (selectedCategory != PoemCategory.ALL || tagSearchQuery.isNotBlank()) {
+                            Button(
+                                onClick = {
+                                    selectedCategory = PoemCategory.ALL
+                                    tagSearchQuery = ""
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = AntiqueGold),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Text("Clear Category & Tag Filters", color = DeepMidnight, fontWeight = FontWeight.Bold)
+                            }
+                        } else {
+                            Button(
+                                onClick = {
+                                    viewModel.downloadCuratedPack("all")
+                                    Toast.makeText(context, "Downloaded starter poetry pack!", Toast.LENGTH_SHORT).show()
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = AntiqueGold),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Text("Download Curated Poetry Pack", color = DeepMidnight, fontWeight = FontWeight.Bold)
+                            }
                         }
                     }
                 }
             }
         } else {
             items(filteredList, key = { it.id }) { shayari ->
-                ShayariCard(
-                    shayari = shayari,
-                    onLikeClick = { viewModel.toggleLike(shayari) },
-                    onSaveClick = { viewModel.toggleSave(shayari) },
-                    onDownloadClick = { viewModel.toggleDownload(shayari) },
-                    onCardClick = { viewModel.openShayariDetail(shayari) },
-                    onReciteClick = { lines, lang ->
-                        audioReciter.speak(lines, lang)
-                    },
-                    onOpenCardStudio = { cardStudioShayari = it },
-                    onAnalyzeWithGemini = {
-                        viewModel.analyzeWithHighThinking(it.lines, it.language)
-                        onNavigateToAiStudio()
+                val isCurrentBookmark = readingProgress.lastReadPoemId == shayari.id
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    if (isCurrentBookmark) {
+                        Surface(
+                            shape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp),
+                            color = AntiqueGold,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 6.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Text("📌", fontSize = 12.sp)
+                                Text(
+                                    text = "Your Reading Bookmark • Picked up here",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = DeepMidnight
+                                )
+                            }
+                        }
                     }
-                )
+
+                    ShayariCard(
+                        shayari = shayari,
+                        onLikeClick = { viewModel.toggleLike(shayari) },
+                        onSaveClick = { viewModel.toggleSave(shayari) },
+                        onDownloadClick = { viewModel.toggleDownload(shayari) },
+                        onCardClick = {
+                            viewModel.recordPoemRead(context, shayari)
+                            viewModel.openShayariDetail(shayari)
+                        },
+                        onReciteClick = { lines, lang ->
+                            viewModel.recordPoemRead(context, shayari)
+                            audioReciter.speak(lines, lang)
+                        },
+                        onOpenCardStudio = { cardStudioShayari = it },
+                        poetryFontSizeSp = poetryFontSizeSp,
+                        poetryLineHeightMult = poetryLineHeightMult,
+                        poetryFontFamilyType = poetryFontFamilyType,
+                        onEditCategoryClick = { categorizeShayari = it },
+                        onAnalyzeWithGemini = {
+                            viewModel.analyzeWithHighThinking(it.lines, it.language)
+                            onNavigateToAiStudio()
+                        }
+                    )
+
+                    // Quick Bookmark / Last-read button
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp, vertical = 2.dp),
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        TextButton(
+                            onClick = {
+                                if (isCurrentBookmark) {
+                                    viewModel.clearBookmark(context)
+                                    Toast.makeText(context, "Bookmark removed", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    viewModel.setBookmark(context, shayari)
+                                    Toast.makeText(context, "Marked as your reading bookmark 📌", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        ) {
+                            Icon(
+                                imageVector = if (isCurrentBookmark) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
+                                contentDescription = "Bookmark",
+                                tint = AntiqueGold,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = if (isCurrentBookmark) "Bookmarked (Last Read)" else "Set Bookmark Here",
+                                fontSize = 11.sp,
+                                color = AntiqueGold
+                            )
+                        }
+                    }
+                }
             }
         }
     }

@@ -24,14 +24,15 @@ class DailyNotificationReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent?) {
         val database = AppDatabase.getDatabase(context)
         CoroutineScope(Dispatchers.IO).launch {
-            val dailyShayari = database.shayariDao().getDailyPick().firstOrNull()?.toDomain()
+            val dailyShayari = com.example.data.repository.ShayariOfTheDayManager.resolveDailyPick(context, database)
+                ?: database.shayariDao().getDailyPick().firstOrNull()?.toDomain()
                 ?: database.shayariDao().getAllShayaris().firstOrNull()?.firstOrNull()?.toDomain()
 
-            val title = "🌅 Morning Shayari • ନୂଆ କବିତା"
+            val title = "🌅 Daily Pick • କାବ୍ୟସେତୁ • Poetry"
             val body = if (dailyShayari != null) {
                 "${dailyShayari.lines}\n— ${dailyShayari.author}"
             } else {
-                "\"हज़ारों ख़्वाहिशें ऐसी कि हर ख़्वाहिश पे दम निकले...\"\nDiscover today's trending verses in Hindi, Odia & English."
+                "\"हज़ारों ख़्वाहिशें ऐसी कि हर ख़्वाहिश पे दम निकले...\"\nDiscover today's featured verse in Hindi, Odia & English."
             }
 
             DailyNotificationManager.showNotification(

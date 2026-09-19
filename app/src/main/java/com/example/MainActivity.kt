@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.FolderSpecial
+import androidx.compose.material.icons.filled.FormatSize
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Security
@@ -67,6 +68,7 @@ import com.example.ui.MainViewModelFactory
 import com.example.ui.components.AudioReciter
 import com.example.ui.components.CardStudioDialog
 import com.example.ui.components.FcmNotificationDialog
+import com.example.ui.components.PoetrySettingsDialog
 import com.example.ui.components.ShayariDetailDialog
 import com.example.ui.components.VirtualMehfilDialog
 import com.example.ui.screens.AiStudioScreen
@@ -147,15 +149,20 @@ fun MainAppContainer(
     var currentNavigationTab by remember { mutableIntStateOf(0) }
     var showFcmDialog by remember { mutableStateOf(false) }
     var showVirtualMehfil by remember { mutableStateOf(false) }
+    var showSettingsDialog by remember { mutableStateOf(false) }
     var detailCardStudioShayari by remember { mutableStateOf<Shayari?>(null) }
 
     val selectedDetail by viewModel.selectedDetailShayari.collectAsStateWithLifecycle()
     val fcmToken by viewModel.fcmToken.collectAsStateWithLifecycle()
     val isAnalyzingWithHighThinking by viewModel.isAnalyzingWithHighThinking.collectAsStateWithLifecycle()
+    val poetryFontSizeSp by viewModel.poetryFontSizeSp.collectAsStateWithLifecycle()
+    val poetryLineHeightMult by viewModel.poetryLineHeightMult.collectAsStateWithLifecycle()
+    val poetryFontFamilyType by viewModel.poetryFontFamilyType.collectAsStateWithLifecycle()
 
-    // Initialize FCM and retrieve token
+    // Initialize FCM and retrieve token, load saved reading display settings
     LaunchedEffect(Unit) {
         viewModel.initFcm(context)
+        viewModel.loadDisplayPreferences(context)
     }
 
     // Process incoming deep link from FCM push notification or deep link URL
@@ -259,6 +266,18 @@ fun MainAppContainer(
                         modifier = Modifier.testTag("appbar_mehfil_action")
                     ) {
                         Text("🌙", fontSize = 18.sp)
+                    }
+
+                    // Reading Display Settings (Font Size, Line Height, Typography)
+                    IconButton(
+                        onClick = { showSettingsDialog = true },
+                        modifier = Modifier.testTag("appbar_settings_action")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.FormatSize,
+                            contentDescription = "Reading Display Settings",
+                            tint = AntiqueGold
+                        )
                     }
 
                     // Firebase Cloud Messaging & Morning Notification Center
@@ -500,6 +519,20 @@ fun MainAppContainer(
                     allShayaris = allShayaris,
                     audioReciter = audioReciter,
                     onDismiss = { showVirtualMehfil = false }
+                )
+            }
+
+            // Poetry Display Readability Settings Dialog
+            if (showSettingsDialog) {
+                PoetrySettingsDialog(
+                    initialFontSizeSp = poetryFontSizeSp,
+                    initialLineHeightMult = poetryLineHeightMult,
+                    initialFontFamily = poetryFontFamilyType,
+                    onDismiss = { showSettingsDialog = false },
+                    onApplySettings = { newSize, newMult, newFont ->
+                        viewModel.updatePoetryDisplaySettings(context, newSize, newMult, newFont)
+                        Toast.makeText(context, "Readability preferences applied!", Toast.LENGTH_SHORT).show()
+                    }
                 )
             }
         }

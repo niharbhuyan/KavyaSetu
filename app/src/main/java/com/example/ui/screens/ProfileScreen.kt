@@ -63,6 +63,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
@@ -70,6 +71,11 @@ import androidx.compose.material3.TextButton
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.data.model.Anthology
+import com.example.ui.components.AccountPreferencesSection
+import com.example.ui.components.GeneratedPoemHistorySection
+import com.example.ui.components.PlayStoreMediaKitDialog
+import com.example.ui.components.ReadingProgressSection
+import com.example.util.PlayStoreAssetHelper
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -125,6 +131,13 @@ fun ProfileScreen(
     val authSuccessMessage by viewModel.authSuccessMessage.collectAsStateWithLifecycle()
     val anthologies by viewModel.anthologies.collectAsStateWithLifecycle()
     val allShayaris by viewModel.allShayaris.collectAsStateWithLifecycle()
+    val readingProgress by viewModel.readingProgress.collectAsStateWithLifecycle()
+    val generatedHistory by viewModel.generatedPoemHistory.collectAsStateWithLifecycle()
+    val dailyPickNotificationEnabled by viewModel.dailyPickNotificationEnabled.collectAsStateWithLifecycle()
+    val poetryFontSizeSp by viewModel.poetryFontSizeSp.collectAsStateWithLifecycle()
+    val poetryLineHeightMult by viewModel.poetryLineHeightMult.collectAsStateWithLifecycle()
+    val poetryFontFamilyType by viewModel.poetryFontFamilyType.collectAsStateWithLifecycle()
+    val fcmToken by viewModel.fcmToken.collectAsStateWithLifecycle()
 
     var selectedTab by remember { mutableIntStateOf(0) }
     var selectedSavedLanguageFilter by remember { mutableStateOf("all") }
@@ -140,6 +153,7 @@ fun ProfileScreen(
     var showChangePasswordDialog by remember { mutableStateOf(false) }
     var showEditProfileDialog by remember { mutableStateOf(false) }
     var showDeleteAccountDialog by remember { mutableStateOf(false) }
+    var showPlayStoreMediaKitDialog by remember { mutableStateOf(false) }
 
     if (showCreateAnthologyDialog) {
         CreateAnthologyDialog(
@@ -258,6 +272,12 @@ fun ProfileScreen(
                 viewModel.deleteAccount()
                 showDeleteAccountDialog = false
             }
+        )
+    }
+
+    if (showPlayStoreMediaKitDialog) {
+        PlayStoreMediaKitDialog(
+            onDismiss = { showPlayStoreMediaKitDialog = false }
         )
     }
 
@@ -466,25 +486,82 @@ fun ProfileScreen(
                         horizontalArrangement = Arrangement.SpaceAround
                     ) {
                         MetricItem(
+                            value = "${readingProgress.readingStreakDays}d",
+                            label = "Read Streak",
+                            testTag = "metric_streak_count"
+                        )
+                        MetricItem(
+                            value = "${readingProgress.totalVersesRead}",
+                            label = "Verses Read",
+                            testTag = "metric_read_count"
+                        )
+                        MetricItem(
+                            value = "${generatedHistory.size}",
+                            label = "AI Composed",
+                            testTag = "metric_composed_count"
+                        )
+                        MetricItem(
                             value = "${savedShayaris.size}",
                             label = "Saved",
                             testTag = "metric_saved_count"
                         )
-                        MetricItem(
-                            value = "${profile.shayariCount}",
-                            label = "Composed",
-                            testTag = "metric_composed_count"
-                        )
-                        MetricItem(
-                            value = "${activities.count { it.type == ActivityType.LIKED } + 12}",
-                            label = "Likes Given",
-                            testTag = "metric_likes_count"
-                        )
-                        MetricItem(
-                            value = "${profile.streakDays}d",
-                            label = "Poet Streak",
-                            testTag = "metric_streak_count"
-                        )
+                    }
+                }
+            }
+        }
+
+        // Play Store Publication Quick-Access Banner
+        item {
+            Card(
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = AntiqueGold.copy(alpha = 0.12f)),
+                border = BorderStroke(1.dp, AntiqueGold.copy(alpha = 0.4f)),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { showPlayStoreMediaKitDialog = true }
+                    .testTag("banner_play_store_kit")
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Surface(
+                            shape = CircleShape,
+                            color = AntiqueGold.copy(alpha = 0.2f),
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text("🚀", fontSize = 18.sp)
+                            }
+                        }
+                        Column {
+                            Text(
+                                text = "Google Play Store Media Kit",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp,
+                                color = AntiqueGold
+                            )
+                            Text(
+                                text = "512px Icon, 1024x500 Banner & 4 Screenshots",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    Button(
+                        onClick = { showPlayStoreMediaKitDialog = true },
+                        colors = ButtonDefaults.buttonColors(containerColor = AntiqueGold),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Text("Open Kit", color = DeepMidnight, fontWeight = FontWeight.Bold, fontSize = 11.sp)
                     }
                 }
             }
@@ -492,40 +569,97 @@ fun ProfileScreen(
 
         // Section Tabs
         item {
-            PrimaryTabRow(
+            ScrollableTabRow(
                 selectedTabIndex = selectedTab,
+                edgePadding = 16.dp,
                 containerColor = MaterialTheme.colorScheme.surface,
                 contentColor = AntiqueGold
             ) {
                 Tab(
                     selected = selectedTab == 0,
                     onClick = { selectedTab = 0 },
-                    text = { Text("Saved (${savedShayaris.size})") },
-                    modifier = Modifier.testTag("tab_saved_shayari")
+                    text = { Text("Reading Progress") },
+                    modifier = Modifier.testTag("tab_reading_progress")
                 )
                 Tab(
                     selected = selectedTab == 1,
                     onClick = { selectedTab = 1 },
-                    text = { Text("Anthologies (${anthologies.size})") },
-                    modifier = Modifier.testTag("tab_anthologies")
+                    text = { Text("AI History (${generatedHistory.size})") },
+                    modifier = Modifier.testTag("tab_ai_history")
                 )
                 Tab(
                     selected = selectedTab == 2,
                     onClick = { selectedTab = 2 },
-                    text = { Text("Activity & Insights") },
-                    modifier = Modifier.testTag("tab_activity_insights")
+                    text = { Text("Saved (${savedShayaris.size})") },
+                    modifier = Modifier.testTag("tab_saved_shayari")
                 )
                 Tab(
                     selected = selectedTab == 3,
                     onClick = { selectedTab = 3 },
-                    text = { Text("Account & Auth") },
+                    text = { Text("Anthologies (${anthologies.size})") },
+                    modifier = Modifier.testTag("tab_anthologies")
+                )
+                Tab(
+                    selected = selectedTab == 4,
+                    onClick = { selectedTab = 4 },
+                    text = { Text("Preferences & Auth") },
                     modifier = Modifier.testTag("tab_account_auth")
+                )
+                Tab(
+                    selected = selectedTab == 5,
+                    onClick = { selectedTab = 5 },
+                    text = { Text("Activity & Insights") },
+                    modifier = Modifier.testTag("tab_activity_insights")
+                )
+                Tab(
+                    selected = selectedTab == 6,
+                    onClick = { selectedTab = 6 },
+                    text = { Text("Play Store Kit 🚀") },
+                    modifier = Modifier.testTag("tab_play_store_kit")
                 )
             }
         }
 
-        // ================= TAB 0: SAVED SHAYARI =================
+        // ================= TAB 0: READING PROGRESS =================
         if (selectedTab == 0) {
+            item {
+                ReadingProgressSection(
+                    readingProgress = readingProgress,
+                    onResumeReading = { poemId ->
+                        viewModel.openShayariDetailById(poemId)
+                    },
+                    onClearBookmark = {
+                        viewModel.clearBookmark(context)
+                        Toast.makeText(context, "Bookmark cleared", Toast.LENGTH_SHORT).show()
+                    },
+                    onUpdateDailyGoal = { goal ->
+                        viewModel.updateDailyGoal(context, goal)
+                        Toast.makeText(context, "Daily reading goal set to $goal couplets", Toast.LENGTH_SHORT).show()
+                    }
+                )
+            }
+        }
+
+        // ================= TAB 1: AI POEM HISTORY =================
+        if (selectedTab == 1) {
+            item {
+                GeneratedPoemHistorySection(
+                    history = generatedHistory,
+                    audioReciter = audioReciter,
+                    onNavigateToAiStudio = onNavigateToAiStudio,
+                    onDeletePoem = { id ->
+                        viewModel.deleteGeneratedPoem(context, id)
+                        Toast.makeText(context, "Poem removed from history", Toast.LENGTH_SHORT).show()
+                    },
+                    onClearHistory = {
+                        viewModel.clearGeneratedPoemHistory(context)
+                    }
+                )
+            }
+        }
+
+        // ================= TAB 2: SAVED SHAYARI =================
+        if (selectedTab == 2) {
             // Language filters for saved verses
             if (savedShayaris.isNotEmpty()) {
                 item {
@@ -644,8 +778,8 @@ fun ProfileScreen(
             }
         }
 
-        // ================= TAB 1: CURATED ANTHOLOGIES =================
-        if (selectedTab == 1) {
+        // ================= TAB 3: CURATED ANTHOLOGIES =================
+        if (selectedTab == 3) {
             item {
                 Card(
                     shape = RoundedCornerShape(20.dp),
@@ -827,8 +961,8 @@ fun ProfileScreen(
             }
         }
 
-        // ================= TAB 2: ACTIVITY & INSIGHTS =================
-        if (selectedTab == 2) {
+        // ================= TAB 5: ACTIVITY & INSIGHTS =================
+        if (selectedTab == 5) {
             // Poetic Emotional Palette Breakdown
             item {
                 Card(
@@ -917,8 +1051,28 @@ fun ProfileScreen(
             }
         }
 
-        // ================= TAB 3: ACCOUNT & FIREBASE AUTH =================
-        if (selectedTab == 3) {
+        // ================= TAB 4: ACCOUNT PREFERENCES & AUTH =================
+        if (selectedTab == 4) {
+            // Daily Notifications & Reading Preferences
+            item {
+                AccountPreferencesSection(
+                    dailyPushEnabled = dailyPickNotificationEnabled,
+                    onToggleDailyPush = { enabled ->
+                        viewModel.setDailyNotificationEnabled(context, enabled)
+                    },
+                    onTestPush = {
+                        viewModel.triggerTestFcmPush(context)
+                    },
+                    fontSize = poetryFontSizeSp,
+                    lineHeightMult = poetryLineHeightMult,
+                    fontFamily = poetryFontFamilyType,
+                    onUpdateTypography = { size, lh, fam ->
+                        viewModel.updatePoetryDisplaySettings(context, size, lh, fam)
+                    },
+                    fcmToken = fcmToken
+                )
+            }
+
             // Firebase Auth Status Overview
             item {
                 Card(
@@ -1163,6 +1317,79 @@ fun ProfileScreen(
                             lineHeight = 20.sp,
                             color = MaterialTheme.colorScheme.onSurface
                         )
+                    }
+                }
+            }
+        }
+
+        // ================= TAB 6: PLAY STORE ASSETS & PUBLICATION =================
+        if (selectedTab == 6) {
+            item {
+                Card(
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                    border = BorderStroke(1.dp, AntiqueGold.copy(alpha = 0.4f))
+                ) {
+                    Column(
+                        modifier = Modifier.padding(18.dp),
+                        verticalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Icon(Icons.Default.VerifiedUser, contentDescription = null, tint = AntiqueGold)
+                                Text(
+                                    text = "Google Play Store Media Kit",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 16.sp,
+                                    color = AntiqueGold
+                                )
+                            }
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = Color(0xFF1E3A2A)
+                            ) {
+                                Text(
+                                    text = "100% COMPLIANT",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF81C784),
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                )
+                            }
+                        }
+
+                        Text(
+                            text = "All required assets for Play Store publication have been crafted according to official Google Play policies:\n• 512×512 32-bit PNG App Icon (no rounded corner mask pre-baked)\n• 1024×500 PNG Feature Graphic (strictly no promotional buzzwords, ranking, or pricing)\n• 4 Phone Screenshots (1080×1920) showcasing real user journeys\n• Compliant Title (<= 30 chars) and Short Description (<= 80 chars)\n• One-click export to phone gallery or native share sheet.",
+                            fontSize = 12.sp,
+                            lineHeight = 18.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Button(
+                                onClick = { showPlayStoreMediaKitDialog = true },
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.buttonColors(containerColor = AntiqueGold),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Text("Open Asset Kit", color = DeepMidnight, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            }
+                            OutlinedButton(
+                                onClick = { PlayStoreAssetHelper.saveAllAssetsToDevice(context) },
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(12.dp),
+                                border = BorderStroke(1.dp, AntiqueGold)
+                            ) {
+                                Text("Save All to Gallery", color = AntiqueGold, fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
+                            }
+                        }
                     }
                 }
             }

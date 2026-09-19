@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">Kavya Setu</string>
     <string name="built_by">Built by Nihar Sales</string>
-    <string name="widget_name">Shayari of the Day</string>
-    <string name="widget_description">Displays a fresh, exquisite couplet on your home screen every day.</string>
+    <string name="widget_name">Daily Pick</string>
+    <string name="widget_description">Displays a featured poem from the collection, updating once every 24 hours.</string>
+    <string name="widget_header_title">✨ Daily Pick</string>
 </resources>

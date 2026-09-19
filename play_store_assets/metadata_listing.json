@@ -1,0 +1,62 @@
+{
+  "app_name": "Kavya Setu",
+  "package_name": "com.aistudio.kavyasetu.rkymzt",
+  "store_listing": {
+    "title": "Kavya Setu: Poetry & Shayari",
+    "short_description": "Multilingual poetry & shayari in Hindi, Odia, English with Gemini AI & audio.",
+    "full_description": "Kavya Setu (काव्य सेतु / କାବ୍ୟ ସେତୁ) is a celebration of Indian poetic heritage, bridging classical verses in Hindi, Urdu, and Odia with modern AI-assisted composition and authentic acoustic audio recitations.\n\n✨ KEY FEATURES:\n\n• Curated Multilingual Verses: Explore thousands of timeless couplets and poems from legends like Mirza Ghalib, Allama Iqbal, Ramdhari Singh Dinkar, Jaun Elia, and Odia masters like Kantakabi Laxmikanta Mohapatra.\n• Authentic Tarannum & Audio Recitations: Immerse yourself in spoken verses and melodic Tarannum recitals with ambient Indian classical sitar and tanpura accompaniments.\n• Gemini AI Poetry Studio: Compose custom Ghazals, Nazms, Haikus, Dohas, and Mukt Chhand in Hindi, Urdu, and Odia. Includes real-time metrical breakdown of Bahr, Radif, and Kafiya rhymes.\n• Calligraphy Card Studio: Customize aesthetic poetry cards with traditional parchment, royal velvet, and midnight obsidian textures. Export high-resolution cards directly for social sharing.\n• Offline Vault & Personal Bookmarks: Save favorite verses, organize by poetic themes, and mark your reading progress with consecutive streak tracking.\n• Virtual Mehfil & Mushaira: Experience live poetic symposiums with Wah-Wah audience reactions and Sher-baazi rhyming challenges.\n• Home Screen Daily Widget & Push Reminders: Start every morning with a handpicked couplet on your home screen or through gentle morning notifications.\n\n🛡️ PRIVACY & COMPLIANCE:\n• Completely offline-first vault for saved verses.\n• Respects user privacy; no invasive tracking or unnecessary device permissions.\n• Content curated for cultural and educational enrichment.",
+    "category": "Books & Reference",
+    "secondary_category": "Entertainment",
+    "content_rating": "Everyone",
+    "contains_ads": false,
+    "tags": [
+      "Poetry",
+      "Shayari",
+      "Hindi Kavita",
+      "Urdu Shayari",
+      "Odia Poetry",
+      "Ghazal",
+      "Gemini AI",
+      "Audio Reciter",
+      "Literature"
+    ]
+  },
+  "asset_specifications": {
+    "app_icon": {
+      "file": "play_store_512_icon.png",
+      "resolution": "512 x 512 px",
+      "format": "32-bit PNG",
+      "max_size": "1024 KB",
+      "status": "COMPLIANT"
+    },
+    "feature_graphic": {
+      "file": "play_store_feature_graphic_1024x500.png",
+      "resolution": "1024 x 500 px",
+      "format": "PNG (no alpha)",
+      "max_size": "15 MB",
+      "status": "COMPLIANT (No promotional buzzwords, awards, or pricing)"
+    },
+    "phone_screenshots": [
+      {
+        "file": "screenshot_1_home_feed.png",
+        "resolution": "1080 x 1920 px",
+        "feature": "Home Feed & Tarannum Audio Recital"
+      },
+      {
+        "file": "screenshot_2_ai_composer.png",
+        "resolution": "1080 x 1920 px",
+        "feature": "Gemini AI Poetry Studio & Meter Analysis"
+      },
+      {
+        "file": "screenshot_3_card_studio.png",
+        "resolution": "1080 x 1920 px",
+        "feature": "Calligraphy Card Studio & Offline Vault"
+      },
+      {
+        "file": "screenshot_4_virtual_mehfil.png",
+        "resolution": "1080 x 1920 px",
+        "feature": "Virtual Mehfil, Mushaira & Sher-baazi"
+      }
+    ]
+  }
+}

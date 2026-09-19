@@ -29,10 +29,12 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.SignalWifiOff
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material.icons.filled.Widgets
+import com.example.util.SocialShareHelper
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -76,6 +78,7 @@ import com.example.ui.components.AudioReciter
 import com.example.ui.components.AmbientSoundscapePlayer
 import com.example.ui.components.CalligraphyStudioDialog
 import com.example.ui.components.CardStudioDialog
+import com.example.ui.components.CategorizePoemDialog
 import com.example.ui.components.DiwanPublisherDialog
 import com.example.ui.components.KalamEUstaadDialog
 import com.example.ui.components.LafzOMaaniDialog
@@ -100,9 +103,13 @@ fun FeedScreen(
     val dailyPick by viewModel.dailyPick.collectAsStateWithLifecycle()
     val selectedLanguage by viewModel.selectedLanguage.collectAsStateWithLifecycle()
     val selectedEmotion by viewModel.selectedEmotion.collectAsStateWithLifecycle()
+    val poetryFontSizeSp by viewModel.poetryFontSizeSp.collectAsStateWithLifecycle()
+    val poetryLineHeightMult by viewModel.poetryLineHeightMult.collectAsStateWithLifecycle()
+    val poetryFontFamilyType by viewModel.poetryFontFamilyType.collectAsStateWithLifecycle()
 
     var cardStudioShayari by remember { mutableStateOf<Shayari?>(null) }
     var mushairaStudioShayari by remember { mutableStateOf<Shayari?>(null) }
+    var categorizeShayari by remember { mutableStateOf<Shayari?>(null) }
     val ambientPlayer = remember { AmbientSoundscapePlayer() }
 
     var showVirtualMehfil by remember { mutableStateOf(false) }
@@ -113,6 +120,18 @@ fun FeedScreen(
     var showDiwanPublisher by remember { mutableStateOf(false) }
 
     val isOfflineSimulated by viewModel.isOfflineSimulated.collectAsStateWithLifecycle()
+
+    if (categorizeShayari != null) {
+        CategorizePoemDialog(
+            shayari = categorizeShayari!!,
+            onDismiss = { categorizeShayari = null },
+            onSaveCategory = { newCategory, newTags ->
+                viewModel.updatePoemCategoryAndTags(categorizeShayari!!.id, newCategory, newTags)
+                Toast.makeText(context, "Updated to ${newCategory.displayName}", Toast.LENGTH_SHORT).show()
+                categorizeShayari = null
+            }
+        )
+    }
 
     if (showVirtualMehfil) {
         VirtualMehfilDialog(
@@ -280,14 +299,14 @@ fun FeedScreen(
                                 }
                                 Column {
                                     Text(
-                                        text = "Shayari of the Day",
+                                        text = "Daily Pick",
                                         fontSize = 15.sp,
                                         fontWeight = FontWeight.Bold,
                                         letterSpacing = 0.5.sp,
                                         color = AntiqueGold
                                     )
                                     Text(
-                                        text = "Curated Daily Verse • Homescreen Ready",
+                                        text = "Featured Poem of the Day • 24h Cycle",
                                         fontSize = 10.sp,
                                         color = Color.White.copy(alpha = 0.7f)
                                     )
@@ -321,6 +340,23 @@ fun FeedScreen(
                                         imageVector = Icons.Default.Refresh,
                                         contentDescription = "Refresh Daily Pick",
                                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(2.dp))
+                                IconButton(
+                                    onClick = {
+                                        val pick = dailyPick ?: shayaris.firstOrNull()
+                                        if (pick != null) {
+                                            SocialShareHelper.sharePoem(context, pick)
+                                        }
+                                    },
+                                    modifier = Modifier.size(32.dp).testTag("share_daily_pick_button")
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Share,
+                                        contentDescription = "Share Daily Pick to Social Media",
+                                        tint = AntiqueGold,
                                         modifier = Modifier.size(18.dp)
                                     )
                                 }
@@ -358,7 +394,7 @@ fun FeedScreen(
                                     color = Color.White.copy(alpha = 0.1f)
                                 ) {
                                     Text(
-                                        text = "Daily 6:00 AM Sync",
+                                        text = "24h Cycle Sync",
                                         fontSize = 10.sp,
                                         color = Color.White.copy(alpha = 0.8f),
                                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
@@ -397,6 +433,19 @@ fun FeedScreen(
                                 }
 
                                 FilledTonalButton(
+                                    onClick = {
+                                        SocialShareHelper.sharePoem(context, pick)
+                                    },
+                                    shape = RoundedCornerShape(12.dp),
+                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp),
+                                    modifier = Modifier.weight(1f).testTag("daily_share_button")
+                                ) {
+                                    Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(15.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("Share", fontSize = 11.sp)
+                                }
+
+                                FilledTonalButton(
                                     onClick = { cardStudioShayari = pick },
                                     shape = RoundedCornerShape(12.dp),
                                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp),
@@ -413,7 +462,7 @@ fun FeedScreen(
                                             if (pinned) {
                                                 Toast.makeText(context, "Homescreen widget pinned successfully!", Toast.LENGTH_SHORT).show()
                                             } else {
-                                                Toast.makeText(context, "Widget ready! Long-press your home screen to add the Shayari Widget.", Toast.LENGTH_LONG).show()
+                                                Toast.makeText(context, "Widget ready! Long-press your home screen to add the Daily Pick Widget.", Toast.LENGTH_LONG).show()
                                             }
                                         }
                                     },
@@ -696,6 +745,10 @@ fun FeedScreen(
                 },
                 onOpenCardStudio = { cardStudioShayari = it },
                 onOpenMushairaStudio = { mushairaStudioShayari = it },
+                poetryFontSizeSp = poetryFontSizeSp,
+                poetryLineHeightMult = poetryLineHeightMult,
+                poetryFontFamilyType = poetryFontFamilyType,
+                onEditCategoryClick = { categorizeShayari = it },
                 onAnalyzeWithGemini = {
                     viewModel.analyzeWithHighThinking(it.lines, it.language)
                     onNavigateToAiStudio()

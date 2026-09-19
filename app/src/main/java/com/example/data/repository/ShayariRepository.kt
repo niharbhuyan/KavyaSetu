@@ -18,6 +18,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
@@ -301,11 +302,16 @@ class ShayariRepository(
     }
 
     suspend fun checkAndUpdateDailyTrending(forceRefresh: Boolean = false): Shayari? = withContext(Dispatchers.IO) {
-        // Daily rotation logic based on date format
-        val todayStr = SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(Date())
-        val seeds = getCuratedSeedShayaris()
-        val index = (todayStr.hashCode() and 0x7FFFFFFF) % seeds.size
-        val selected = seeds[index]
+        val approvedList = dao.getAllApprovedShayaris().firstOrNull() ?: emptyList()
+        val candidates = if (approvedList.isNotEmpty()) {
+            approvedList.map { it.toDomain() }
+        } else {
+            getCuratedSeedShayaris()
+        }
+
+        val dateKey = if (forceRefresh) System.currentTimeMillis().toString() else SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(Date())
+        val index = (dateKey.hashCode() and 0x7FFFFFFF) % candidates.size
+        val selected = candidates[index]
 
         dao.clearDailyPicks()
         val dailyShayari = selected.copy(isDailyPick = true, isTrending = true)
@@ -325,7 +331,11 @@ class ShayariRepository(
                 penName = "Ghalib",
                 language = "hindi",
                 emotion = "ishq",
+                category = "love",
+                tags = "love, desire, ghazal, passion, longing",
                 likesCount = 342,
+                isSaved = true,
+                isDownloaded = true,
                 timestamp = now - 1000000,
                 translationEnglish = "Thousands of desires, each worth dying for; many I have fulfilled, yet so many remain.",
                 translationOdia = "ହଜାରେ ଏମିତି ଇଚ୍ଛା ଯାହା ପାଇଁ ପ୍ରାଣ ଯାଏ, ବହୁତ ସ୍ୱପ୍ନ ପୂରଣ ହେଲା ତଥାପି ବାକି ରହିଯାଏ।",
@@ -340,11 +350,51 @@ class ShayariRepository(
                 penName = "Rahat",
                 language = "hindi",
                 emotion = "hausla",
+                category = "inspiration",
+                tags = "inspiration, courage, hausla, storm, resilience, defiance",
                 likesCount = 512,
+                isSaved = true,
+                isDownloaded = true,
                 timestamp = now - 2000000,
                 translationEnglish = "We are not leaves that fall from brittle boughs; tell the ferocious storm to know its limits.",
                 translationOdia = "ଡାଳରୁ ଝଡ଼ିବା ପତ୍ର ନୋହୁଁ ଆମେ, ଝଡ଼କୁ କହିଦିଅ ସୀମାରେ ରହିବାକୁ।",
                 poeticAnalysis = "Defiant and electrifying couplet embodying resilience and fearless pride.",
+                isTrending = true
+            ),
+            Shayari(
+                id = "sh_hi_nat_1",
+                lines = "मेघ बजे, बिजली चमकी, भीगा सारा वन उपवन\nधरती के प्यासे अधरों पर जैसे बरस पड़ा सावन",
+                author = "Suryakant Tripathi Nirala",
+                penName = "Nirala",
+                language = "hindi",
+                emotion = "hausla",
+                category = "nature",
+                tags = "nature, rain, monsoon, clouds, saavan, greenery, earth",
+                likesCount = 428,
+                isSaved = true,
+                isDownloaded = true,
+                timestamp = now - 2200000,
+                translationEnglish = "Clouds thunder, lightning flares, the woodland is drenched; as if the sweet monsoon rain kissed the thirsty lips of the earth.",
+                translationOdia = "ମେଘ ଗର୍ଜିଲା, ବିଜୁଳି ଚମକିଲା, ବରଷାରେ ଭିଜିଲା ସବୁଜ ବନାନୀ। ଧରଣୀର ପିପାସିତ ତନୁରେ ବହିଲା ଅମୃତ ବାରି।",
+                poeticAnalysis = "Exquisite lyrical imagery of the Indian monsoon bringing life, relief, and awakening to mother nature.",
+                isTrending = true
+            ),
+            Shayari(
+                id = "sh_hi_6",
+                lines = "दिल से रोए मगर होंठों से मुस्कुरा बैठे,\nयूँ ही हम किसी से वफ़ा निभा बैठे।",
+                author = "Sahir Ludhianvi",
+                penName = "Sahir",
+                language = "hindi",
+                emotion = "dard",
+                category = "sorrow",
+                tags = "sorrow, dard, heartbreak, tears, pain, loyalty, virah",
+                likesCount = 365,
+                isSaved = true,
+                isDownloaded = true,
+                timestamp = now - 900000,
+                translationEnglish = "The heart wept in anguish yet the lips offered a smile; this is how faithfully we loved, enduring all in silence.",
+                translationOdia = "ହୃଦୟ କାନ୍ଦିଲା କିନ୍ତୁ ଓଠରେ ହସ ଥିଲା, ଏମିତି ହିଁ ଆମେ ପ୍ରେମର ପ୍ରତିଶ୍ରୁତି ପାଳିଲୁ।",
+                poeticAnalysis = "Iconic expression of poignant stoicism and heartbroken sacrifice.",
                 isTrending = true
             ),
             Shayari(
@@ -354,6 +404,8 @@ class ShayariRepository(
                 penName = "Gulzar",
                 language = "hindi",
                 emotion = "yaadein",
+                category = "philosophy",
+                tags = "philosophy, time, memories, human, life",
                 likesCount = 289,
                 timestamp = now - 3000000,
                 translationEnglish = "Time never halts or stays in one place; its restless habits are so like those of man.",
@@ -368,6 +420,8 @@ class ShayariRepository(
                 penName = "Sufi",
                 language = "hindi",
                 emotion = "sufi",
+                category = "mystic",
+                tags = "mystic, sufi, spiritual, divine, soul, peace",
                 likesCount = 410,
                 timestamp = now - 4000000,
                 translationEnglish = "Neither in the temple nor in the mosque was He found; but peering into the soul, the Divine spark shone everywhere.",
@@ -382,6 +436,8 @@ class ShayariRepository(
                 penName = "Waseem",
                 language = "hindi",
                 emotion = "dosti",
+                category = "friendship",
+                tags = "friendship, dosti, yaari, companion, trust",
                 likesCount = 230,
                 timestamp = now - 5000000,
                 translationEnglish = "In life's relentless strife, this alone is my wealth: whenever I fell apart, my friends pieced me whole.",
@@ -398,7 +454,11 @@ class ShayariRepository(
                 penName = "କବିସୂର୍ଯ୍ୟ",
                 language = "odia",
                 emotion = "ishq",
+                category = "love",
+                tags = "love, prem, romance, silence, devotion, heart",
                 likesCount = 378,
+                isSaved = true,
+                isDownloaded = true,
                 timestamp = now - 600000,
                 translationEnglish = "The deep silence in your eyes speaks an unuttered tale; in every beat of my heart is inscribed your sacred name.",
                 translationHindi = "तेरी आँखों की खामोशी में एक अनकही दास्तां है, दिल की हर धड़कन में बस तेरा ही नाम रवां है।",
@@ -407,18 +467,58 @@ class ShayariRepository(
                 isDailyPick = false
             ),
             Shayari(
+                id = "sh_or_nat_1",
+                lines = "ବରଷା ରାଣୀର ଆଗମନେ ହସି ଉଠେ ସବୁଜ ଧରଣୀ,\nନଦୀ ନାଳ ସବୁ ଉଛୁଳି ବହଇ ପ୍ରକୃତିର କଳଗାନ ଶୁଣି।",
+                author = "Radhanath Ray",
+                penName = "କବିବର",
+                language = "odia",
+                emotion = "hausla",
+                category = "nature",
+                tags = "nature, rain, barsha, prakriti, river, green, hills",
+                likesCount = 392,
+                isSaved = true,
+                isDownloaded = true,
+                timestamp = now - 1200000,
+                translationEnglish = "With the grand arrival of the monsoon queen, green earth rejoices; rivers and brooks overflow with the sweet song of nature.",
+                translationHindi = "बरसात की रानी के आते ही मुस्कुरा उठी हरी-भरी धरती, नदियों और झरनों से प्रकृति का मधुर संगीत बह निकला।",
+                poeticAnalysis = "Classical Odia romantic description of natural abundance and seasonal rejuvenation.",
+                isTrending = true
+            ),
+            Shayari(
                 id = "sh_or_2",
                 lines = "ଝଡ଼ର ତାଣ୍ଡବେ ବି ଥରିବନି ଆମ ଦମ୍ଭିଲା ପାଦ ଦୁଇଟି,\nସ୍ୱପ୍ନର ପଥେ ଜଳିବ ଆଲୋକ ଜିତିବୁ ସଂଗ୍ରାମଟି।",
                 author = "Utkal Bard",
                 penName = "ଉତ୍କଳୀୟ",
                 language = "odia",
                 emotion = "hausla",
+                category = "inspiration",
+                tags = "inspiration, prerana, courage, storm, dream, perseverance",
                 likesCount = 445,
+                isSaved = true,
+                isDownloaded = true,
                 timestamp = now - 1500000,
                 translationEnglish = "Even amidst the roaring tempest, our firm footsteps will not falter; on the path of dreams, triumphant dawn shall break.",
                 translationHindi = "तूफानों के दौर में भी हमारे कदम लड़खड़ाएंगे नहीं, हौसलों के दम पर हम नया सवेरा लाएंगे।",
                 poeticAnalysis = "Vibrant patriotic and motivational meter in classical Odia verse tradition.",
                 isTrending = true
+            ),
+            Shayari(
+                id = "sh_or_5",
+                lines = "ଲୁହରେ ଭିଜିଲା ଆଖିର ପଲକ କହେ ଅଶ୍ରୁଳ ବେଦନା,\nଯାହାକୁ ସାଇତି ରଖିଲି ମନେ ସେ ତ ବୁଝିଲାନି ଯନ୍ତ୍ରଣା।",
+                author = "Radhanath Ray",
+                penName = "କବିବର",
+                language = "odia",
+                emotion = "dard",
+                category = "sorrow",
+                tags = "sorrow, biraha, dard, tears, separation, heartbreak",
+                likesCount = 312,
+                isSaved = true,
+                isDownloaded = true,
+                timestamp = now - 1300000,
+                translationEnglish = "Tears soak the lashes telling a tale of unuttered sorrow; the one treasured in heart never perceived the pain.",
+                translationHindi = "आँसुओं से भीगी पलकें कहती हैं बेपनाह दर्द, जिसे चाहा उसने कभी ये तड़प समझी नहीं।",
+                poeticAnalysis = "Soulful Odia classical verse tracing the silent ache of unexpressed grief.",
+                isTrending = false
             ),
             Shayari(
                 id = "sh_or_3",
@@ -427,6 +527,8 @@ class ShayariRepository(
                 penName = "ମାନସିଂହ",
                 language = "odia",
                 emotion = "dosti",
+                category = "friendship",
+                tags = "friendship, dosti, mitrata, companion, trust",
                 likesCount = 295,
                 timestamp = now - 2500000,
                 translationEnglish = "In this mortal realm of shifting sun and shadow, true friendship alone stands selfless and pure by your side.",
@@ -441,6 +543,8 @@ class ShayariRepository(
                 penName = "ରାଉତରାୟ",
                 language = "odia",
                 emotion = "yaadein",
+                category = "philosophy",
+                tags = "philosophy, nostalgia, memories, evening, tears, poetry",
                 likesCount = 310,
                 timestamp = now - 3500000,
                 translationEnglish = "When those golden sunsets of the past reawaken in memory, tears flow gently, transforming into timeless poetry.",
@@ -451,13 +555,35 @@ class ShayariRepository(
 
             // --- ENGLISH POETIC COUPLETS ---
             Shayari(
+                id = "sh_en_nat_1",
+                lines = "The earth awakens laughing in a tapestry of wildflowers,\nWhile morning skies bathe emerald hills in gentle summer showers.",
+                author = "William Wordsworth",
+                penName = "Wordsworth",
+                language = "english",
+                emotion = "hausla",
+                category = "nature",
+                tags = "nature, flowers, rain, hills, morning, breeze, spring",
+                likesCount = 475,
+                isSaved = true,
+                isDownloaded = true,
+                timestamp = now - 500000,
+                translationHindi = "खिले फूलों की महक में धरती मुस्कुराती है, सुबह की रिमझिम फुहार पहाड़ों को नहलाती है।",
+                translationOdia = "ଫୁଲର ସୌରଭେ ହସି ଉଠେ ପୃଥିବୀର ରୂପ, ସକାଳର ଶୀତଳ ବର୍ଷାରେ ଧୋଇଯାଏ ସବୁଜ କାନନ।",
+                poeticAnalysis = "Romantic pantheistic celebration of nature as a living, joyful sanctuary of tranquility.",
+                isTrending = true
+            ),
+            Shayari(
                 id = "sh_en_1",
                 lines = "In the quiet chambers of the midnight soul,\nYour absence burns brighter than what made me whole.",
                 author = "Julian Sterling",
                 penName = "Sterling",
                 language = "english",
                 emotion = "dard",
+                category = "sorrow",
+                tags = "sorrow, absence, midnight, heartbreak, loss, grief",
                 likesCount = 388,
+                isSaved = true,
+                isDownloaded = true,
                 timestamp = now - 800000,
                 translationHindi = "आधी रात की इस तन्हाई में तेरी कमी यूं खलती है, जैसे वीरान महफ़िल में कोई शमा जलती है।",
                 translationOdia = "ଅଧରାତିର ନିର୍ଜନତାରେ ତୁମ ଅନୁପସ୍ଥିତି ଏମିତି ଜଳେ, ଯେମିତି କ୍ଷତ ଭିତରେ ନିଆଁର ଶିଖା ଥରେ।",
@@ -471,11 +597,33 @@ class ShayariRepository(
                 penName = "Vance",
                 language = "english",
                 emotion = "hausla",
+                category = "inspiration",
+                tags = "inspiration, resilience, roots, fire, courage, strength",
                 likesCount = 490,
+                isSaved = true,
+                isDownloaded = true,
                 timestamp = now - 1800000,
                 translationHindi = "आँधियां भले ही शाखों को वीरान कर दें, जो जड़ें ज़मीन में हैं वो कभी मिट नहीं सकतीं।",
                 translationOdia = "ଝଡ଼ ଯେତେ ଶାଖା ଭାଙ୍ଗିଲେ ବି ଚେର ଅଚଳ ରହେ, ଭିତରେ ଥିବା ବିଶ୍ୱାସ ସଦା ଜୟଗାନ ଗାଏ।",
                 poeticAnalysis = "Inspirational couplet celebrating unseen resilience and inner strength.",
+                isTrending = true
+            ),
+            Shayari(
+                id = "sh_en_4",
+                lines = "She walks in beauty, like the night\nOf cloudless climes and starry skies.",
+                author = "Lord Byron",
+                penName = "Byron",
+                language = "english",
+                emotion = "ishq",
+                category = "love",
+                tags = "love, beauty, starry, skies, romance, night",
+                likesCount = 440,
+                isSaved = true,
+                isDownloaded = true,
+                timestamp = now - 1700000,
+                translationHindi = "वो हुस्न की मल्लिका रातों की तरह चलती है, जैसे बे-अब्र फलक पर तारों की महफ़िल सजती है।",
+                translationOdia = "ସେ ଚାଲେ ସୌନ୍ଦର୍ଯ୍ୟର ପରିଭାଷା ହୋଇ, ତାରାଖଚିତ ନିର୍ମଳ ଆକାଶର ନୀରବତା ପରି।",
+                poeticAnalysis = "Harmonious romantic hymn celebrating pure, incandescent grace.",
                 isTrending = true
             ),
             Shayari(
@@ -485,6 +633,8 @@ class ShayariRepository(
                 penName = "Mystic",
                 language = "english",
                 emotion = "sufi",
+                category = "mystic",
+                tags = "mystic, sufi, prayer, universe, spiritual, rumi",
                 likesCount = 422,
                 timestamp = now - 2800000,
                 translationHindi = "हम ढूंढते रहे फलक पर खुदा का घर, वो तो बस सांसों की सरगोशी में मुस्कुरा रहा था।",
@@ -493,59 +643,19 @@ class ShayariRepository(
                 isTrending = false
             ),
             Shayari(
-                id = "sh_hi_6",
-                lines = "दिल से रोए मगर होंठों से मुस्कुरा बैठे,\nयूँ ही हम किसी से वफ़ा निभा बैठे।",
-                author = "Sahir Ludhianvi",
-                penName = "Sahir",
-                language = "hindi",
-                emotion = "dard",
-                likesCount = 365,
-                timestamp = now - 900000,
-                translationEnglish = "The heart wept in anguish yet the lips offered a smile; this is how faithfully we loved, enduring all in silence.",
-                translationOdia = "ହୃଦୟ କାନ୍ଦିଲା କିନ୍ତୁ ଓଠରେ ହସ ଥିଲା, ଏମିତି ହିଁ ଆମେ ପ୍ରେମର ପ୍ରତିଶ୍ରୁତି ପାଳିଲୁ।",
-                poeticAnalysis = "Iconic expression of unrequited love and poignant stoicism.",
-                isTrending = true
-            ),
-            Shayari(
                 id = "sh_hi_7",
                 lines = "हो गई है पीर पर्वत-सी पिघलनी चाहिए,\nइस हिमालय से कोई गंगा निकलनी चाहिए।",
                 author = "Dushyant Kumar",
                 penName = "Dushyant",
                 language = "hindi",
                 emotion = "hausla",
+                category = "inspiration",
+                tags = "inspiration, change, revolution, ganga, himalaya, courage",
                 likesCount = 580,
                 timestamp = now - 1100000,
                 translationEnglish = "This pain, huge as a mountain, must melt away now; from this very Himalaya, a Ganges must flow.",
                 translationOdia = "ଏଇ ଦୁଃଖର ପାହାଡ଼ ଏବେ ତରଳିବା ଦରକାର, ହିମାଳୟରୁ ନୂଆ ଗଙ୍ଗା ବହିବା ଦରକାର।",
                 poeticAnalysis = "Epoch-defining revolutionary Hindi ghazal igniting hope and righteous transformation.",
-                isTrending = true
-            ),
-            Shayari(
-                id = "sh_or_5",
-                lines = "ଲୁହରେ ଭିଜିଲା ଆଖିର ପଲକ କହେ ଅଶ୍ରୁଳ ବେଦନା,\nଯାହାକୁ ସାଇତି ରଖିଲି ମନେ ସେ ତ ବୁଝିଲାନି ଯନ୍ତ୍ରଣା।",
-                author = "Radhanath Ray",
-                penName = "କବିବର",
-                language = "odia",
-                emotion = "dard",
-                likesCount = 312,
-                timestamp = now - 1300000,
-                translationEnglish = "Tears soak the lashes telling a tale of unuttered sorrow; the one treasured in heart never perceived the pain.",
-                translationHindi = "आँसुओं से भीगी पलकें कहती हैं बेपनाह दर्द, जिसे चाहा उसने कभी ये तड़प समझी नहीं।",
-                poeticAnalysis = "Soulful Odia classical verse tracing the silent ache of unexpressed grief.",
-                isTrending = false
-            ),
-            Shayari(
-                id = "sh_en_4",
-                lines = "She walks in beauty, like the night\nOf cloudless climes and starry skies.",
-                author = "Lord Byron",
-                penName = "Byron",
-                language = "english",
-                emotion = "ishq",
-                likesCount = 440,
-                timestamp = now - 1700000,
-                translationHindi = "वो हुस्न की मल्लिका रातों की तरह चलती है, जैसे बे-अब्र फलक पर तारों की महफ़िल सजती है।",
-                translationOdia = "ସେ ଚାଲେ ସୌନ୍ଦର୍ଯ୍ୟର ପରିଭାଷା ହୋଇ, ତାରାଖଚିତ ନିର୍ମଳ ଆକାଶର ନୀରବତା ପରି।",
-                poeticAnalysis = "Harmonious romantic hymn celebrating pure, incandescent grace.",
                 isTrending = true
             ),
             // --- MODERATION QUEUE SEED SUBMISSIONS (FOR ADMIN REVIEW) ---

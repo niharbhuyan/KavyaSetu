@@ -28,6 +28,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FormatQuote
 import androidx.compose.material.icons.filled.Psychology
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -55,7 +56,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import com.example.util.SocialShareHelper
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
@@ -95,6 +98,7 @@ fun KalamEUstaadDialog(
 
     val scope = rememberCoroutineScope()
     val clipboardManager = LocalClipboardManager.current
+    val context = LocalContext.current
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -423,10 +427,29 @@ fun KalamEUstaadDialog(
                                             onClick = {
                                                 clipboardManager.setText(AnnotatedString(res.revisedCouplet))
                                             },
-                                            modifier = Modifier.weight(1f),
+                                            modifier = Modifier.weight(0.9f),
                                             colors = ButtonDefaults.outlinedButtonColors(contentColor = AntiqueGold)
                                         ) {
-                                            Text("Copy Verse", fontSize = 12.sp)
+                                            Text("Copy", fontSize = 12.sp)
+                                        }
+
+                                        OutlinedButton(
+                                            onClick = {
+                                                SocialShareHelper.shareGeminiShayari(
+                                                    context = context,
+                                                    lines = res.revisedCouplet,
+                                                    emotion = "Ustaad Islah Refinement",
+                                                    language = "hindi/urdu",
+                                                    author = selectedPersona.name,
+                                                    topic = "Master Mentorship Couplet"
+                                                )
+                                            },
+                                            modifier = Modifier.weight(1f).testTag("ustaad_share_button"),
+                                            colors = ButtonDefaults.outlinedButtonColors(contentColor = AntiqueGold)
+                                        ) {
+                                            Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(14.dp), tint = AntiqueGold)
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text("Share", fontSize = 12.sp)
                                         }
 
                                         Button(
@@ -434,12 +457,12 @@ fun KalamEUstaadDialog(
                                                 onAdoptRevision(res.revisedCouplet)
                                                 onDismiss()
                                             },
-                                            modifier = Modifier.weight(1f),
+                                            modifier = Modifier.weight(1.1f),
                                             colors = ButtonDefaults.buttonColors(containerColor = AntiqueGold)
                                         ) {
                                             Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp), tint = DeepMidnight)
                                             Spacer(modifier = Modifier.width(4.dp))
-                                            Text("Adopt Verse", color = DeepMidnight, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                            Text("Adopt", color = DeepMidnight, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                         }
                                     }
                                 }

@@ -34,13 +34,16 @@ import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.FormatQuote
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FileDownloadDone
+import androidx.compose.material.icons.filled.Label
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Translate
+import com.example.util.SocialShareHelper
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -89,6 +92,10 @@ fun ShayariCard(
     onDownloadClick: (() -> Unit)? = null,
     onCardClick: (() -> Unit)? = null,
     onOpenMushairaStudio: ((Shayari) -> Unit)? = null,
+    poetryFontSizeSp: Float = 20f,
+    poetryLineHeightMult: Float = 1.6f,
+    poetryFontFamilyType: String = "serif",
+    onEditCategoryClick: ((Shayari) -> Unit)? = null,
     isAnalyzing: Boolean = false,
     modifier: Modifier = Modifier
 ) {
@@ -96,6 +103,13 @@ fun ShayariCard(
     var showTranslations by remember { mutableStateOf(false) }
     val emotion = Emotion.fromCode(shayari.emotion)
     val lang = Language.fromCode(shayari.language)
+    val category = shayari.getCategoryEnum()
+
+    val resolvedFontFamily = when (poetryFontFamilyType) {
+        "sans" -> FontFamily.SansSerif
+        "mono" -> FontFamily.Monospace
+        else -> FontFamily.Serif
+    }
 
     Card(
         modifier = modifier
@@ -242,10 +256,10 @@ fun ShayariCard(
             Text(
                 text = shayari.lines,
                 style = MaterialTheme.typography.bodyLarge.copy(
-                    fontSize = 20.sp,
-                    lineHeight = 32.sp,
+                    fontSize = poetryFontSizeSp.sp,
+                    lineHeight = (poetryFontSizeSp * poetryLineHeightMult).sp,
                     letterSpacing = 0.5.sp,
-                    fontFamily = FontFamily.Serif
+                    fontFamily = resolvedFontFamily
                 ),
                 color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Start,
@@ -270,6 +284,67 @@ fun ShayariCard(
                     ),
                     color = AntiqueGold
                 )
+            }
+
+            // Category & Tag Indicators Row
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = AntiqueGold.copy(alpha = 0.14f),
+                    border = BorderStroke(1.dp, AntiqueGold.copy(alpha = 0.35f)),
+                    onClick = { onEditCategoryClick?.invoke(shayari) },
+                    modifier = Modifier.testTag("category_tag_badge_${shayari.id}")
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(category.emoji, fontSize = 12.sp)
+                        Text(
+                            text = category.displayName,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = AntiqueGold
+                        )
+                        if (onEditCategoryClick != null) {
+                            Icon(
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = "Edit Category",
+                                tint = AntiqueGold.copy(alpha = 0.7f),
+                                modifier = Modifier.size(11.dp)
+                            )
+                        }
+                    }
+                }
+
+                if (shayari.tags.isNotBlank()) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        shayari.tags.split(",").map { it.trim() }.filter { it.isNotEmpty() }.take(2).forEach { tag ->
+                            Surface(
+                                shape = RoundedCornerShape(6.dp),
+                                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f),
+                                border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+                            ) {
+                                Text(
+                                    text = "#$tag",
+                                    fontSize = 10.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
+                    }
+                }
             }
 
             // Translations view toggle
@@ -485,19 +560,13 @@ fun ShayariCard(
                 // Direct Social Share Intent
                 IconButton(
                     onClick = {
-                        val shareText = "✨ *Shayari of the Soul*\n\n${shayari.lines}\n\n— ${shayari.author} (${shayari.language.replaceFirstChar { it.uppercase() }})\n\nShared via Shayari App"
-                        val intent = Intent(Intent.ACTION_SEND).apply {
-                            type = "text/plain"
-                            putExtra(Intent.EXTRA_TEXT, shareText)
-                            putExtra(Intent.EXTRA_SUBJECT, "Poetic Verse")
-                        }
-                        context.startActivity(Intent.createChooser(intent, "Share Shayari via..."))
+                        SocialShareHelper.sharePoem(context, shayari)
                     },
                     modifier = Modifier.testTag("share_button_${shayari.id}")
                 ) {
                     Icon(
                         imageVector = Icons.Default.Share,
-                        contentDescription = "Share Shayari",
+                        contentDescription = "Share to Social Media",
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }

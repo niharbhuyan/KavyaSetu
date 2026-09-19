@@ -4,10 +4,12 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.example.data.local.PoetryDisplayPreferences
 import com.example.data.model.ActivityType
 import com.example.data.model.Anthology
 import com.example.data.model.Emotion
 import com.example.data.model.Language
+import com.example.data.model.PoemCategory
 import com.example.data.model.PoeticAnalysisResult
 import com.example.data.model.Shayari
 import com.example.data.model.UserActivityItem
@@ -29,7 +31,27 @@ class MainViewModel(private val repository: ShayariRepository) : ViewModel() {
 
     val selectedLanguage = MutableStateFlow(Language.ALL)
     val selectedEmotion = MutableStateFlow<Emotion?>(null)
+    val selectedCategory = MutableStateFlow(PoemCategory.ALL)
     val searchQuery = MutableStateFlow("")
+
+    // Poetry Reading & Typography Preferences
+    val poetryFontSizeSp = MutableStateFlow(20f)
+    val poetryLineHeightMult = MutableStateFlow(1.6f)
+    val poetryFontFamilyType = MutableStateFlow("serif")
+
+    // Poetry Style Filter for AI Studio Composer
+    val selectedPoetryStyle = MutableStateFlow(com.example.data.model.PoetryStyle.GHAZAL)
+
+    // Reading Progress & Bookmark State
+    val readingProgress: StateFlow<com.example.data.local.ReadingProgressState> =
+        com.example.data.local.ReadingProgressManager.readingState
+
+    // Generated Poem History
+    val generatedPoemHistory: StateFlow<List<com.example.data.model.GeneratedPoemItem>> =
+        com.example.data.local.GeneratedPoemManager.history
+
+    // Daily Push Notification Preference
+    val dailyPickNotificationEnabled = MutableStateFlow(true)
 
     private val _userProfileState = MutableStateFlow(
         UserProfile("local_poet_guest", "Guest Shayar", "Parwaaz", bio = "Words carrying the weight of my heart.", streakDays = 5)
@@ -342,7 +364,14 @@ class MainViewModel(private val repository: ShayariRepository) : ViewModel() {
         com.example.notification.ShayariFirebaseMessagingService.simulateDailyMorningFcmPush(context, current)
     }
 
-    fun composeWithGemini(topic: String, emotion: String, language: String, penName: String) {
+    fun composeWithGemini(
+        topic: String,
+        emotion: String,
+        language: String,
+        penName: String,
+        style: com.example.data.model.PoetryStyle = selectedPoetryStyle.value,
+        context: Context? = null
+    ) {
         viewModelScope.launch {
             isComposing.value = true
             compositionError.value = null
@@ -352,14 +381,26 @@ class MainViewModel(private val repository: ShayariRepository) : ViewModel() {
                 topic = topic,
                 emotion = emotion,
                 language = language,
-                authorPenName = penName
+                authorPenName = penName,
+                style = style
             )
             result.onSuccess { text ->
                 composedResult.value = text
+                if (context != null) {
+                    com.example.data.local.GeneratedPoemManager.recordGeneratedPoem(
+                        context = context,
+                        topic = topic,
+                        style = style,
+                        emotion = emotion,
+                        language = language,
+                        penName = penName,
+                        content = text
+                    )
+                }
                 repository.recordActivity(
                     ActivityType.COMPOSE,
-                    "Composed AI Couplet",
-                    "Generated verse on \"$topic\" in $language"
+                    "Composed ${style.displayName}",
+                    "Generated verse on \"$topic\" in $language (${style.displayName})"
                 )
             }.onFailure { e ->
                 compositionError.value = e.message ?: "Failed to generate verse."
@@ -639,6 +680,77 @@ class MainViewModel(private val repository: ShayariRepository) : ViewModel() {
 
     fun recordUserActivity(type: ActivityType, title: String, description: String) {
         repository.recordActivity(type, title, description)
+    }
+
+    fun loadDisplayPreferences(context: Context) {
+        poetryFontSizeSp.value = PoetryDisplayPreferences.getFontSize(context)
+        poetryLineHeightMult.value = PoetryDisplayPreferences.getLineHeightMult(context)
+        poetryFontFamilyType.value = PoetryDisplayPreferences.getFontFamily(context)
+    }
+
+    fun updatePoetryDisplaySettings(context: Context, fontSize: Float, lineHeightMult: Float, fontFamily: String) {
+        poetryFontSizeSp.value = fontSize
+        poetryLineHeightMult.value = lineHeightMult
+        poetryFontFamilyType.value = fontFamily
+        PoetryDisplayPreferences.saveFontSize(context, fontSize)
+        PoetryDisplayPreferences.saveLineHeightMult(context, lineHeightMult)
+        PoetryDisplayPreferences.saveFontFamily(context, fontFamily)
+    }
+
+    fun updatePoemCategoryAndTags(shayariId: String, category: PoemCategory, customTags: String) {
+        viewModelScope.launch {
+            repository.updatePoemCategoryAndTags(shayariId, category.id, customTags)
+        }
+    }
+
+    fun selectCategory(category: PoemCategory) {
+        selectedCategory.value = category
+    }
+
+    fun selectPoetryStyle(style: com.example.data.model.PoetryStyle) {
+        selectedPoetryStyle.value = style
+    }
+
+    fun initManagers(context: Context) {
+        com.example.data.local.ReadingProgressManager.initialize(context)
+        com.example.data.local.GeneratedPoemManager.initialize(context)
+        loadDisplayPreferences(context)
+    }
+
+    fun recordPoemRead(context: Context, shayari: Shayari) {
+        com.example.data.local.ReadingProgressManager.recordPoemRead(context, shayari)
+    }
+
+    fun setBookmark(context: Context, shayari: Shayari) {
+        com.example.data.local.ReadingProgressManager.setBookmark(context, shayari)
+        repository.recordActivity(
+            ActivityType.SAVED,
+            "Bookmarked Verse",
+            "Set reading bookmark to couplet by ${shayari.author}"
+        )
+    }
+
+    fun clearBookmark(context: Context) {
+        com.example.data.local.ReadingProgressManager.clearBookmark(context)
+    }
+
+    fun updateDailyGoal(context: Context, newGoal: Int) {
+        com.example.data.local.ReadingProgressManager.updateDailyGoal(context, newGoal)
+    }
+
+    fun deleteGeneratedPoem(context: Context, id: String) {
+        com.example.data.local.GeneratedPoemManager.deletePoem(context, id)
+    }
+
+    fun clearGeneratedPoemHistory(context: Context) {
+        com.example.data.local.GeneratedPoemManager.clearAll(context)
+    }
+
+    fun setDailyNotificationEnabled(context: Context, enabled: Boolean) {
+        dailyPickNotificationEnabled.value = enabled
+        if (enabled) {
+            DailyNotificationManager.scheduleDailyMorningAlarm(context)
+        }
     }
 }
 

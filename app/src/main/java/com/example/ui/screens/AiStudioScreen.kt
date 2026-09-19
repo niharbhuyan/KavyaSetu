@@ -81,6 +81,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.model.Emotion
 import com.example.data.model.Language
+import com.example.data.model.PoetryStyle
 import com.example.data.model.PromptLibraryData
 import com.example.data.model.PromptMood
 import com.example.data.model.ShayariPrompt
@@ -94,6 +95,7 @@ import com.example.ui.components.LafzOMaaniDialog
 import com.example.ui.components.MeterAnalysisResult
 import com.example.ui.components.PoeticMeterAnalyzer
 import com.example.ui.components.SherBaaziGameDialog
+import com.example.util.SocialShareHelper
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Casino
@@ -301,6 +303,7 @@ private fun ComposeTab(viewModel: MainViewModel, audioReciter: AudioReciter) {
     val isComposing by viewModel.isComposing.collectAsStateWithLifecycle()
     val resultText by viewModel.composedResult.collectAsStateWithLifecycle()
     val errorText by viewModel.compositionError.collectAsStateWithLifecycle()
+    val selectedStyle by viewModel.selectedPoetryStyle.collectAsStateWithLifecycle()
 
     Card(
         shape = RoundedCornerShape(20.dp),
@@ -357,6 +360,48 @@ private fun ComposeTab(viewModel: MainViewModel, audioReciter: AudioReciter) {
                             selectedContainerColor = VelvetRose.copy(alpha = 0.2f),
                             selectedLabelColor = VelvetRose
                         )
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Poetry Style Filter Selector (Ghazal, Haiku, Free Verse, etc.)
+            Text("Select Poetry Style / काव्य विधा:", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+            Spacer(modifier = Modifier.height(6.dp))
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                PoetryStyle.entries.forEach { style ->
+                    FilterChip(
+                        selected = selectedStyle == style,
+                        onClick = { viewModel.selectPoetryStyle(style) },
+                        label = { Text("${style.emoji} ${style.displayName}") },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = AntiqueGold.copy(alpha = 0.25f),
+                            selectedLabelColor = AntiqueGold
+                        )
+                    )
+                }
+            }
+
+            Surface(
+                shape = RoundedCornerShape(10.dp),
+                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
+                border = BorderStroke(1.dp, AntiqueGold.copy(alpha = 0.25f)),
+                modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text(selectedStyle.emoji, fontSize = 15.sp)
+                    Text(
+                        text = "${selectedStyle.displayName}: ${selectedStyle.description}",
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -483,7 +528,9 @@ private fun ComposeTab(viewModel: MainViewModel, audioReciter: AudioReciter) {
                         topic = topic.ifBlank { "Deep love and longing" },
                         emotion = selectedEmotion,
                         language = selectedLang,
-                        penName = penName
+                        penName = penName,
+                        style = selectedStyle,
+                        context = context
                     )
                 },
                 enabled = !isComposing,
@@ -494,11 +541,11 @@ private fun ComposeTab(viewModel: MainViewModel, audioReciter: AudioReciter) {
                 if (isComposing) {
                     CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp, color = DeepMidnight)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Composing Couplet...")
+                    Text("Composing ${selectedStyle.displayName}...")
                 } else {
                     Icon(Icons.Default.AutoAwesome, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Compose Couplet")
+                    Text("Compose ${selectedStyle.displayName}")
                 }
             }
 
@@ -523,14 +570,49 @@ private fun ComposeTab(viewModel: MainViewModel, audioReciter: AudioReciter) {
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "✨ Newly Composed Verse",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = AntiqueGold
-                    )
-                    IconButton(onClick = { audioReciter.speak(resultText!!, selectedLang) }) {
-                        Icon(Icons.Default.VolumeUp, contentDescription = "Recite", tint = AntiqueGold)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            text = "✨ Newly Composed",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = AntiqueGold
+                        )
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = AntiqueGold.copy(alpha = 0.2f),
+                            border = BorderStroke(1.dp, AntiqueGold.copy(alpha = 0.4f))
+                        ) {
+                            Text(
+                                text = "${selectedStyle.emoji} ${selectedStyle.displayName}",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = AntiqueGold,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(
+                            onClick = {
+                                SocialShareHelper.shareGeminiShayari(
+                                    context = context,
+                                    lines = resultText!!,
+                                    emotion = selectedEmotion,
+                                    language = selectedLang,
+                                    author = penName,
+                                    topic = topic
+                                )
+                            },
+                            modifier = Modifier.testTag("ai_share_icon_button")
+                        ) {
+                            Icon(Icons.Default.Share, contentDescription = "Share Couplet to Social Media", tint = AntiqueGold)
+                        }
+                        IconButton(onClick = { audioReciter.speak(resultText!!, selectedLang) }) {
+                            Icon(Icons.Default.VolumeUp, contentDescription = "Recite", tint = AntiqueGold)
+                        }
                     }
                 }
 
@@ -557,11 +639,30 @@ private fun ComposeTab(viewModel: MainViewModel, audioReciter: AudioReciter) {
                             clipboard.setPrimaryClip(ClipData.newPlainText("AI Shayari", resultText!!))
                             Toast.makeText(context, "Copied to clipboard!", Toast.LENGTH_SHORT).show()
                         },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(0.9f).testTag("ai_copy_button")
                     ) {
                         Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Copy")
+                        Text("Copy", fontSize = 12.sp)
+                    }
+
+                    Button(
+                        onClick = {
+                            SocialShareHelper.shareGeminiShayari(
+                                context = context,
+                                lines = resultText!!,
+                                emotion = selectedEmotion,
+                                language = selectedLang,
+                                author = penName,
+                                topic = topic
+                            )
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = AntiqueGold, contentColor = DeepMidnight),
+                        modifier = Modifier.weight(1.1f).testTag("ai_share_button")
+                    ) {
+                        Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(16.dp), tint = DeepMidnight)
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Share", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = DeepMidnight)
                     }
 
                     Button(
@@ -577,11 +678,11 @@ private fun ComposeTab(viewModel: MainViewModel, audioReciter: AudioReciter) {
                             }
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = VelvetRose),
-                        modifier = Modifier.weight(1.4f)
+                        modifier = Modifier.weight(1.2f).testTag("ai_publish_button")
                     ) {
                         Icon(Icons.Default.Publish, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Publish to Feed")
+                        Text("Publish", fontSize = 12.sp)
                     }
                 }
 

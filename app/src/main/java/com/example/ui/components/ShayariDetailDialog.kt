@@ -38,6 +38,7 @@ import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.filled.VolumeUp
+import com.example.util.SocialShareHelper
 import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -173,12 +174,27 @@ fun ShayariDetailDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Metadata Badges (Language, Emotion, Era)
+                // Metadata Badges (Language, Emotion, Category, Tags, Era)
                 FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(6.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
+                    val category = shayari.getCategoryEnum()
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = AntiqueGold.copy(alpha = 0.15f),
+                        border = BorderStroke(1.dp, AntiqueGold.copy(alpha = 0.4f))
+                    ) {
+                        Text(
+                            text = "${category.emoji} ${category.displayName}",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = AntiqueGold,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
+
                     Surface(
                         shape = RoundedCornerShape(8.dp),
                         color = AntiqueGold.copy(alpha = 0.15f),
@@ -205,6 +221,23 @@ fun ShayariDetailDialog(
                             color = VelvetRose,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                         )
+                    }
+
+                    if (shayari.tags.isNotBlank()) {
+                        shayari.tags.split(",").map { it.trim() }.filter { it.isNotEmpty() }.forEach { tag ->
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                                border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+                            ) {
+                                Text(
+                                    text = "#$tag",
+                                    fontSize = 11.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(horizontal = 7.dp, vertical = 4.dp)
+                                )
+                            }
+                        }
                     }
 
                     if (shayari.isDailyPick || shayari.isTrending) {
@@ -488,22 +521,15 @@ fun ShayariDetailDialog(
                         )
                     }
 
-                    // Share
+                    // Share to Social Media
                     IconButton(
                         onClick = {
-                            val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                                type = "text/plain"
-                                putExtra(
-                                    Intent.EXTRA_TEXT,
-                                    "✨ \"${shayari.lines}\"\n\n— ${shayari.author}\n\nDeep Link: shayari://detail?id=${shayari.id}\nRead in Shayari App"
-                                )
-                            }
-                            context.startActivity(Intent.createChooser(shareIntent, "Share Couplet"))
+                            SocialShareHelper.sharePoem(context, shayari)
                         }
                     ) {
                         Icon(
                             imageVector = Icons.Default.Share,
-                            contentDescription = "Share",
+                            contentDescription = "Share to Social Media",
                             tint = Color.White.copy(alpha = 0.7f)
                         )
                     }

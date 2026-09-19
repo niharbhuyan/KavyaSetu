@@ -23,6 +23,20 @@ This directory contains ready-to-upload visual assets and metadata compliant wit
 - **Short Description**: `Multilingual poetry & shayari in Hindi, Odia, English with Gemini AI & audio.` *(77 characters, complies with the 80-character limit)*
 - **Category**: Books & Reference
 - **Content Rating**: Everyone
+- **Privacy Policy URL**: `https://raw.githack.com/niharsales/kavyasetu/main/privacy_policy.html`
+- **Developer Email**: `niharbhuyan@gmail.com`
+
+---
+
+## 🔒 Where to Enter Privacy Policy in Google Play Console
+
+1. In the left menu of **Google Play Console**, scroll down to **Policy and programs**.
+2. Click **App content**.
+3. Under **Privacy Policy**, click **Start** (or **Manage**).
+4. Enter the Privacy Policy URL:
+   `https://raw.githack.com/niharsales/kavyasetu/main/privacy_policy.html`
+   *(Or host the included `privacy_policy.html` on your GitHub Pages or personal domain).*
+5. Click **Save**.
 
 ---
 

@@ -65,7 +65,9 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
+import com.example.R
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -298,18 +300,36 @@ fun CardStudioDialog(
                             )
                         }
 
-                        // Bottom Signature & Takhallis Seal
+                        // Bottom Signature & Takhallis Seal with App Watermark
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                text = "Crafted with Shayari Global",
-                                fontSize = 9.sp,
-                                letterSpacing = 1.sp,
-                                color = selectedTheme.textColor.copy(alpha = 0.6f)
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(5.dp)
+                            ) {
+                                Surface(
+                                    shape = CircleShape,
+                                    color = DeepMidnight,
+                                    border = BorderStroke(0.6.dp, selectedTheme.accentColor.copy(alpha = 0.8f)),
+                                    modifier = Modifier.size(16.dp)
+                                ) {
+                                    Image(
+                                        painter = painterResource(id = R.drawable.app_logo),
+                                        contentDescription = "Kavya Setu Logo",
+                                        modifier = Modifier.fillMaxSize().clip(CircleShape)
+                                    )
+                                }
+                                Text(
+                                    text = "Kavya Setu • काव्यसेतु",
+                                    fontSize = 9.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 0.5.sp,
+                                    color = selectedTheme.textColor.copy(alpha = 0.85f)
+                                )
+                            }
 
                             // Custom Takhallis Stamp
                             if (customSignature.isNotBlank()) {
@@ -592,9 +612,9 @@ fun CardStudioDialog(
                     OutlinedButton(
                         onClick = {
                             val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                            val formatted = "✨ *${shayari.lines}*\n\n— ${shayari.author}\n\n#Shayari #Art #${shayari.emotion}"
+                            val formatted = "✨ *${shayari.lines}*\n\n— ${shayari.author}\n\n— Watermark: Kavya Setu • काव्यसेतु\n#KavyaSetu #Poetry #${shayari.emotion}"
                             clipboard.setPrimaryClip(ClipData.newPlainText("Formatted Card", formatted))
-                            Toast.makeText(context, "Card text copied!", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Card text copied with Kavya Setu watermark!", Toast.LENGTH_SHORT).show()
                         },
                         modifier = Modifier.weight(1f)
                     ) {
@@ -605,11 +625,11 @@ fun CardStudioDialog(
 
                     Button(
                         onClick = {
-                            val shareText = "🌹 *Shayari Card*\n\n${shayari.lines}\n\n— ${shayari.author} (${shayari.language.replaceFirstChar { it.uppercase() }})\n\nShared from Shayari App"
+                            val shareText = "🖋️ *Kavya Setu • Card Studio*\n━━━━━━━━━━━━━━━━━━━━\n\n${shayari.lines}\n\n— ${shayari.author} (${shayari.language.replaceFirstChar { it.uppercase() }})\n\n— Watermark: Kavya Setu • काव्यसेतु (Built by Nihar Sales)\n#KavyaSetu #ShayariCard"
                             val intent = Intent(Intent.ACTION_SEND).apply {
                                 type = "text/plain"
                                 putExtra(Intent.EXTRA_TEXT, shareText)
-                                putExtra(Intent.EXTRA_SUBJECT, "Shayari Card")
+                                putExtra(Intent.EXTRA_SUBJECT, "Kavya Setu Card — ${shayari.author}")
                             }
                             context.startActivity(Intent.createChooser(intent, "Share Card to..."))
                         },

@@ -30,6 +30,8 @@ object PlayStoreAssetHelper {
 
     val STORE_TITLE = "Kavya Setu: Poetry & Shayari"
     val SHORT_DESCRIPTION = "Multilingual poetry & shayari in Hindi, Odia, English with Gemini AI & audio."
+    val PRIVACY_POLICY_URL = "https://raw.githack.com/niharsales/kavyasetu/main/privacy_policy.html"
+    val DEVELOPER_EMAIL = "niharbhuyan@gmail.com"
     val FULL_DESCRIPTION = """
 Kavya Setu (काव्य सेतु / କାବ୍ୟ ସେତୁ) is an Indian multilingual poetry and shayari platform celebrating the rich cultural tapestry of Hindi Kavita, Urdu Shayari, and Odia Chhanda.
 

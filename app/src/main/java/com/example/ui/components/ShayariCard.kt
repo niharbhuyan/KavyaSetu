@@ -532,9 +532,9 @@ fun ShayariCard(
                 IconButton(
                     onClick = {
                         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                        val textToCopy = "${shayari.lines}\n\n— ${shayari.author}\n#Shayari #Poetry #Multilingual"
+                        val textToCopy = "🖋️ *Kavya Setu • काव्यसेतु*\n\n${shayari.lines}\n\n— ${shayari.author}\n— Watermark: Kavya Setu (Built by Nihar Sales)\n#KavyaSetu #Poetry #Shayari"
                         clipboard.setPrimaryClip(ClipData.newPlainText("Shayari", textToCopy))
-                        Toast.makeText(context, "Shayari copied to clipboard", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Shayari copied with Kavya Setu watermark", Toast.LENGTH_SHORT).show()
                     },
                     modifier = Modifier.testTag("copy_button_${shayari.id}")
                 ) {

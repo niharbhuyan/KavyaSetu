@@ -636,8 +636,9 @@ private fun ComposeTab(viewModel: MainViewModel, audioReciter: AudioReciter) {
                     OutlinedButton(
                         onClick = {
                             val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                            clipboard.setPrimaryClip(ClipData.newPlainText("AI Shayari", resultText!!))
-                            Toast.makeText(context, "Copied to clipboard!", Toast.LENGTH_SHORT).show()
+                            val watermarkedText = "🖋️ *Kavya Setu • AI Composed Verse*\n━━━━━━━━━━━━━━━━━━━━\n\n${resultText!!}\n\n— Composed on Kavya Setu (Built by Nihar Sales)\n#KavyaSetu #GeminiAI"
+                            clipboard.setPrimaryClip(ClipData.newPlainText("AI Shayari", watermarkedText))
+                            Toast.makeText(context, "Copied with Kavya Setu watermark!", Toast.LENGTH_SHORT).show()
                         },
                         modifier = Modifier.weight(0.9f).testTag("ai_copy_button")
                     ) {

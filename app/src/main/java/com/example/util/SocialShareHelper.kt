@@ -135,7 +135,8 @@ object SocialShareHelper {
         }
 
         return buildString {
-            append("✨ *Kavya Setu • काव्य सेतु*\n\n")
+            append("🖋️ *Kavya Setu • काव्यसेतु • କାବ୍ୟସେତୁ*\n")
+            append("━━━━━━━━━━━━━━━━━━━━\n\n")
             append(lines.trim())
             append("\n\n")
             append(authorCredit)
@@ -147,6 +148,7 @@ object SocialShareHelper {
             if (!id.isNullOrBlank()) {
                 append("📖 Read in app: shayari://detail?id=$id\n")
             }
+            append("— Watermark: Kavya Setu (Built by Nihar Sales)\n")
             append("$langTag #KavyaSetu #ShayariOfTheSoul")
         }
     }
@@ -169,7 +171,8 @@ object SocialShareHelper {
         }
 
         return buildString {
-            append("✨ *AI Composed Verse • کلامِ مصنوعی*\n")
+            append("🖋️ *Kavya Setu • AI Composed Verse*\n")
+            append("━━━━━━━━━━━━━━━━━━━━\n")
             if (topic.isNotBlank()) {
                 append("Theme: \"$topic\"\n")
             }
@@ -179,6 +182,7 @@ object SocialShareHelper {
             val penCredit = if (author.isNotBlank() && author != "AI Poet") author else "Poet of the Soul"
             append("— $penCredit (Composed with Gemini AI on Kavya Setu)\n")
             append("Mood: ${emotion.replaceFirstChar { it.uppercase() }}\n\n")
+            append("— Watermark: Kavya Setu • काव्यसेतु (Built by Nihar Sales)\n")
             append("$langTag #GeminiAI #AIShayari #KavyaSetu #PoetryCommunity")
         }
     }

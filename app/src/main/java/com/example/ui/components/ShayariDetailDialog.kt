@@ -508,10 +508,10 @@ fun ShayariDetailDialog(
                             val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                             val clip = ClipData.newPlainText(
                                 "Shayari",
-                                "${shayari.lines}\n— ${shayari.author}\n\nShared via Shayari App"
+                                "🖋️ *Kavya Setu • काव्यसेतु*\n\n${shayari.lines}\n— ${shayari.author}\n\n— Watermark: Kavya Setu (Built by Nihar Sales)\n#KavyaSetu #Poetry"
                             )
                             clipboard.setPrimaryClip(clip)
-                            Toast.makeText(context, "Couplet copied to clipboard", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Couplet copied with Kavya Setu watermark", Toast.LENGTH_SHORT).show()
                         }
                     ) {
                         Icon(

@@ -3,6 +3,8 @@ package com.example.ui.components
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -30,6 +32,8 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.OpenInNew
+import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material3.Button
@@ -415,6 +419,110 @@ private fun StoreListingTab() {
                     copyToClipboard(context, "Full Description", PlayStoreAssetHelper.FULL_DESCRIPTION)
                 }
             )
+        }
+
+        // Privacy Policy URL Card (Mandatory for Google Play Store)
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.85f)),
+                border = BorderStroke(1.5.dp, AntiqueGold)
+            ) {
+                Column(modifier = Modifier.padding(14.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Icon(Icons.Default.Security, contentDescription = null, tint = AntiqueGold, modifier = Modifier.size(18.dp))
+                            Text(
+                                text = "Privacy Policy URL",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp,
+                                color = AntiqueGold
+                            )
+                        }
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = Color(0xFF1E3A2A)
+                        ) {
+                            Text(
+                                text = "MANDATORY FOR PLAY CONSOLE",
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF81C784),
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = "Paste this URL directly into Google Play Console -> Policy and programs -> App content -> Privacy policy:",
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = Color.Black.copy(alpha = 0.35f),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = PlayStoreAssetHelper.PRIVACY_POLICY_URL,
+                            modifier = Modifier.padding(10.dp),
+                            fontSize = 12.sp,
+                            fontFamily = FontFamily.Monospace,
+                            color = AntiqueGold
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Button(
+                            onClick = {
+                                copyToClipboard(context, "Privacy Policy URL", PlayStoreAssetHelper.PRIVACY_POLICY_URL)
+                            },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(containerColor = AntiqueGold),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(14.dp), tint = RoyalPlum)
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Copy URL", color = RoyalPlum, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                        }
+
+                        OutlinedButton(
+                            onClick = {
+                                try {
+                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(PlayStoreAssetHelper.PRIVACY_POLICY_URL)).apply {
+                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    }
+                                    context.startActivity(intent)
+                                } catch (e: Exception) {
+                                    Toast.makeText(context, "Could not open browser: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+                                }
+                            },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(10.dp),
+                            border = BorderStroke(1.dp, AntiqueGold)
+                        ) {
+                            Icon(Icons.Default.OpenInNew, contentDescription = null, modifier = Modifier.size(14.dp), tint = AntiqueGold)
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Open in Browser", color = AntiqueGold, fontWeight = FontWeight.SemiBold, fontSize = 11.sp)
+                        }
+                    }
+                }
+            }
         }
 
         // Google Play Store Policy Checklist

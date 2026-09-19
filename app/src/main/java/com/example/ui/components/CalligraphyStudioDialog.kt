@@ -3,8 +3,12 @@ package com.example.ui.components
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Typeface
 import android.net.Uri
+import com.example.R
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -62,6 +66,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -155,6 +160,43 @@ fun CalligraphyStudioDialog(
                 androidCanvas.drawPath(path, strokePaint)
             }
 
+            // Draw App Name & Logo Watermark onto the exported calligraphy image
+            try {
+                val logoBitmap = BitmapFactory.decodeResource(context.resources, R.drawable.app_logo)
+                if (logoBitmap != null) {
+                    val targetSize = 44
+                    val scaledLogo = Bitmap.createScaledBitmap(logoBitmap, targetSize, targetSize, true)
+                    val logoX = width - targetSize - 40f
+                    val logoY = height - targetSize - 36f
+
+                    // Draw circular background backing for logo
+                    val sealBgPaint = android.graphics.Paint().apply {
+                        color = android.graphics.Color.argb(220, 24, 8, 41)
+                        style = android.graphics.Paint.Style.FILL
+                        isAntiAlias = true
+                    }
+                    androidCanvas.drawCircle(logoX + targetSize / 2f, logoY + targetSize / 2f, targetSize / 2f + 2f, sealBgPaint)
+                    androidCanvas.drawBitmap(scaledLogo, logoX, logoY, null)
+
+                    val watermarkTextPaint = android.graphics.Paint().apply {
+                        color = selectedInk.color.toArgb()
+                        textSize = 20f
+                        typeface = Typeface.create(Typeface.SERIF, Typeface.BOLD)
+                        isAntiAlias = true
+                        textAlign = android.graphics.Paint.Align.RIGHT
+                    }
+                    androidCanvas.drawText("Kavya Setu • काव्यसेतु", logoX - 12f, logoY + 22f, watermarkTextPaint)
+
+                    val watermarkSubPaint = android.graphics.Paint().apply {
+                        color = android.graphics.Color.argb(180, 150, 120, 80)
+                        textSize = 13f
+                        isAntiAlias = true
+                        textAlign = android.graphics.Paint.Align.RIGHT
+                    }
+                    androidCanvas.drawText("Handcrafted Qalam Studio • Built by Nihar Sales", logoX - 12f, logoY + 38f, watermarkSubPaint)
+                }
+            } catch (ignored: Exception) {}
+
             val cacheDir = File(context.cacheDir, "calligraphy_art")
             if (!cacheDir.exists()) cacheDir.mkdirs()
             val file = File(cacheDir, "Qalam_Art_${System.currentTimeMillis()}.png")
@@ -171,7 +213,7 @@ fun CalligraphyStudioDialog(
             val shareIntent = Intent(Intent.ACTION_SEND).apply {
                 type = "image/png"
                 putExtra(Intent.EXTRA_STREAM, uri)
-                putExtra(Intent.EXTRA_TEXT, "Handcrafted calligraphy created with Kavya Setu Qalam Studio.")
+                putExtra(Intent.EXTRA_TEXT, "Handcrafted calligraphy created with Kavya Setu • काव्यसेतु (Built by Nihar Sales).\n#KavyaSetu #Calligraphy")
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
             context.startActivity(Intent.createChooser(shareIntent, "Share Calligraphy Artwork"))
@@ -354,6 +396,40 @@ fun CalligraphyStudioDialog(
                                         cap = StrokeCap.Round,
                                         join = StrokeJoin.Round
                                     )
+                                )
+                            }
+                        }
+
+                        // Watermark badge in bottom-right of drawing canvas
+                        Surface(
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .padding(10.dp),
+                            shape = RoundedCornerShape(8.dp),
+                            color = DeepMidnight.copy(alpha = 0.8f),
+                            border = androidx.compose.foundation.BorderStroke(0.6.dp, AntiqueGold.copy(alpha = 0.4f))
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Surface(
+                                    shape = CircleShape,
+                                    color = DeepMidnight,
+                                    modifier = Modifier.size(13.dp)
+                                ) {
+                                    Image(
+                                        painter = painterResource(id = R.drawable.app_logo),
+                                        contentDescription = "Kavya Setu Logo",
+                                        modifier = Modifier.fillMaxSize()
+                                    )
+                                }
+                                Text(
+                                    text = "Kavya Setu • Qalam",
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = AntiqueGold
                                 )
                             }
                         }

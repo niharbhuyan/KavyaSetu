@@ -3,6 +3,7 @@ package com.example.ui.screens
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -86,6 +87,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
@@ -94,6 +96,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.R
 import com.example.data.model.ActivityType
 import com.example.data.model.Emotion
 import com.example.data.model.Language
@@ -1295,22 +1298,44 @@ fun ProfileScreen(
             item {
                 Card(
                     shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                    border = BorderStroke(1.dp, AntiqueGold.copy(alpha = 0.3f))
                 ) {
-                    Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(
-                            text = "Kavya Setu • काव्यसेतु • କାବ୍ୟସେତୁ",
-                            fontWeight = FontWeight.Bold,
-                            color = AntiqueGold,
-                            fontSize = 18.sp
-                        )
-                        Text(
-                            text = "Built by Nihar Sales",
-                            fontWeight = FontWeight.SemiBold,
-                            color = VelvetRose,
-                            fontSize = 13.sp
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
+                    Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(14.dp)
+                        ) {
+                            Surface(
+                                shape = CircleShape,
+                                color = DeepMidnight,
+                                border = BorderStroke(1.5.dp, AntiqueGold),
+                                modifier = Modifier.size(60.dp)
+                            ) {
+                                Image(
+                                    painter = painterResource(id = R.drawable.app_logo),
+                                    contentDescription = "Kavya Setu App Logo",
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .clip(CircleShape)
+                                )
+                            }
+                            Column {
+                                Text(
+                                    text = "Kavya Setu • काव्यसेतु • କାବ୍ୟସେତୁ",
+                                    fontWeight = FontWeight.Bold,
+                                    color = AntiqueGold,
+                                    fontSize = 17.sp
+                                )
+                                Text(
+                                    text = "Built by Nihar Sales",
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = VelvetRose,
+                                    fontSize = 13.sp
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             text = "Kavya Setu bridges hearts across cultures with native support for:\n• Hindi (Devanagari script)\n• Odia (ଓଡ଼ିଆ ଲିପି)\n• English\n\nFeatures full Gemini AI generation, Prompt Library categorized by mood, metrical analysis, visual card studio export, homescreen widget, content moderation, and morning push inspiration.",
                             fontSize = 13.sp,
@@ -1363,7 +1388,7 @@ fun ProfileScreen(
                         }
 
                         Text(
-                            text = "All required assets for Play Store publication have been crafted according to official Google Play policies:\n• 512×512 32-bit PNG App Icon (no rounded corner mask pre-baked)\n• 1024×500 PNG Feature Graphic (strictly no promotional buzzwords, ranking, or pricing)\n• 4 Phone Screenshots (1080×1920) showcasing real user journeys\n• Compliant Title (<= 30 chars) and Short Description (<= 80 chars)\n• One-click export to phone gallery or native share sheet.",
+                            text = "All required assets for Play Store publication have been crafted according to official Google Play policies:\n• 512×512 32-bit PNG App Icon (no rounded corner mask pre-baked)\n• 1024×500 PNG Feature Graphic (strictly no promotional buzzwords, ranking, or pricing)\n• 4 Phone Screenshots (1080×1920) showcasing real user journeys\n• Compliant Title (<= 30 chars) and Short Description (<= 80 chars)\n• Google Play Compliant Privacy Policy URL (hosted and offline in-app)\n• One-click export to phone gallery or native share sheet.",
                             fontSize = 12.sp,
                             lineHeight = 18.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant

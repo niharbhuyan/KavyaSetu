@@ -2,6 +2,8 @@ package com.example.ui.components
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
@@ -10,6 +12,7 @@ import android.graphics.Typeface
 import android.graphics.pdf.PdfDocument
 import android.net.Uri
 import androidx.core.content.FileProvider
+import com.example.R
 import com.example.data.model.DiwanConfig
 import com.example.data.model.DiwanCoverStyle
 import com.example.data.model.Shayari
@@ -37,7 +40,7 @@ object DiwanPdfGenerator {
             // 1. Title / Cover Page
             val coverPageInfo = PdfDocument.PageInfo.Builder(pageWidth, pageHeight, pageNumber++).create()
             val coverPage = pdfDoc.startPage(coverPageInfo)
-            drawCoverPage(coverPage.canvas, pageWidth, pageHeight, config)
+            drawCoverPage(context, coverPage.canvas, pageWidth, pageHeight, config)
             pdfDoc.finishPage(coverPage)
 
             // 2. Dedication Page
@@ -54,6 +57,7 @@ object DiwanPdfGenerator {
                 val versePageInfo = PdfDocument.PageInfo.Builder(pageWidth, pageHeight, pageNumber++).create()
                 val versePage = pdfDoc.startPage(versePageInfo)
                 drawCoupletsPage(
+                    context = context,
                     canvas = versePage.canvas,
                     w = pageWidth,
                     h = pageHeight,
@@ -83,7 +87,7 @@ object DiwanPdfGenerator {
         }
     }
 
-    private fun drawCoverPage(canvas: Canvas, w: Int, h: Int, config: DiwanConfig) {
+    private fun drawCoverPage(context: Context, canvas: Canvas, w: Int, h: Int, config: DiwanConfig) {
         val bgPaint = Paint().apply {
             color = when (config.coverStyle) {
                 DiwanCoverStyle.ROYAL_VELVET -> Color.rgb(42, 16, 23)
@@ -172,8 +176,27 @@ object DiwanPdfGenerator {
         }
 
         val dateStr = SimpleDateFormat("MMMM yyyy", Locale.getDefault()).format(Date())
-        canvas.drawText("Diwan Collection • Published $dateStr", w / 2f, h - 70f, footerPaint)
-        canvas.drawText("Created with Kavya Setu • काव्यसेतु • କାବ୍ୟସେତୁ", w / 2f, h - 50f, footerPaint)
+        canvas.drawText("Diwan Collection • Published $dateStr", w / 2f, h - 86f, footerPaint)
+
+        // Draw App Logo and Name Watermark on Cover
+        try {
+            val logoBmp = BitmapFactory.decodeResource(context.resources, R.drawable.app_logo)
+            if (logoBmp != null) {
+                val logoSize = 28
+                val scaled = Bitmap.createScaledBitmap(logoBmp, logoSize, logoSize, true)
+                canvas.drawBitmap(scaled, (w / 2f) - (logoSize / 2f), h - 68f, null)
+            }
+        } catch (ignored: Exception) {}
+
+        val watermarkPaint = Paint().apply {
+            color = accentColor
+            alpha = 230
+            textSize = 10.5f
+            typeface = Typeface.create(Typeface.SERIF, Typeface.BOLD)
+            textAlign = Paint.Align.CENTER
+            isAntiAlias = true
+        }
+        canvas.drawText("Kavya Setu • काव्यसेतु • କାବ୍ୟସେତୁ (Built by Nihar Sales)", w / 2f, h - 28f, watermarkPaint)
     }
 
     private fun drawDedicationPage(canvas: Canvas, w: Int, h: Int, config: DiwanConfig) {
@@ -218,6 +241,7 @@ object DiwanPdfGenerator {
     }
 
     private fun drawCoupletsPage(
+        context: Context,
         canvas: Canvas,
         w: Int,
         h: Int,
@@ -245,6 +269,25 @@ object DiwanPdfGenerator {
             isAntiAlias = true
         }
         canvas.drawText(config.bookTitle.uppercase(), 44f, 50f, headerPaint)
+
+        // Watermark on page bottom
+        val watermarkPaint = Paint().apply {
+            color = Color.rgb(160, 130, 85)
+            textSize = 8.5f
+            typeface = Typeface.create(Typeface.SERIF, Typeface.NORMAL)
+            isAntiAlias = true
+        }
+        canvas.drawText("Kavya Setu • काव्यसेतु (Built by Nihar Sales)", 44f, h - 45f, watermarkPaint)
+
+        // Draw small app logo next to watermark text
+        try {
+            val logoBmp = BitmapFactory.decodeResource(context.resources, R.drawable.app_logo)
+            if (logoBmp != null) {
+                val logoSize = 14
+                val scaled = Bitmap.createScaledBitmap(logoBmp, logoSize, logoSize, true)
+                canvas.drawBitmap(scaled, 235f, h - 56f, null)
+            }
+        } catch (ignored: Exception) {}
 
         val pageNumPaint = Paint().apply {
             color = Color.rgb(150, 120, 80)
@@ -348,7 +391,7 @@ object DiwanPdfGenerator {
                 type = "application/pdf"
                 putExtra(Intent.EXTRA_STREAM, uri)
                 putExtra(Intent.EXTRA_SUBJECT, "Diwan Poetry Book: ${pdfFile.nameWithoutExtension}")
-                putExtra(Intent.EXTRA_TEXT, "Here is a published poetry Diwan compiled with Kavya Setu.")
+                putExtra(Intent.EXTRA_TEXT, "📖 Published Poetry Diwan compiled with Kavya Setu • काव्यसेतु • କାବ୍ୟସେତୁ (Built by Nihar Sales).\n#KavyaSetu #Diwan #PoetryCollection")
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
             context.startActivity(Intent.createChooser(intent, "Share Poetry Diwan (PDF)"))

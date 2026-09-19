@@ -15,16 +15,16 @@
                 android:endX="108"
                 android:endY="108"
                 android:type="linear">
-                <item android:color="#240D36" android:offset="0.0" />
-                <item android:color="#461131" android:offset="0.5" />
-                <item android:color="#1A0B2E" android:offset="1.0" />
+                <item android:color="#180829" android:offset="0.0" />
+                <item android:color="#260C38" android:offset="0.5" />
+                <item android:color="#140624" android:offset="1.0" />
             </gradient>
         </aapt:attr>
     </path>
     <!-- Subtle golden circular decorative rim -->
     <path
-        android:strokeColor="#33FFD700"
-        android:strokeWidth="1.5"
+        android:strokeColor="#40FFD700"
+        android:strokeWidth="1.2"
         android:fillColor="#00000000"
-        android:pathData="M54,22 A32,32 0 1 0 54,86 A32,32 0 1 0 54,22" />
+        android:pathData="M54,20 A34,34 0 1 0 54,88 A34,34 0 1 0 54,20" />
 </vector>

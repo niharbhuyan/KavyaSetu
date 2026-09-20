@@ -102,6 +102,7 @@ import androidx.compose.material.icons.filled.Casino
 import com.example.ui.theme.AntiqueGold
 import com.example.ui.theme.DeepMidnight
 import com.example.ui.theme.VelvetRose
+import com.example.ads.AdMobBanner
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)

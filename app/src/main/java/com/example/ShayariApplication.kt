@@ -24,6 +24,7 @@ class ShayariApplication : Application() {
         DailyNotificationManager.createNotificationChannel(this)
         DailyNotificationManager.scheduleDailyMorningAlarm(this)
         com.example.widget.ShayariDailyWidgetProvider.schedule24HourUpdate(this)
+        com.example.ads.AdMobManager.initialize(this)
 
         database = AppDatabase.getDatabase(this)
         firebaseService = FirebaseService()

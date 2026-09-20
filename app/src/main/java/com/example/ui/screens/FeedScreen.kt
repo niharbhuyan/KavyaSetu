@@ -20,6 +20,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import com.example.ads.AdMobBanner
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -729,31 +731,42 @@ fun FeedScreen(
             }
         }
 
-        // Shayaris List
-        items(
+        // Shayaris List with AdMob Banners
+        itemsIndexed(
             items = shayaris,
-            key = { it.id }
-        ) { shayari ->
-            ShayariCard(
-                shayari = shayari,
-                onLikeClick = { viewModel.toggleLike(shayari) },
-                onSaveClick = { viewModel.toggleSave(shayari) },
-                onDownloadClick = { viewModel.toggleDownload(shayari) },
-                onCardClick = { viewModel.openShayariDetail(shayari) },
-                onReciteClick = { lines, lang ->
-                    audioReciter.speak(lines, lang)
-                },
-                onOpenCardStudio = { cardStudioShayari = it },
-                onOpenMushairaStudio = { mushairaStudioShayari = it },
-                poetryFontSizeSp = poetryFontSizeSp,
-                poetryLineHeightMult = poetryLineHeightMult,
-                poetryFontFamilyType = poetryFontFamilyType,
-                onEditCategoryClick = { categorizeShayari = it },
-                onAnalyzeWithGemini = {
-                    viewModel.analyzeWithHighThinking(it.lines, it.language)
-                    onNavigateToAiStudio()
+            key = { _, item -> item.id }
+        ) { index, shayari ->
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                ShayariCard(
+                    shayari = shayari,
+                    onLikeClick = { viewModel.toggleLike(shayari) },
+                    onSaveClick = { viewModel.toggleSave(shayari) },
+                    onDownloadClick = { viewModel.toggleDownload(shayari) },
+                    onCardClick = { viewModel.openShayariDetail(shayari) },
+                    onReciteClick = { lines, lang ->
+                        audioReciter.speak(lines, lang)
+                    },
+                    onOpenCardStudio = { cardStudioShayari = it },
+                    onOpenMushairaStudio = { mushairaStudioShayari = it },
+                    poetryFontSizeSp = poetryFontSizeSp,
+                    poetryLineHeightMult = poetryLineHeightMult,
+                    poetryFontFamilyType = poetryFontFamilyType,
+                    onEditCategoryClick = { categorizeShayari = it },
+                    onAnalyzeWithGemini = {
+                        viewModel.analyzeWithHighThinking(it.lines, it.language)
+                        onNavigateToAiStudio()
+                    }
+                )
+
+                // Inline AdMob Banner every 4 cards
+                if (index > 0 && (index + 1) % 4 == 0) {
+                    AdMobBanner(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp)
+                    )
                 }
-            )
+            }
         }
 
         item {

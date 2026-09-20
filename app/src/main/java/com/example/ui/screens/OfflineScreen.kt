@@ -20,6 +20,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import com.example.ads.AdMobBanner
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -832,7 +834,7 @@ fun OfflineScreen(
                 }
             }
         } else {
-            items(filteredList, key = { it.id }) { shayari ->
+            itemsIndexed(filteredList, key = { _, it -> it.id }) { index, shayari ->
                 val isCurrentBookmark = readingProgress.lastReadPoemId == shayari.id
                 Column(modifier = Modifier.fillMaxWidth()) {
                     if (isCurrentBookmark) {
@@ -915,6 +917,13 @@ fun OfflineScreen(
                                 color = AntiqueGold
                             )
                         }
+                    }
+
+                    // Inline AdMob Banner every 4 cards
+                    if (index > 0 && (index + 1) % 4 == 0) {
+                        Spacer(modifier = Modifier.height(10.dp))
+                        AdMobBanner(modifier = Modifier.fillMaxWidth())
+                        Spacer(modifier = Modifier.height(6.dp))
                     }
                 }
             }

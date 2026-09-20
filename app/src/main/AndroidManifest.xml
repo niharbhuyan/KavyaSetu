@@ -18,6 +18,12 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.MyApplication">
+
+        <!-- Google AdMob / AdSense Application ID -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-4880243637225183~0000000000" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

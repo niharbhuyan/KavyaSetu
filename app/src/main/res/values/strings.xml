@@ -4,4 +4,9 @@
     <string name="widget_name">Daily Pick</string>
     <string name="widget_description">Displays a featured poem from the collection, updating once every 24 hours.</string>
     <string name="widget_header_title">✨ Daily Pick</string>
+    <string name="admob_app_id">ca-app-pub-4880243637225183~0000000000</string>
+    <string name="admob_banner_id">ca-app-pub-4880243637225183/8892147365</string>
+    <!-- Fallback Firebase configuration placeholders to silence missing google_app_id in emulator -->
+    <string name="google_app_id" translatable="false">1:613265325843:android:kavyasetu2026fallback</string>
+    <string name="gcm_defaultSenderId" translatable="false">613265325843</string>
 </resources>

@@ -283,6 +283,12 @@ fun AiStudioScreen(
                 3 -> ImageGeneratorTab()
                 4 -> MeterTutorTab(audioReciter)
             }
+            Spacer(modifier = Modifier.height(16.dp))
+            AdMobBanner(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp)
+            )
             Spacer(modifier = Modifier.height(50.dp))
         }
     }

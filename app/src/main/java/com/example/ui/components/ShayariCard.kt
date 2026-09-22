@@ -57,6 +57,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -101,6 +102,7 @@ fun ShayariCard(
 ) {
     val context = LocalContext.current
     var showTranslations by remember { mutableStateOf(false) }
+    var showShareDialog by remember { mutableStateOf(false) }
     val emotion = Emotion.fromCode(shayari.emotion)
     val lang = Language.fromCode(shayari.language)
     val category = shayari.getCategoryEnum()
@@ -269,12 +271,31 @@ fun ShayariCard(
                     .testTag("shayari_lines_text")
             )
 
-            // Author & Pen Name Signature
+            // Author & Pen Name Signature with Takhallus Seal
+            val userSeal by com.example.data.local.TakhallusSealManager.currentSeal.collectAsState()
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                if (shayari.author.equals("You", ignoreCase = true) || shayari.penName.isNotBlank()) {
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = Color(userSeal.inkColorHex).copy(alpha = 0.18f),
+                        border = BorderStroke(1.dp, Color(userSeal.inkColorHex).copy(alpha = 0.6f)),
+                        modifier = Modifier.padding(end = 8.dp)
+                    ) {
+                        Text(
+                            text = "🪶 ${userSeal.takhallus.ifBlank { "شاعر" }}",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(userSeal.inkColorHex),
+                            modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp)
+                        )
+                    }
+                }
+
                 Text(
                     text = "— ${shayari.author}${if (shayari.penName.isNotBlank()) " '${shayari.penName}'" else ""}",
                     style = MaterialTheme.typography.titleMedium.copy(
@@ -557,11 +578,9 @@ fun ShayariCard(
                     )
                 }
 
-                // Direct Social Share Intent
+                // Direct Social Share Intent with Format Selector
                 IconButton(
-                    onClick = {
-                        SocialShareHelper.sharePoem(context, shayari)
-                    },
+                    onClick = { showShareDialog = true },
                     modifier = Modifier.testTag("share_button_${shayari.id}")
                 ) {
                     Icon(
@@ -572,5 +591,17 @@ fun ShayariCard(
                 }
             }
         }
+    }
+
+    if (showShareDialog) {
+        FormattedSocialShareDialog(
+            lines = shayari.lines,
+            author = shayari.author,
+            language = shayari.language,
+            emotion = shayari.emotion,
+            style = shayari.category,
+            penName = shayari.penName,
+            onDismiss = { showShareDialog = false }
+        )
     }
 }

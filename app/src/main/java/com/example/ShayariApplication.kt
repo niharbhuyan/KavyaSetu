@@ -24,7 +24,14 @@ class ShayariApplication : Application() {
         DailyNotificationManager.createNotificationChannel(this)
         DailyNotificationManager.scheduleDailyMorningAlarm(this)
         com.example.widget.ShayariDailyWidgetProvider.schedule24HourUpdate(this)
+        com.example.sync.HourlySyncManager.scheduleHourlySync(this)
         com.example.ads.AdMobManager.initialize(this)
+
+        // Initialize feature managers
+        com.example.data.local.TakhallusSealManager.initialize(this)
+        com.example.data.local.TarhiMushairaManager.initialize(this)
+        com.example.data.local.RiyazJournalManager.initialize(this)
+        com.example.data.local.RaatMehfilManager.initialize(this)
 
         database = AppDatabase.getDatabase(this)
         firebaseService = FirebaseService()

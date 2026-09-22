@@ -804,6 +804,7 @@ fun AccountPreferencesSection(
     fontFamily: String,
     onUpdateTypography: (Float, Float, String) -> Unit,
     fcmToken: String?,
+    onTriggerHourlySync: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -815,6 +816,81 @@ fun AccountPreferencesSection(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        // Hourly Auto-Sync & Background Refresh Card
+        Card(
+            shape = RoundedCornerShape(22.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            border = BorderStroke(1.dp, AntiqueGold.copy(alpha = 0.35f))
+        ) {
+            Column(modifier = Modifier.padding(20.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Surface(
+                            shape = CircleShape,
+                            color = AntiqueGold.copy(alpha = 0.2f),
+                            modifier = Modifier.size(42.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = Icons.Default.AutoAwesome,
+                                    contentDescription = null,
+                                    tint = AntiqueGold,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+                        }
+                        Column {
+                            Text(
+                                text = "Hourly Auto-Refresh & Sync",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "Active • Rotates picks & refreshes every 60 min",
+                                fontSize = 12.sp,
+                                color = Color(0xFF81C784)
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Text(
+                    text = "Kavya Setu automatically recalculates trending poetry, rotates featured couplets, syncs community verses from Firestore, and updates your homescreen widget on an hourly schedule.",
+                    fontSize = 13.sp,
+                    lineHeight = 19.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                Button(
+                    onClick = {
+                        onTriggerHourlySync?.invoke()
+                        Toast.makeText(context, "Executed immediate auto-sync & hourly refresh! ⚡", Toast.LENGTH_SHORT).show()
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = AntiqueGold.copy(alpha = 0.25f),
+                        contentColor = AntiqueGold
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth().testTag("trigger_hourly_sync_button")
+                ) {
+                    Icon(Icons.Default.AutoAwesome, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Sync & Refresh Now (Manual Trigger)", fontWeight = FontWeight.Bold)
+                }
+            }
+        }
         // FCM Push Notification Preference Card
         Card(
             shape = RoundedCornerShape(22.dp),

@@ -252,6 +252,12 @@ class MainViewModel(private val repository: ShayariRepository) : ViewModel() {
         }
     }
 
+    fun triggerHourlySyncNow(context: Context) {
+        viewModelScope.launch {
+            com.example.sync.HourlySyncManager.performSync(context)
+        }
+    }
+
     fun pinHomescreenWidget(context: Context, onResult: (Boolean) -> Unit) {
         com.example.widget.ShayariDailyWidgetProvider.pinWidgetToHomeScreen(context, onResult)
     }

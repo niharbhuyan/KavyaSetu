@@ -1072,7 +1072,10 @@ fun ProfileScreen(
                     onUpdateTypography = { size, lh, fam ->
                         viewModel.updatePoetryDisplaySettings(context, size, lh, fam)
                     },
-                    fcmToken = fcmToken
+                    fcmToken = fcmToken,
+                    onTriggerHourlySync = {
+                        viewModel.triggerHourlySyncNow(context)
+                    }
                 )
             }
 

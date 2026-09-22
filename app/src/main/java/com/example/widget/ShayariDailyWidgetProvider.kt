@@ -61,21 +61,12 @@ class ShayariDailyWidgetProvider : AppWidgetProvider() {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
 
-            // Schedule for the next calendar midnight (24-hour cycle)
-            val calendar = Calendar.getInstance().apply {
-                timeInMillis = System.currentTimeMillis()
-                set(Calendar.HOUR_OF_DAY, 0)
-                set(Calendar.MINUTE, 0)
-                set(Calendar.SECOND, 0)
-                set(Calendar.MILLISECOND, 0)
-                add(Calendar.DAY_OF_YEAR, 1)
-            }
-
             try {
+                // Schedule repeating hourly refresh for dynamic poetry rotation and freshness
                 alarmManager.setInexactRepeating(
-                    AlarmManager.RTC,
-                    calendar.timeInMillis,
-                    AlarmManager.INTERVAL_DAY,
+                    AlarmManager.ELAPSED_REALTIME,
+                    android.os.SystemClock.elapsedRealtime() + AlarmManager.INTERVAL_HOUR,
+                    AlarmManager.INTERVAL_HOUR,
                     pendingIntent
                 )
             } catch (_: Exception) {

@@ -118,6 +118,8 @@ fun AiStudioScreen(
     var showSherBaaziDialog by remember { mutableStateOf(false) }
     var showKalamEUstaad by remember { mutableStateOf(false) }
     var showLafzOMaani by remember { mutableStateOf(false) }
+    var showTarhiMushaira by remember { mutableStateOf(false) }
+    var showRiyazJournal by remember { mutableStateOf(false) }
     val allShayaris by viewModel.allShayaris.collectAsStateWithLifecycle()
 
     val tabs = listOf("Compose (Flash)", "High Thinking (Pro)", "Rhymes (Lite)", "Card Art (3 Pro)", "Meter & Beher")
@@ -143,6 +145,19 @@ fun AiStudioScreen(
         LafzOMaaniDialog(
             audioReciter = audioReciter,
             onDismiss = { showLafzOMaani = false }
+        )
+    }
+
+    if (showTarhiMushaira) {
+        com.example.ui.components.TarhiMushairaDialog(
+            audioReciter = audioReciter,
+            onDismiss = { showTarhiMushaira = false }
+        )
+    }
+
+    if (showRiyazJournal) {
+        com.example.ui.components.RiyazJournalDialog(
+            onDismiss = { showRiyazJournal = false }
         )
     }
 
@@ -269,6 +284,58 @@ fun AiStudioScreen(
             }
         }
 
+        // Row 2: Daily Tarhi Mushaira Challenge & Personal Riyaz Journal
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Surface(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable { showTarhiMushaira = true }
+                    .testTag("ai_studio_tarhi_mushaira_btn"),
+                color = Color(0xFF1F1A2E),
+                border = BorderStroke(1.dp, AntiqueGold.copy(alpha = 0.6f))
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text("🎯", fontSize = 16.sp)
+                    Column {
+                        Text("Tarhi Mushaira", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = AntiqueGold)
+                        Text("Daily Verse Challenge", fontSize = 9.sp, color = Color.LightGray)
+                    }
+                }
+            }
+
+            Surface(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable { showRiyazJournal = true }
+                    .testTag("ai_studio_riyaz_btn"),
+                color = Color(0xFF281C15),
+                border = BorderStroke(1.dp, Color(0xFFD4A373).copy(alpha = 0.6f))
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text("📓", fontSize = 16.sp)
+                    Column {
+                        Text("Personal Riyaz", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFFE8C88B))
+                        Text("Qafiya Finder & Drafts", fontSize = 9.sp, color = Color.LightGray)
+                    }
+                }
+            }
+        }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -306,6 +373,7 @@ private fun ComposeTab(viewModel: MainViewModel, audioReciter: AudioReciter) {
     var inlineSelectedMood by remember { mutableStateOf<PromptMood?>(null) }
     var activePromptTitle by remember { mutableStateOf<String?>(null) }
     var showIslahForComposed by remember { mutableStateOf(false) }
+    var showShareDialog by remember { mutableStateOf(false) }
 
     val isComposing by viewModel.isComposing.collectAsStateWithLifecycle()
     val resultText by viewModel.composedResult.collectAsStateWithLifecycle()
@@ -603,19 +671,10 @@ private fun ComposeTab(viewModel: MainViewModel, audioReciter: AudioReciter) {
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         IconButton(
-                            onClick = {
-                                SocialShareHelper.shareGeminiShayari(
-                                    context = context,
-                                    lines = resultText!!,
-                                    emotion = selectedEmotion,
-                                    language = selectedLang,
-                                    author = penName,
-                                    topic = topic
-                                )
-                            },
+                            onClick = { showShareDialog = true },
                             modifier = Modifier.testTag("ai_share_icon_button")
                         ) {
-                            Icon(Icons.Default.Share, contentDescription = "Share Couplet to Social Media", tint = AntiqueGold)
+                            Icon(Icons.Default.Share, contentDescription = "Export Formatted Couplet to Social Media", tint = AntiqueGold)
                         }
                         IconButton(onClick = { audioReciter.speak(resultText!!, selectedLang) }) {
                             Icon(Icons.Default.VolumeUp, contentDescription = "Recite", tint = AntiqueGold)
@@ -655,16 +714,7 @@ private fun ComposeTab(viewModel: MainViewModel, audioReciter: AudioReciter) {
                     }
 
                     Button(
-                        onClick = {
-                            SocialShareHelper.shareGeminiShayari(
-                                context = context,
-                                lines = resultText!!,
-                                emotion = selectedEmotion,
-                                language = selectedLang,
-                                author = penName,
-                                topic = topic
-                            )
-                        },
+                        onClick = { showShareDialog = true },
                         colors = ButtonDefaults.buttonColors(containerColor = AntiqueGold, contentColor = DeepMidnight),
                         modifier = Modifier.weight(1.1f).testTag("ai_share_button")
                     ) {
@@ -704,6 +754,19 @@ private fun ComposeTab(viewModel: MainViewModel, audioReciter: AudioReciter) {
                 }
             }
         }
+    }
+
+    if (showShareDialog && resultText != null) {
+        com.example.ui.components.FormattedSocialShareDialog(
+            lines = resultText!!,
+            author = penName.ifBlank { "You" },
+            language = selectedLang,
+            emotion = selectedEmotion,
+            style = selectedStyle.displayName,
+            topic = topic.ifBlank { null },
+            penName = penName.ifBlank { null },
+            onDismiss = { showShareDialog = false }
+        )
     }
 
     if (showIslahForComposed && resultText != null) {
@@ -1219,7 +1282,7 @@ private fun MeterTutorTab(audioReciter: AudioReciter) {
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Identified Meter Tag
+            // Identified Meter Tag with Ilm-e-Arooz Classical Feet (Afail/Arkan)
             Surface(
                 shape = RoundedCornerShape(12.dp),
                 color = AntiqueGold.copy(alpha = 0.12f),
@@ -1228,7 +1291,7 @@ private fun MeterTutorTab(audioReciter: AudioReciter) {
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     Text(
-                        text = "Identified Meter / Beher:",
+                        text = "Ilm-e-Arooz (علمِ عروض) Classical Beher:",
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -1237,6 +1300,13 @@ private fun MeterTutorTab(audioReciter: AudioReciter) {
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         color = AntiqueGold
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Standard Afail (أفاعيل): فاعِلاتُن فَعِلاتُن فَعِلاتُن فَعِلُن • Fa'ilatun Fa'ilatun",
+                        fontSize = 10.5.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = VelvetRose
                     )
                 }
             }
@@ -1354,6 +1424,37 @@ private fun MeterTutorTab(audioReciter: AudioReciter) {
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(top = 2.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Ilm-e-Arooz Classical Bahoor Reference Table
+            Card(
+                shape = RoundedCornerShape(14.dp),
+                colors = CardDefaults.cardColors(containerColor = DeepMidnight),
+                border = BorderStroke(1.dp, AntiqueGold.copy(alpha = 0.4f)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(14.dp)) {
+                    Text(
+                        text = "📖 Ilm-e-Arooz Classical Bahoor (علمِ عروض بحور)",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp,
+                        color = AntiqueGold
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "1. Bahr-e-Hazaj (بحرِ ہَزَج): مفاعیلن مفاعیلن مفاعیلن مفاعیلن (U - - -)\n" +
+                                "2. Bahr-e-Ramal (بحرِ رَمَل): فاعلاتن فاعلاتن فاعلاتن فاعلاتن (- U - -)\n" +
+                                "3. Bahr-e-Rajaz (بحرِ رَجَز): مستفعلن مستفعلن مستفعلن مستفعلن (- - U -)\n" +
+                                "4. Bahr-e-Mutaqaarib (بحرِ مُتقارب): فعولن فعولن فعولن فعولن (U - -)\n" +
+                                "5. Bahr-e-Kamil (بحرِ کامِل): متفاعلن متفاعلن متفاعلن متفاعلن (UU - U -)",
+                        fontSize = 11.sp,
+                        lineHeight = 18.sp,
+                        fontFamily = FontFamily.Serif,
+                        color = Color.LightGray
                     )
                 }
             }

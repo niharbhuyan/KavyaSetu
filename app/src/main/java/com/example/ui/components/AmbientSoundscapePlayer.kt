@@ -25,6 +25,7 @@ enum class AmbientSoundPreset(
     TANPURA("Tanpura Drone", "तानपूरा", "🪕", "Resonant Sa-Pa classical drone"),
     MONSOON_RAIN("Monsoon Rain", "बरसात", "🌧️", "Gentle rhythmic monsoon droplets"),
     NIGHT_WHISPERS("Night Whispers", "रात की हवा", "🌙", "Nocturnal harmonic breeze"),
+    NIGHT_CRICKETS("Night Crickets", "झिंगुर की आवाज़", "🦗", "Atmospheric nocturnal crickets with soothing drone"),
     TEMPLE_BELL("Singing Bowl", "घंटी ध्वनि", "🔔", "Meditative harmonic bells")
 }
 
@@ -131,6 +132,15 @@ class AmbientSoundscapePlayer {
                             val breezeLfo = 0.5 + 0.5 * sin(phase1 * 0.005)
                             val tone = sin(phase1) * 0.4 + sin(phase2) * 0.3
                             tone * breezeLfo * 0.6
+                        }
+                        AmbientSoundPreset.NIGHT_CRICKETS -> {
+                            // Chirping rhythm modulation
+                            val chirpEnvelope = if ((phase1.toInt() % 180) < 45) {
+                                sin(phase1 * 0.4).coerceAtLeast(0.0)
+                            } else 0.0
+                            val cricketChirp = sin(phase1 * 14.0) * chirpEnvelope * 0.35
+                            val backgroundDrone = sin(phase2 * 0.5) * 0.15
+                            (cricketChirp + backgroundDrone) * 0.6
                         }
                         AmbientSoundPreset.TEMPLE_BELL -> {
                             bellEnvelope *= 0.99992

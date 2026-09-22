@@ -8,6 +8,8 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
@@ -55,17 +57,31 @@ fun ShayariTheme(
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit,
 ) {
-    val colorScheme = when {
+    val raatMehfilConfig by com.example.data.local.RaatMehfilManager.themeConfig.collectAsState()
+    val isNocturnal = darkTheme || raatMehfilConfig.isNightModeForced || raatMehfilConfig.midnightHourActive
+
+    val baseScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+            if (isNocturnal) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-        darkTheme -> DarkColorScheme
+        isNocturnal -> DarkColorScheme
         else -> LightColorScheme
     }
 
+    val finalColorScheme = if (raatMehfilConfig.amberCandleGlow) {
+        baseScheme.copy(
+            primary = Color(0xFFF3D279),
+            background = Color(0xFF140F0A),
+            surface = Color(0xFF1E1712),
+            surfaceVariant = Color(0xFF2B2019)
+        )
+    } else {
+        baseScheme
+    }
+
     MaterialTheme(
-        colorScheme = colorScheme,
+        colorScheme = finalColorScheme,
         typography = Typography,
         content = content
     )

@@ -120,6 +120,11 @@ fun FeedScreen(
     var showCalligraphy by remember { mutableStateOf(false) }
     var showLafzOMaani by remember { mutableStateOf(false) }
     var showDiwanPublisher by remember { mutableStateOf(false) }
+    var showTarhiMushaira by remember { mutableStateOf(false) }
+    var showTakhallusStudio by remember { mutableStateOf(false) }
+    var showRiyazJournal by remember { mutableStateOf(false) }
+    var showRaatMehfil by remember { mutableStateOf(false) }
+    var showDastaangoi by remember { mutableStateOf(false) }
 
     val isOfflineSimulated by viewModel.isOfflineSimulated.collectAsStateWithLifecycle()
 
@@ -196,6 +201,41 @@ fun FeedScreen(
             shayari = mushairaStudioShayari!!,
             ambientPlayer = ambientPlayer,
             onDismiss = { mushairaStudioShayari = null }
+        )
+    }
+
+    if (showTarhiMushaira) {
+        com.example.ui.components.TarhiMushairaDialog(
+            audioReciter = audioReciter,
+            onDismiss = { showTarhiMushaira = false }
+        )
+    }
+
+    if (showTakhallusStudio) {
+        com.example.ui.components.TakhallusStudioDialog(
+            onDismiss = { showTakhallusStudio = false }
+        )
+    }
+
+    if (showRiyazJournal) {
+        com.example.ui.components.RiyazJournalDialog(
+            onDismiss = { showRiyazJournal = false }
+        )
+    }
+
+    if (showRaatMehfil) {
+        com.example.ui.components.RaatMehfilDialog(
+            ambientPlayer = ambientPlayer,
+            onDismiss = { showRaatMehfil = false }
+        )
+    }
+
+    if (showDastaangoi) {
+        com.example.ui.components.DastaangoiMehfilDialog(
+            allShayaris = shayaris,
+            audioReciter = audioReciter,
+            ambientPlayer = ambientPlayer,
+            onDismiss = { showDastaangoi = false }
         )
     }
 
@@ -638,6 +678,106 @@ fun FeedScreen(
                                 Spacer(modifier = Modifier.height(6.dp))
                                 Text("Diwan Publisher", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = VelvetRose)
                                 Text("Publish & export illustrated PDF e-book", fontSize = 10.sp, color = Color.LightGray, lineHeight = 13.sp)
+                            }
+                        }
+                    }
+
+                    // 7. Tarhi Mushaira (Daily Verse Challenge)
+                    item {
+                        Card(
+                            modifier = Modifier
+                                .width(155.dp)
+                                .clickable { showTarhiMushaira = true }
+                                .testTag("hub_tarhi_mushaira_card"),
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFF1F1A2E)),
+                            shape = RoundedCornerShape(14.dp),
+                            border = BorderStroke(1.dp, AntiqueGold.copy(alpha = 0.6f))
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Text("🎯", fontSize = 22.sp)
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text("Tarhi Mushaira", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = AntiqueGold)
+                                Text("Daily classical hemistich challenge", fontSize = 10.sp, color = Color.LightGray, lineHeight = 13.sp)
+                            }
+                        }
+                    }
+
+                    // 8. Takhallus Studio (Digital Seal / Mohar)
+                    item {
+                        Card(
+                            modifier = Modifier
+                                .width(155.dp)
+                                .clickable { showTakhallusStudio = true }
+                                .testTag("hub_takhallus_studio_card"),
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFF2A1F18)),
+                            shape = RoundedCornerShape(14.dp),
+                            border = BorderStroke(1.dp, Color(0xFFE8C88B).copy(alpha = 0.6f))
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Text("🪶", fontSize = 22.sp)
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text("Takhallus Studio", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color(0xFFE8C88B))
+                                Text("Design personal digital poet seal", fontSize = 10.sp, color = Color.LightGray, lineHeight = 13.sp)
+                            }
+                        }
+                    }
+
+                    // 9. Personal Riyaz (Rhyme Finder & Drafts)
+                    item {
+                        Card(
+                            modifier = Modifier
+                                .width(155.dp)
+                                .clickable { showRiyazJournal = true }
+                                .testTag("hub_riyaz_journal_card"),
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFF1B2421)),
+                            shape = RoundedCornerShape(14.dp),
+                            border = BorderStroke(1.dp, Color(0xFF57CC99).copy(alpha = 0.5f))
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Text("📓", fontSize = 22.sp)
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text("Personal Riyaz", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color(0xFF57CC99))
+                                Text("Qafiya dictionary & poetry drafts", fontSize = 10.sp, color = Color.LightGray, lineHeight = 13.sp)
+                            }
+                        }
+                    }
+
+                    // 10. Raat Ki Mehfil (Night Owl Mode)
+                    item {
+                        Card(
+                            modifier = Modifier
+                                .width(155.dp)
+                                .clickable { showRaatMehfil = true }
+                                .testTag("hub_raat_mehfil_card"),
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A)),
+                            shape = RoundedCornerShape(14.dp),
+                            border = BorderStroke(1.dp, Color(0xFFF6D688).copy(alpha = 0.5f))
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Text("🕯️", fontSize = 22.sp)
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text("Raat Ki Mehfil", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color(0xFFF6D688))
+                                Text("Amber candle glow & night sanctuary", fontSize = 10.sp, color = Color.LightGray, lineHeight = 13.sp)
+                            }
+                        }
+                    }
+
+                    // 11. Dastaangoi (Live Audio Storytelling Theatre)
+                    item {
+                        Card(
+                            modifier = Modifier
+                                .width(155.dp)
+                                .clickable { showDastaangoi = true }
+                                .testTag("hub_dastaangoi_card"),
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFF2C1322)),
+                            shape = RoundedCornerShape(14.dp),
+                            border = BorderStroke(1.dp, AntiqueGold.copy(alpha = 0.6f))
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Text("🎙️", fontSize = 22.sp)
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text("Dastaangoi", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = AntiqueGold)
+                                Text("Live oral recitation & historical tales", fontSize = 10.sp, color = Color.LightGray, lineHeight = 13.sp)
                             }
                         }
                     }

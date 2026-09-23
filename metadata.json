@@ -1,6 +1,7 @@
 {
   "name": "Kavya Setu",
-  "description": "Kavya Setu - A multilingual poetry & shayari platform in Hindi, Odia, and English. Built by Nihar Sales. Features Gemini AI composition, prompt library, daily pick widget, and offline vault.",
+  "version": "v1.2.1",
+  "description": "Kavya Setu (v1.2.1) - A multilingual poetry & shayari platform in Hindi, Odia, and English. Built by Nihar Sales. Features Gemini AI composition, prompt library, daily pick widget, and offline vault.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

@@ -22,8 +22,8 @@ class AudioReciter(context: Context) : TextToSpeech.OnInitListener {
     fun speak(text: String, languageCode: String) {
         if (!isReady || tts == null) return
         val locale = when (languageCode.lowercase()) {
-            "hindi" -> Locale("hi", "IN")
-            "odia" -> Locale("or", "IN")
+            "hindi" -> Locale.forLanguageTag("hi-IN")
+            "odia" -> Locale.forLanguageTag("or-IN")
             else -> Locale.ENGLISH
         }
         val result = tts?.setLanguage(locale)

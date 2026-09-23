@@ -17,8 +17,8 @@ android {
     applicationId = "com.niharsales.kavyasetu"
     minSdk = 24
     targetSdk = 36
-    versionCode = 1
-    versionName = "1.0"
+    versionCode = 4
+    versionName = "v1.2.1"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
@@ -27,9 +27,9 @@ android {
     create("release") {
       val keystorePath = System.getenv("KEYSTORE_PATH") ?: "${rootDir}/my-upload-key.jks"
       storeFile = file(keystorePath)
-      storePassword = System.getenv("STORE_PASSWORD")
+      storePassword = System.getenv("STORE_PASSWORD") ?: "kavyasetu2026"
       keyAlias = "upload"
-      keyPassword = System.getenv("KEY_PASSWORD")
+      keyPassword = System.getenv("KEY_PASSWORD") ?: "kavyasetu2026"
     }
     create("debugConfig") {
       storeFile = file("${rootDir}/debug.keystore")
@@ -42,9 +42,13 @@ android {
   buildTypes {
     release {
       isCrunchPngs = false
-      isMinifyEnabled = false
+      isMinifyEnabled = true
+      isShrinkResources = true
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
       signingConfig = signingConfigs.getByName("release")
+      ndk {
+        debugSymbolLevel = "FULL"
+      }
     }
     debug { signingConfig = signingConfigs.getByName("debugConfig") }
   }

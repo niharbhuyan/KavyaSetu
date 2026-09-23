@@ -29,6 +29,7 @@ import kotlinx.coroutines.launch
  */
 class ShayariFirebaseMessagingService : FirebaseMessagingService() {
 
+    @Suppress("OVERRIDE_DEPRECATION", "DEPRECATION")
     override fun onNewToken(token: String) {
         super.onNewToken(token)
         Log.d(TAG, "New FCM Registration Token: $token")

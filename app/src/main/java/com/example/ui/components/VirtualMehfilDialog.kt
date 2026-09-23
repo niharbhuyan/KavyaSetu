@@ -107,7 +107,15 @@ fun VirtualMehfilDialog(
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
-    val vibrator = remember { context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator }
+    val vibrator = remember {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val vibratorManager = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? android.os.VibratorManager
+            vibratorManager?.defaultVibrator
+        } else {
+            @Suppress("DEPRECATION")
+            context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+        }
+    }
     val scope = rememberCoroutineScope()
 
     var currentVerseIndex by remember { mutableIntStateOf(0) }
@@ -165,6 +173,7 @@ fun VirtualMehfilDialog(
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 vibrator?.vibrate(VibrationEffect.createOneShot(45, VibrationEffect.DEFAULT_AMPLITUDE))
             } else {
+                @Suppress("DEPRECATION")
                 vibrator?.vibrate(45)
             }
         } catch (e: Exception) {

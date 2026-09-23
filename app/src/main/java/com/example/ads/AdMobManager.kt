@@ -1,7 +1,9 @@
 package com.example.ads
 
 import android.content.Context
+import android.os.Build
 import android.util.Log
+import android.view.View
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -26,6 +28,7 @@ import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.MobileAds
+import com.google.android.gms.ads.RequestConfiguration
 
 object AdMobManager {
     private const val TAG = "AdMobManager"
@@ -41,9 +44,27 @@ object AdMobManager {
 
     private var isInitialized = false
 
+    val isRunningInEmulator: Boolean by lazy {
+        Build.FINGERPRINT.startsWith("generic") ||
+            Build.FINGERPRINT.startsWith("unknown") ||
+            Build.MODEL.contains("google_sdk") ||
+            Build.MODEL.contains("Emulator") ||
+            Build.MODEL.contains("Android SDK built for x86") ||
+            Build.MANUFACTURER.contains("Genymotion") ||
+            Build.HARDWARE.contains("goldfish") ||
+            Build.HARDWARE.contains("ranchu") ||
+            Build.PRODUCT.contains("sdk") ||
+            Build.PRODUCT.contains("google_sdk")
+    }
+
     fun initialize(context: Context) {
         if (isInitialized) return
         try {
+            val requestConfig = RequestConfiguration.Builder()
+                .setTestDeviceIds(listOf(AdRequest.DEVICE_ID_EMULATOR))
+                .build()
+            MobileAds.setRequestConfiguration(requestConfig)
+
             MobileAds.initialize(context) { status ->
                 Log.d(TAG, "AdMob MobileAds initialized successfully: $status")
                 isInitialized = true
@@ -93,6 +114,11 @@ fun AdMobBanner(
                 AdView(context).apply {
                     setAdSize(AdSize.BANNER)
                     this.adUnitId = adUnitId
+                    // In emulators or container runtimes lacking hardware rendernodes,
+                    // software layer prevents Mesa from trying to open /dev/dri/renderD128
+                    if (AdMobManager.isRunningInEmulator) {
+                        setLayerType(View.LAYER_TYPE_SOFTWARE, null)
+                    }
                     adListener = object : AdListener() {
                         override fun onAdLoaded() {
                             Log.d("AdMobBanner", "Banner ad loaded successfully")

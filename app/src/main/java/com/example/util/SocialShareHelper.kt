@@ -425,7 +425,7 @@ object SocialShareHelper {
         penName: String? = null,
         id: String? = null
     ): String {
-        return buildCustomFormattedPoem(
+        val base = buildCustomFormattedPoem(
             lines = lines,
             author = author,
             penName = penName,
@@ -438,6 +438,11 @@ object SocialShareHelper {
             includeWatermark = true,
             includeMetadata = true
         )
+        return if (!id.isNullOrBlank()) {
+            "$base\n\n🔗 Read in App: shayari://detail?id=$id"
+        } else {
+            base
+        }
     }
 
     /**
@@ -450,7 +455,7 @@ object SocialShareHelper {
         author: String = "AI Poet",
         topic: String = ""
     ): String {
-        return buildCustomFormattedPoem(
+        val base = buildCustomFormattedPoem(
             lines = lines,
             author = author.ifBlank { "AI Poet" },
             language = language,
@@ -462,6 +467,11 @@ object SocialShareHelper {
             includeWatermark = true,
             includeMetadata = true
         )
+        return buildString {
+            append(base)
+            append("\n\n🤖 Composed with Gemini AI on Kavya Setu\n")
+            append("#GeminiAI #AIShayari")
+        }.trim()
     }
 }
 

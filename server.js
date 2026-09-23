@@ -32,6 +32,27 @@ const server = http.createServer((req, res) => {
   }
 
   let reqPath = decodeURIComponent(req.url.split('?')[0]);
+  
+  // Dedicated fast-path for Google AdMob app-ads.txt and ads.txt verification
+  const normalizedPath = reqPath.toLowerCase().replace(/\/+$/, '');
+  if (normalizedPath === '/app-ads.txt' || normalizedPath === '/ads.txt') {
+    const appAdsContent = 'google.com, pub-4880243637225183, DIRECT, f08c47fec0942fa0\n';
+    res.writeHead(200, {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'Content-Length': Buffer.byteLength(appAdsContent, 'utf8'),
+      'Cache-Control': 'public, max-age=3600',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
+      'X-Content-Type-Options': 'nosniff'
+    });
+    if (req.method === 'HEAD') {
+      res.end();
+      return;
+    }
+    res.end(appAdsContent);
+    return;
+  }
+
   if (reqPath === '/' || reqPath === '') {
     reqPath = '/index.html';
   }

@@ -47,14 +47,22 @@ object AdMobManager {
     val isRunningInEmulator: Boolean by lazy {
         Build.FINGERPRINT.startsWith("generic") ||
             Build.FINGERPRINT.startsWith("unknown") ||
-            Build.MODEL.contains("google_sdk") ||
-            Build.MODEL.contains("Emulator") ||
-            Build.MODEL.contains("Android SDK built for x86") ||
-            Build.MANUFACTURER.contains("Genymotion") ||
-            Build.HARDWARE.contains("goldfish") ||
-            Build.HARDWARE.contains("ranchu") ||
-            Build.PRODUCT.contains("sdk") ||
-            Build.PRODUCT.contains("google_sdk")
+            Build.MODEL.contains("google_sdk", ignoreCase = true) ||
+            Build.MODEL.contains("Emulator", ignoreCase = true) ||
+            Build.MODEL.contains("Android SDK built for x86", ignoreCase = true) ||
+            Build.MODEL.contains("Cuttlefish", ignoreCase = true) ||
+            Build.MANUFACTURER.contains("Genymotion", ignoreCase = true) ||
+            Build.HARDWARE.contains("goldfish", ignoreCase = true) ||
+            Build.HARDWARE.contains("ranchu", ignoreCase = true) ||
+            Build.HARDWARE.contains("cutf", ignoreCase = true) ||
+            Build.HARDWARE.contains("vsoc", ignoreCase = true) ||
+            Build.PRODUCT.contains("sdk", ignoreCase = true) ||
+            Build.PRODUCT.contains("google_sdk", ignoreCase = true) ||
+            Build.PRODUCT.contains("cf_", ignoreCase = true) ||
+            Build.PRODUCT.contains("cvd", ignoreCase = true) ||
+            Build.PRODUCT.contains("vbox", ignoreCase = true) ||
+            Build.BOARD.contains("goldfish", ignoreCase = true) ||
+            Build.BOARD.contains("cutf", ignoreCase = true)
     }
 
     fun initialize(context: Context) {
@@ -114,11 +122,8 @@ fun AdMobBanner(
                 AdView(context).apply {
                     setAdSize(AdSize.BANNER)
                     this.adUnitId = adUnitId
-                    // In emulators or container runtimes lacking hardware rendernodes,
-                    // software layer prevents Mesa from trying to open /dev/dri/renderD128
-                    if (AdMobManager.isRunningInEmulator) {
-                        setLayerType(View.LAYER_TYPE_SOFTWARE, null)
-                    }
+                    // Set software layer type to completely avoid Mesa /dev/dri/renderD128 rendernode errors in virtualized environments
+                    setLayerType(View.LAYER_TYPE_SOFTWARE, null)
                     adListener = object : AdListener() {
                         override fun onAdLoaded() {
                             Log.d("AdMobBanner", "Banner ad loaded successfully")

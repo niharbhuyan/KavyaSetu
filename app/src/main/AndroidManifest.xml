@@ -25,11 +25,6 @@
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="@string/admob_app_id" />
 
-        <!-- Privacy Sandbox AdServices Configuration -->
-        <property
-            android:name="android.adservices.AD_SERVICES_CONFIG"
-            android:resource="@xml/gma_ad_services_config" />
-
         <!-- Disable automatic Firebase Analytics collection if unconfigured -->
         <meta-data
             android:name="firebase_analytics_collection_enabled"

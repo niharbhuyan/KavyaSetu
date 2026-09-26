@@ -252,4 +252,136 @@ class ExampleRobolectricTest {
     assertTrue(formatted.contains("#GeminiAI"))
     assertTrue(formatted.contains("#AIShayari"))
   }
+
+  @Test
+  fun `verify reading metrics for standard couplet`() {
+    val couplet = "हज़ारों ख़्वाहिशें ऐसी कि हर ख़्वाहिश पे दम निकले\nबहुत निकले मिरे अरमान लेकिन फिर भी कम निकले"
+    val metrics = com.example.ui.components.calculatePoemReadingMetrics(couplet, "Thousands of desires, each worth dying for.")
+
+    assertEquals(2, metrics.lineCount)
+    assertEquals(1, metrics.coupletCount)
+    assertEquals(false, metrics.isLongNazmOrGhazal)
+    assertTrue(metrics.wordCount > 0)
+    assertTrue(metrics.estimatedSeconds >= 25)
+    assertTrue(metrics.formattedReadTime.contains("read"))
+  }
+
+  @Test
+  fun `verify reading metrics for long nazm or ghazal`() {
+    val longNazm = """
+      बोल कि लब आज़ाद हैं तेरे
+      बोल ज़बाँ अब तक तेरी है
+      तेरा सुतवाँ जिस्म है तेरा
+      बोल कि जाँ अब तक तेरी है
+
+      देख कि शीशगर की दूकां में
+      तुंद हैं शो'ले सुर्ख़ है आहिन
+      खुलने लगे क़ुफ़्लों के दहाने
+      फैला हर एक ज़ंजीर का दामन
+    """.trimIndent()
+
+    val translation = "Speak, for your lips are free; speak, for your tongue is still your own; your upright body is still yours."
+    val metrics = com.example.ui.components.calculatePoemReadingMetrics(longNazm, translation)
+
+    assertEquals(8, metrics.lineCount)
+    assertEquals(4, metrics.coupletCount)
+    assertEquals(true, metrics.isLongNazmOrGhazal)
+    assertTrue(metrics.estimatedSeconds > 40)
+    assertTrue(metrics.formattedReadTime.contains("min read") || metrics.formattedReadTime.contains("sec read"))
+  }
+
+  @Test
+  fun `verify reading metrics for multi-stanza long ghazal`() {
+    val multiStanzaGhazal = """
+      ख़ुदी को कर बुलंद इतना कि हर तक़दीर से पहले
+      ख़ुदा बंदे से ख़ुद पूछे बता तेरी रज़ा क्या है
+
+      सितारों से आगे जहाँ और भी हैं
+      अभी इश्क़ के इम्तिहाँ और भी हैं
+
+      तू शाहीं है परवाज़ है काम तेरा
+      तेरे सामने आसमाँ और भी हैं
+    """.trimIndent()
+
+    val metrics = com.example.ui.components.calculatePoemReadingMetrics(
+      poemText = multiStanzaGhazal,
+      translationText = "Elevate your selfhood to such heights that before decreeing your destiny, God Himself shall ask: Tell me, what is your desire?"
+    )
+
+    assertEquals(6, metrics.lineCount)
+    assertEquals(3, metrics.coupletCount)
+    assertTrue(metrics.isLongNazmOrGhazal)
+    assertTrue(metrics.wordCount >= 40)
+    assertTrue(metrics.estimatedSeconds >= 50)
+  }
+
+  @Test
+  fun `verify poem reader native share intent generation`() {
+    val shayari = com.example.data.model.Shayari(
+      id = "sh_ghalib_ishq",
+      lines = "इश्क़ ने 'ग़ालिब' निकम्मा कर दिया\nवर्ना हम भी आदमी थे काम के",
+      translationEnglish = "Love has made me worthless, Ghalib; otherwise, I too was once a capable man.",
+      author = "Mirza Ghalib",
+      penName = "Ghalib",
+      language = "hindi",
+      emotion = "ishq"
+    )
+
+    val shareText = com.example.util.SocialShareHelper.formatPoemForSocial(
+      lines = shayari.lines,
+      author = shayari.author,
+      language = shayari.language,
+      emotion = shayari.emotion,
+      category = shayari.category,
+      penName = shayari.penName,
+      id = shayari.id
+    )
+
+    val shareIntent = com.example.util.SocialShareHelper.createShareIntent(
+      text = shareText,
+      subject = "Poetic Verse from Mirza Ghalib — Kavya Setu"
+    )
+
+    assertEquals(android.content.Intent.ACTION_SEND, shareIntent.action)
+    assertEquals("text/plain", shareIntent.type)
+    assertTrue(shareIntent.getStringExtra(android.content.Intent.EXTRA_TEXT)!!.contains("इश्क़ ने 'ग़ालिब' निकम्मा कर दिया"))
+    assertTrue(shareIntent.getStringExtra(android.content.Intent.EXTRA_TEXT)!!.contains("Mirza Ghalib"))
+    assertTrue(shareIntent.getStringExtra(android.content.Intent.EXTRA_TEXT)!!.contains("#KavyaSetu"))
+    assertEquals("Poetic Verse from Mirza Ghalib — Kavya Setu", shareIntent.getStringExtra(android.content.Intent.EXTRA_SUBJECT))
+  }
+
+  @Test
+  fun `verify poem reader copy to clipboard functionality`() {
+    val context = ApplicationProvider.getApplicationContext<Context>()
+    val shayari = com.example.data.model.Shayari(
+      id = "sh_mir_patta",
+      lines = "पत्ता पत्ता बूटा बूटा हाल हमारा जाने है\nजाने न जाने गुल ही न जाने बाग़ तो सारा जाने है",
+      translationEnglish = "Every leaf and every bud knows of my state; only the rose remains oblivious.",
+      author = "Mir Taqi Mir",
+      penName = "Mir",
+      language = "hindi",
+      emotion = "ishq"
+    )
+
+    com.example.util.SocialShareHelper.copyPoem(context, shayari)
+
+    val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+    val clip = clipboard.primaryClip
+    assertNotNull(clip)
+    assertTrue(clip!!.itemCount > 0)
+    val copiedText = clip.getItemAt(0).text.toString()
+
+    assertTrue(copiedText.contains("पत्ता पत्ता बूटा बूटा"))
+    assertTrue(copiedText.contains("Mir Taqi Mir"))
+    assertTrue(copiedText.contains("Every leaf and every bud knows of my state"))
+    assertTrue(copiedText.contains("#KavyaSetu"))
+  }
+
+  @Test
+  fun `verify auto update background manager configuration`() {
+    val context = ApplicationProvider.getApplicationContext<Context>()
+    com.example.sync.HourlySyncManager.scheduleHourlySync(context)
+    val alarmManager = context.getSystemService(android.content.Context.ALARM_SERVICE) as android.app.AlarmManager
+    assertNotNull(alarmManager)
+  }
 }

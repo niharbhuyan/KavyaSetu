@@ -50,6 +50,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -80,6 +81,7 @@ fun DastaangoiMehfilDialog(
     ambientPlayer: AmbientSoundscapePlayer,
     onDismiss: () -> Unit
 ) {
+    val context = LocalContext.current
     val dastaanChapters = remember {
         listOf(
             DastaanChapter(
@@ -248,7 +250,40 @@ fun DastaangoiMehfilDialog(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Visual Reading Progress across Dastaan Chapters with Share button
+                val dastaanProgress = (selectedChapterIndex + 1).toFloat() / dastaanChapters.size.toFloat()
+                PoetryReadingProgressBar(
+                    progress = dastaanProgress,
+                    poemTypeLabel = "Dastaan Chapter",
+                    poemMetrics = PoemReadingMetrics(
+                        lineCount = 12,
+                        coupletCount = 3,
+                        wordCount = 180,
+                        estimatedSeconds = 120,
+                        isLongNazmOrGhazal = true
+                    ),
+                    modifier = Modifier.padding(bottom = 6.dp),
+                    onSharePoem = {
+                        val chapter = dastaanChapters.getOrNull(selectedChapterIndex)
+                        val text = if (chapter != null) {
+                            "📖 *Dastaangoi Mehfil — ${chapter.title}*\n\n${chapter.narrativeExcerpt}\n\n🖋️ *Sher:* \n${chapter.featuredVerse}\n\n— Era: ${chapter.era} • Poet: ${chapter.poet}\nvia Kavya Setu #Dastaangoi #Poetry"
+                        } else {
+                            "Dastaangoi Mehfil via Kavya Setu"
+                        }
+                        com.example.util.SocialShareHelper.shareViaChooser(context, text, "Dastaangoi Chapter")
+                    },
+                    onCopyPoem = {
+                        val chapter = dastaanChapters.getOrNull(selectedChapterIndex)
+                        val text = if (chapter != null) {
+                            "📖 Dastaangoi Mehfil — ${chapter.title}\n\n${chapter.narrativeExcerpt}\n\n${chapter.featuredVerse}\n\n— Poet: ${chapter.poet} (${chapter.era})\nvia Kavya Setu"
+                        } else {
+                            "Dastaangoi Mehfil via Kavya Setu"
+                        }
+                        com.example.util.SocialShareHelper.copyToClipboard(context, text, "Dastaangoi Chapter")
+                    }
+                )
 
                 // Stage Presentation Card
                 Card(

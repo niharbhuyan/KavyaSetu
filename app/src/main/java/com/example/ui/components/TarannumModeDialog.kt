@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -168,9 +169,29 @@ fun TarannumModeDialog(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(10.dp))
+
+                val lazyListState = rememberLazyListState()
+                val readingMetrics = remember(shayari.lines) {
+                    calculatePoemReadingMetrics(shayari.lines)
+                }
+
+                // Reading Progress Bar at top of Tarannum chanter with Share & Copy buttons
+                LazyListPoetryReadingProgressBar(
+                    lazyListState = lazyListState,
+                    totalItems = 5,
+                    poemMetrics = readingMetrics,
+                    modifier = Modifier.padding(bottom = 6.dp),
+                    onSharePoem = {
+                        com.example.util.SocialShareHelper.sharePoem(context, shayari)
+                    },
+                    onCopyPoem = {
+                        com.example.util.SocialShareHelper.copyPoem(context, shayari)
+                    }
+                )
 
                 LazyColumn(
+                    state = lazyListState,
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth(),

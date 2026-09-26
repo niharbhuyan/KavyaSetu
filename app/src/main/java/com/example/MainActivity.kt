@@ -167,10 +167,11 @@ fun MainAppContainer(
     val poetryLineHeightMult by viewModel.poetryLineHeightMult.collectAsStateWithLifecycle()
     val poetryFontFamilyType by viewModel.poetryFontFamilyType.collectAsStateWithLifecycle()
 
-    // Initialize FCM and retrieve token, load saved reading display settings
+    // Initialize FCM and retrieve token, load saved reading display settings, auto-update all features
     LaunchedEffect(Unit) {
         viewModel.initFcm(context)
         viewModel.loadDisplayPreferences(context)
+        viewModel.triggerHourlySyncNow(context)
     }
 
     // Process incoming deep link from FCM push notification or deep link URL

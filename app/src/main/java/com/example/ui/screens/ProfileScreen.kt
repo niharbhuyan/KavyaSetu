@@ -73,6 +73,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.data.model.Anthology
 import com.example.ui.components.AccountPreferencesSection
+import com.example.ui.components.BetaTestingDialog
+import com.example.ui.components.BetaTestingSection
 import com.example.ui.components.GeneratedPoemHistorySection
 import com.example.ui.components.PlayStoreMediaKitDialog
 import com.example.ui.components.ReadingProgressSection
@@ -114,6 +116,8 @@ import com.example.ui.components.SignInDialog
 import com.example.ui.components.SignUpDialog
 import com.example.ui.theme.AntiqueGold
 import com.example.ui.theme.DeepMidnight
+import com.example.ui.theme.MysticTeal
+import com.example.ui.theme.MysticTealSoft
 import com.example.ui.theme.SoftGold
 import com.example.ui.theme.VelvetRose
 
@@ -157,6 +161,7 @@ fun ProfileScreen(
     var showEditProfileDialog by remember { mutableStateOf(false) }
     var showDeleteAccountDialog by remember { mutableStateOf(false) }
     var showPlayStoreMediaKitDialog by remember { mutableStateOf(false) }
+    var showBetaTestingDialog by remember { mutableStateOf(false) }
 
     if (showCreateAnthologyDialog) {
         CreateAnthologyDialog(
@@ -281,6 +286,12 @@ fun ProfileScreen(
     if (showPlayStoreMediaKitDialog) {
         PlayStoreMediaKitDialog(
             onDismiss = { showPlayStoreMediaKitDialog = false }
+        )
+    }
+
+    if (showBetaTestingDialog) {
+        BetaTestingDialog(
+            onDismiss = { showBetaTestingDialog = false }
         )
     }
 
@@ -570,6 +581,77 @@ fun ProfileScreen(
             }
         }
 
+        // Beta Testing Quick-Access Banner
+        item {
+            Card(
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MysticTeal.copy(alpha = 0.12f)),
+                border = BorderStroke(1.dp, MysticTeal.copy(alpha = 0.4f)),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { selectedTab = 7 }
+                    .testTag("banner_beta_testing")
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Surface(
+                            shape = CircleShape,
+                            color = MysticTeal.copy(alpha = 0.2f),
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text("🧪", fontSize = 18.sp)
+                            }
+                        }
+                        Column {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Text(
+                                    text = "Google Play Beta Testing",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 13.sp,
+                                    color = MysticTealSoft
+                                )
+                                Surface(
+                                    shape = RoundedCornerShape(6.dp),
+                                    color = MysticTeal.copy(alpha = 0.25f)
+                                ) {
+                                    Text(
+                                        text = "INTERNAL",
+                                        fontSize = 9.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MysticTealSoft,
+                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                    )
+                                }
+                            }
+                            Text(
+                                text = "Join early access track for upcoming builds & features",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    Button(
+                        onClick = { selectedTab = 7 },
+                        colors = ButtonDefaults.buttonColors(containerColor = MysticTeal),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Text("Join Track", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                    }
+                }
+            }
+        }
+
         // Section Tabs
         item {
             ScrollableTabRow(
@@ -619,6 +701,12 @@ fun ProfileScreen(
                     onClick = { selectedTab = 6 },
                     text = { Text("Play Store Kit 🚀") },
                     modifier = Modifier.testTag("tab_play_store_kit")
+                )
+                Tab(
+                    selected = selectedTab == 7,
+                    onClick = { selectedTab = 7 },
+                    text = { Text("Beta Testing 🧪") },
+                    modifier = Modifier.testTag("tab_beta_testing")
                 )
             }
         }
@@ -1075,6 +1163,9 @@ fun ProfileScreen(
                     fcmToken = fcmToken,
                     onTriggerHourlySync = {
                         viewModel.triggerHourlySyncNow(context)
+                    },
+                    onOpenBetaTesting = {
+                        selectedTab = 7
                     }
                 )
             }
@@ -1420,6 +1511,15 @@ fun ProfileScreen(
                         }
                     }
                 }
+            }
+        }
+
+        // ================= TAB 7: GOOGLE PLAY BETA TESTING =================
+        if (selectedTab == 7) {
+            item {
+                BetaTestingSection(
+                    onOpenPlayStoreKit = { selectedTab = 6 }
+                )
             }
         }
 

@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -75,6 +77,7 @@ import com.example.data.model.Language
 import com.example.data.model.Shayari
 import com.example.ui.theme.AntiqueGold
 import com.example.ui.theme.DeepMidnight
+import com.example.ui.theme.SoftGold
 import com.example.ui.theme.VelvetRose
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -102,6 +105,11 @@ fun ShayariDetailDialog(
     var showCalligraphy by remember { mutableStateOf(false) }
     var showUstaadIslah by remember { mutableStateOf(false) }
 
+    val scrollState = rememberScrollState()
+    val readingMetrics = remember(shayari.lines, shayari.translationEnglish) {
+        calculatePoemReadingMetrics(shayari.lines, shayari.translationEnglish)
+    }
+
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
@@ -109,68 +117,123 @@ fun ShayariDetailDialog(
         Surface(
             modifier = Modifier
                 .fillMaxWidth(0.95f)
-                .padding(vertical = 24.dp)
+                .fillMaxHeight(0.92f)
+                .padding(vertical = 12.dp)
                 .testTag("shayari_detail_dialog"),
-            shape = RoundedCornerShape(28.dp),
+            shape = RoundedCornerShape(24.dp),
             color = DeepMidnight,
             border = BorderStroke(1.5.dp, AntiqueGold.copy(alpha = 0.6f)),
             shadowElevation = 16.dp
         ) {
             Column(
-                modifier = Modifier
-                    .verticalScroll(rememberScrollState())
-                    .padding(20.dp)
+                modifier = Modifier.fillMaxSize()
             ) {
-                // Header Bar
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                // PINNED AT THE TOP: Visual Reading Progress Bar with Native Android Share Action
+                ScrollablePoetryReadingProgressBar(
+                    scrollState = scrollState,
+                    shayari = shayari,
+                    onPoemFinished = {
+                        com.example.data.local.ReadingProgressManager.recordPoemRead(context, shayari)
+                    },
+                    onSharePoem = {
+                        SocialShareHelper.sharePoem(context, shayari)
+                    },
+                    onCopyPoem = {
+                        SocialShareHelper.copyPoem(context, shayari)
+                    }
+                )
+
+                // Scrollable Content
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .verticalScroll(scrollState)
+                        .padding(20.dp)
                 ) {
+                    // Header Bar
                     Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Surface(
-                            shape = CircleShape,
-                            color = AntiqueGold.copy(alpha = 0.2f),
-                            modifier = Modifier.size(36.dp)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.weight(1f)
                         ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    imageVector = Icons.Default.FormatQuote,
-                                    contentDescription = null,
-                                    tint = AntiqueGold,
-                                    modifier = Modifier.size(20.dp)
+                            Surface(
+                                shape = CircleShape,
+                                color = AntiqueGold.copy(alpha = 0.2f),
+                                modifier = Modifier.size(36.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        imageVector = Icons.Default.FormatQuote,
+                                        contentDescription = null,
+                                        tint = AntiqueGold,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
+                            Column {
+                                Text(
+                                    text = if (readingMetrics.isLongNazmOrGhazal) "Nazm Reader • ନଜ଼୍ମ ପାଠ" else "Shayari Details • ବିବରଣୀ",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = AntiqueGold
+                                )
+                                Text(
+                                    text = if (readingMetrics.isLongNazmOrGhazal) "Long Poem • ${readingMetrics.coupletCount} Ash'aar • ${readingMetrics.formattedReadTime}" else "Deep Link View • Couplet of the Day",
+                                    fontSize = 11.sp,
+                                    color = Color.White.copy(alpha = 0.6f)
                                 )
                             }
                         }
-                        Column {
-                            Text(
-                                text = "Shayari Details • ବିବରଣୀ",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = AntiqueGold
-                            )
-                            Text(
-                                text = "Deep Link View • Couplet of the Day",
-                                fontSize = 11.sp,
-                                color = Color.White.copy(alpha = 0.6f)
-                            )
+
+                        // Top Action Icons: Native Share Intent, Copy to Clipboard & Close Dialog
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            IconButton(
+                                onClick = {
+                                    SocialShareHelper.sharePoem(context, shayari)
+                                },
+                                modifier = Modifier.size(36.dp).testTag("header_share_poem_button")
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Share,
+                                    contentDescription = "Share Poem to Social Apps",
+                                    tint = AntiqueGold
+                                )
+                            }
+
+                            IconButton(
+                                onClick = {
+                                    SocialShareHelper.copyPoem(context, shayari)
+                                },
+                                modifier = Modifier.size(36.dp).testTag("header_copy_poem_button")
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.ContentCopy,
+                                    contentDescription = "Copy Poem to Clipboard",
+                                    tint = AntiqueGold
+                                )
+                            }
+
+                            IconButton(
+                                onClick = onDismiss,
+                                modifier = Modifier.size(36.dp).testTag("close_detail_button")
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Close",
+                                    tint = Color.White.copy(alpha = 0.8f)
+                                )
+                            }
                         }
                     }
-
-                    IconButton(
-                        onClick = onDismiss,
-                        modifier = Modifier.size(36.dp).testTag("close_detail_button")
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Close",
-                            tint = Color.White.copy(alpha = 0.8f)
-                        )
-                    }
-                }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -282,17 +345,53 @@ fun ShayariDetailDialog(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Text(
-                                text = shayari.lines,
-                                style = MaterialTheme.typography.headlineSmall.copy(
-                                    fontFamily = FontFamily.Serif,
-                                    lineHeight = 32.sp,
-                                    fontSize = 20.sp,
-                                    textAlign = TextAlign.Center,
-                                    fontWeight = FontWeight.SemiBold
-                                ),
-                                color = Color.White
-                            )
+                            val stanzas = shayari.lines.split("\n\n").filter { it.isNotBlank() }
+                            if (stanzas.size > 1) {
+                                stanzas.forEachIndexed { sIndex, stanza ->
+                                    if (sIndex > 0) {
+                                        Spacer(modifier = Modifier.height(14.dp))
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(0.85f),
+                                            horizontalArrangement = Arrangement.Center,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            HorizontalDivider(modifier = Modifier.weight(1f), color = AntiqueGold.copy(alpha = 0.25f))
+                                            Text(
+                                                text = " ✦ Ash'ar ${sIndex + 1} ✦ ",
+                                                fontSize = 11.sp,
+                                                fontWeight = FontWeight.Medium,
+                                                color = AntiqueGold.copy(alpha = 0.8f),
+                                                modifier = Modifier.padding(horizontal = 8.dp)
+                                            )
+                                            HorizontalDivider(modifier = Modifier.weight(1f), color = AntiqueGold.copy(alpha = 0.25f))
+                                        }
+                                        Spacer(modifier = Modifier.height(14.dp))
+                                    }
+                                    Text(
+                                        text = stanza.trim(),
+                                        style = MaterialTheme.typography.headlineSmall.copy(
+                                            fontFamily = FontFamily.Serif,
+                                            lineHeight = 32.sp,
+                                            fontSize = 20.sp,
+                                            textAlign = TextAlign.Center,
+                                            fontWeight = FontWeight.SemiBold
+                                        ),
+                                        color = Color.White
+                                    )
+                                }
+                            } else {
+                                Text(
+                                    text = shayari.lines,
+                                    style = MaterialTheme.typography.headlineSmall.copy(
+                                        fontFamily = FontFamily.Serif,
+                                        lineHeight = 32.sp,
+                                        fontSize = 20.sp,
+                                        textAlign = TextAlign.Center,
+                                        fontWeight = FontWeight.SemiBold
+                                    ),
+                                    color = Color.White
+                                )
+                            }
 
                             Spacer(modifier = Modifier.height(14.dp))
 
@@ -358,43 +457,65 @@ fun ShayariDetailDialog(
                     Spacer(modifier = Modifier.height(16.dp))
                 }
 
-                // Primary Action Buttons Row (Recite, Card Studio, Homescreen Widget)
+                // Primary Action Buttons Row (Recite, Share, Copy, Card Studio, Homescreen Widget)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(5.dp)
                 ) {
                     FilledTonalButton(
                         onClick = { onReciteClick(shayari.lines, shayari.language) },
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.weight(1f),
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 6.dp)
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 6.dp)
                     ) {
-                        Icon(Icons.Default.VolumeUp, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("Recite", fontSize = 12.sp)
+                        Icon(Icons.Default.VolumeUp, contentDescription = null, modifier = Modifier.size(15.dp))
+                        Spacer(modifier = Modifier.width(2.dp))
+                        Text("Recite", fontSize = 11.sp)
+                    }
+
+                    FilledTonalButton(
+                        onClick = { SocialShareHelper.sharePoem(context, shayari) },
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.weight(1f).testTag("detail_primary_share_button"),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 6.dp)
+                    ) {
+                        Icon(Icons.Default.Share, contentDescription = "Share", tint = SoftGold, modifier = Modifier.size(15.dp))
+                        Spacer(modifier = Modifier.width(2.dp))
+                        Text("Share", fontSize = 11.sp, color = SoftGold, fontWeight = FontWeight.SemiBold)
+                    }
+
+                    FilledTonalButton(
+                        onClick = { SocialShareHelper.copyPoem(context, shayari) },
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.weight(1f).testTag("detail_primary_copy_button"),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 6.dp)
+                    ) {
+                        Icon(Icons.Default.ContentCopy, contentDescription = "Copy to Clipboard", tint = SoftGold, modifier = Modifier.size(15.dp))
+                        Spacer(modifier = Modifier.width(2.dp))
+                        Text("Copy", fontSize = 11.sp, color = SoftGold, fontWeight = FontWeight.SemiBold)
                     }
 
                     FilledTonalButton(
                         onClick = { onOpenCardStudio(shayari) },
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.weight(1f),
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 6.dp)
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 6.dp)
                     ) {
-                        Icon(Icons.Default.Palette, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("Card Studio", fontSize = 12.sp)
+                        Icon(Icons.Default.Palette, contentDescription = null, modifier = Modifier.size(15.dp))
+                        Spacer(modifier = Modifier.width(2.dp))
+                        Text("Studio", fontSize = 11.sp)
                     }
 
                     Button(
                         onClick = { onPinWidget(context) },
                         colors = ButtonDefaults.buttonColors(containerColor = AntiqueGold),
                         shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.weight(1.2f),
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 6.dp)
+                        modifier = Modifier.weight(1.05f),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 6.dp)
                     ) {
-                        Icon(Icons.Default.Widgets, contentDescription = null, tint = DeepMidnight, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("Add Widget", fontSize = 12.sp, color = DeepMidnight, fontWeight = FontWeight.Bold)
+                        Icon(Icons.Default.Widgets, contentDescription = null, tint = DeepMidnight, modifier = Modifier.size(15.dp))
+                        Spacer(modifier = Modifier.width(2.dp))
+                        Text("Widget", fontSize = 11.sp, color = DeepMidnight, fontWeight = FontWeight.Bold)
                     }
                 }
 
@@ -571,6 +692,7 @@ fun ShayariDetailDialog(
             }
         }
     }
+}
 
     if (showTarannum) {
         TarannumModeDialog(

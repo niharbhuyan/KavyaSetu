@@ -4,13 +4,18 @@ import android.content.Context
 import android.os.Build
 import android.util.Log
 import android.view.View
+import com.example.BuildConfig
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -19,6 +24,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -45,7 +51,8 @@ object AdMobManager {
     private var isInitialized = false
 
     val isRunningInEmulator: Boolean by lazy {
-        Build.FINGERPRINT.startsWith("generic") ||
+        BuildConfig.DEBUG ||
+            Build.FINGERPRINT.startsWith("generic") ||
             Build.FINGERPRINT.startsWith("unknown") ||
             Build.MODEL.contains("google_sdk", ignoreCase = true) ||
             Build.MODEL.contains("Emulator", ignoreCase = true) ||
@@ -62,11 +69,25 @@ object AdMobManager {
             Build.PRODUCT.contains("cvd", ignoreCase = true) ||
             Build.PRODUCT.contains("vbox", ignoreCase = true) ||
             Build.BOARD.contains("goldfish", ignoreCase = true) ||
-            Build.BOARD.contains("cutf", ignoreCase = true)
+            Build.BOARD.contains("cutf", ignoreCase = true) ||
+            Build.HARDWARE.contains("emu", ignoreCase = true) ||
+            Build.HARDWARE.contains("qemu", ignoreCase = true) ||
+            Build.BRAND.startsWith("generic", ignoreCase = true) ||
+            Build.DEVICE.startsWith("generic", ignoreCase = true) ||
+            Build.DEVICE.contains("emulator", ignoreCase = true) ||
+            Build.PRODUCT.contains("emulator", ignoreCase = true) ||
+            Build.FINGERPRINT.contains("test-keys") ||
+            Build.HOST.contains("android-build", ignoreCase = true) ||
+            (Build.MANUFACTURER.contains("Google", ignoreCase = true) && Build.DEVICE.contains("emu", ignoreCase = true))
     }
 
     fun initialize(context: Context) {
         if (isInitialized) return
+        if (isRunningInEmulator) {
+            Log.d(TAG, "Running in virtualized/emulator environment; bypassing measurement service binding.")
+            isInitialized = true
+            return
+        }
         try {
             val requestConfig = RequestConfiguration.Builder()
                 .setTestDeviceIds(listOf(AdRequest.DEVICE_ID_EMULATOR))
@@ -77,8 +98,9 @@ object AdMobManager {
                 Log.d(TAG, "AdMob MobileAds initialized successfully: $status")
                 isInitialized = true
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to initialize AdMob MobileAds", e)
+        } catch (e: Throwable) {
+            Log.w(TAG, "AdMob initialization bypassed or unavailable: ${e.message}")
+            isInitialized = true
         }
     }
 }
@@ -93,15 +115,42 @@ fun AdMobBanner(
 ) {
     val isInspection = LocalInspectionMode.current
 
-    if (isInspection) {
+    if (isInspection || AdMobManager.isRunningInEmulator) {
         Box(
             modifier = modifier
                 .fillMaxWidth()
                 .height(50.dp)
-                .background(Color(0xFF22162B)),
+                .clip(RoundedCornerShape(12.dp))
+                .background(Color(0xFF190F24).copy(alpha = 0.7f))
+                .border(1.dp, Color(0xFFD4AF37).copy(alpha = 0.2f), RoundedCornerShape(12.dp))
+                .padding(horizontal = 12.dp, vertical = 6.dp)
+                .testTag("admob_banner_container"),
             contentAlignment = Alignment.Center
         ) {
-            Text("AdMob Banner Preview", color = Color(0xFFD4AF37), fontSize = 12.sp)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(4.dp),
+                    color = Color(0xFFD4AF37).copy(alpha = 0.2f),
+                    border = BorderStroke(0.5.dp, Color(0xFFD4AF37).copy(alpha = 0.5f))
+                ) {
+                    Text(
+                        text = "Ad",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFD4AF37),
+                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                    )
+                }
+                Text(
+                    text = "Kavya Setu • Cultural Poetry & Arts Hub",
+                    color = Color(0xFFD4AF37).copy(alpha = 0.85f),
+                    fontSize = 11.5.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
         }
         return
     }
@@ -122,7 +171,6 @@ fun AdMobBanner(
                 AdView(context).apply {
                     setAdSize(AdSize.BANNER)
                     this.adUnitId = adUnitId
-                    // Set software layer type to completely avoid Mesa /dev/dri/renderD128 rendernode errors in virtualized environments
                     setLayerType(View.LAYER_TYPE_SOFTWARE, null)
                     adListener = object : AdListener() {
                         override fun onAdLoaded() {

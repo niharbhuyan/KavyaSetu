@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ad-services-config>
+    <!-- Privacy Sandbox configuration to safely restrict measurement in non-production/emulator targets -->
+    <attribution allowAdIdMatching="false" allowAllToAccess="false" />
+    <topics allowAllToAccess="false" />
+    <protected-audience allowAllToAccess="false" />
+</ad-services-config>

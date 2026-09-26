@@ -17,8 +17,8 @@ android {
     applicationId = "com.niharsales.kavyasetu"
     minSdk = 24
     targetSdk = 36
-    versionCode = 4
-    versionName = "v1.2.1"
+    versionCode = 6
+    versionName = "v1.2.3"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }

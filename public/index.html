@@ -443,18 +443,18 @@
     <div class="download-card">
       <div class="file-meta">
         <div class="file-info">
-          <h2>KavyaSetu-v1.2.1-release.aab</h2>
-          <span class="file-tag">✓ R8 Obfuscated & Shrinked • Play Store Ready • Build 4</span>
+          <h2>KavyaSetu-v1.2.3-release.aab</h2>
+          <span class="file-tag">✓ R8 Obfuscated &amp; Shrinked • Play Store Ready • Build 6</span>
         </div>
         <div style="text-align: right; color: var(--text-muted); font-size: 14px;">
-          <strong>17.7 MB (Optimized)</strong>
+          <strong>17.0 MB (Optimized)</strong>
         </div>
       </div>
 
-      <a href="/KavyaSetu-v1.2.1-release.aab" download="KavyaSetu-v1.2.1-release.aab" class="btn-download" id="mainDownloadBtn">
+      <a href="/KavyaSetu-v1.2.3-release.aab" download="KavyaSetu-v1.2.3-release.aab" class="btn-download" id="mainDownloadBtn">
         <svg class="btn-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         <div class="btn-spinner"></div>
-        <span class="btn-text">Download Latest Signed .AAB (v1.2.1 • Build 4)</span>
+        <span class="btn-text">Download Latest Signed .AAB (v1.2.3 • Build 6)</span>
       </a>
 
       <div id="downloadToast" class="download-status-toast"></div>
@@ -465,11 +465,32 @@
           <div class="btn-secondary-spinner"></div>
           <span class="btn-sec-text">Direct AAB (app-release.aab)</span>
         </a>
+        <a href="/upload_certificate.pem" download="upload_certificate.pem" class="btn-secondary" style="flex: 1; min-width: 180px; margin-top: 0; border-color: rgba(255, 183, 77, 0.6); background: rgba(255, 183, 77, 0.1);">
+          <span class="btn-sec-icon">🛡️</span>
+          <div class="btn-secondary-spinner"></div>
+          <span class="btn-sec-text">Upload Key Reset Cert (.pem)</span>
+        </a>
         <a href="/mapping.zip" download="mapping.zip" class="btn-secondary" style="flex: 1; min-width: 180px; margin-top: 0;">
           <span class="btn-sec-icon">📄</span>
           <div class="btn-secondary-spinner"></div>
           <span class="btn-sec-text">Deobfuscation Map (mapping.zip)</span>
         </a>
+        <a href="/my-upload-key.jks" download="my-upload-key.jks" class="btn-secondary" style="flex: 1; min-width: 180px; margin-top: 0;">
+          <span class="btn-sec-icon">🔑</span>
+          <div class="btn-secondary-spinner"></div>
+          <span class="btn-sec-text">Upload Keystore (.jks)</span>
+        </a>
+      </div>
+
+      <!-- KEY RESOLUTION BANNER FOR GOOGLE PLAY CONSOLE -->
+      <div class="keystore-box" style="margin-top: 14px; border-color: rgba(255, 167, 38, 0.7); background: rgba(255, 167, 38, 0.1);">
+        <strong style="color: #ffb74d;">🛡️ Fixing "Wrong Key / Certificate Fingerprint" in Google Play:</strong><br/>
+        <p style="margin: 6px 0 10px 0; font-size: 13px; color: var(--text-muted); line-height: 1.5;">
+          If Play Console shows <em>"signed with the wrong key"</em>, Google Play App Signing allows you to reset your upload key in 3 easy steps:<br/>
+          <strong>1.</strong> In the left sidebar of Play Console, click <strong>Test and release → App integrity</strong>.<br/>
+          <strong>2.</strong> Under <strong>App signing</strong>, click <strong>"Request upload key reset"</strong>.<br/>
+          <strong>3.</strong> Select <em>"I lost my upload key"</em> and upload <a href="/upload_certificate.pem" download="upload_certificate.pem" style="color: #ffb74d; text-decoration: underline; font-weight: bold;">upload_certificate.pem</a>. Google registers it promptly, after which this AAB uploads without issue.
+        </p>
       </div>
 
       <div class="specs-grid">
@@ -479,7 +500,7 @@
         </div>
         <div class="spec-item">
           <div class="spec-label">Version / Code</div>
-          <div class="spec-value">v1.2.1 (Build Code 4)</div>
+          <div class="spec-value">v1.2.3 (Build Code 6)</div>
         </div>
         <div class="spec-item">
           <div class="spec-label">DEX Optimization / R8</div>
@@ -723,11 +744,11 @@
 
           // Activate subtle loading spinner animation
           mainBtn.classList.add('loading');
-          mainBtn.querySelector('.btn-text').textContent = 'Preparing Download… (17.7 MB)';
+          mainBtn.querySelector('.btn-text').textContent = 'Preparing Download… (17.0 MB)';
           
           if (toast) {
             toast.style.display = 'block';
-            toast.innerHTML = '⏳ <strong>Initiating download…</strong> Fetching <code>KavyaSetu-v1.2.1-release.aab</code> from server.';
+            toast.innerHTML = '⏳ <strong>Initiating download…</strong> Fetching <code>KavyaSetu-v1.2.3-release.aab</code> from server.';
           }
 
           // Visual transition when browser begins download stream
@@ -736,7 +757,7 @@
             mainBtn.classList.add('success');
             mainBtn.querySelector('.btn-text').textContent = '✓ Download Started!';
             if (toast) {
-              toast.innerHTML = '✅ <strong>Download started!</strong> Look for the <code>KavyaSetu-v1.2.1-release.aab</code> file in your downloads.';
+              toast.innerHTML = '✅ <strong>Download started!</strong> Look for the <code>KavyaSetu-v1.2.3-release.aab</code> file in your downloads.';
             }
           }, 2200);
 

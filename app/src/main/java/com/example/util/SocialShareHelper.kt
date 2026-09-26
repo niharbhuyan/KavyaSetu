@@ -73,6 +73,66 @@ object SocialShareHelper {
     }
 
     /**
+     * Copies poem couplets, author pen-name, and translation directly to clipboard with a toast confirmation.
+     */
+    fun copyPoem(context: Context, shayari: Shayari) {
+        val textToCopy = buildString {
+            append(shayari.lines.trim())
+            append("\n\n— ")
+            append(shayari.author)
+            if (!shayari.penName.isNullOrBlank() && shayari.penName != shayari.author) {
+                append(" (${shayari.penName})")
+            }
+            if (!shayari.translationEnglish.isNullOrBlank()) {
+                append("\n\nTranslation: ")
+                append(shayari.translationEnglish.trim())
+            }
+            append("\n\n#KavyaSetu #Poetry")
+        }
+        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        val clip = ClipData.newPlainText("Poem by ${shayari.author}", textToCopy)
+        clipboard.setPrimaryClip(clip)
+        Toast.makeText(context, "Poem copied to clipboard! 📋", Toast.LENGTH_SHORT).show()
+    }
+
+    fun copyPoem(context: Context, shayari: ShayariEntity) {
+        val textToCopy = buildString {
+            append(shayari.lines.trim())
+            append("\n\n— ")
+            append(shayari.author)
+            if (!shayari.penName.isNullOrBlank() && shayari.penName != shayari.author) {
+                append(" (${shayari.penName})")
+            }
+            if (!shayari.translationEnglish.isNullOrBlank()) {
+                append("\n\nTranslation: ")
+                append(shayari.translationEnglish.trim())
+            }
+            append("\n\n#KavyaSetu #Poetry")
+        }
+        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        val clip = ClipData.newPlainText("Poem by ${shayari.author}", textToCopy)
+        clipboard.setPrimaryClip(clip)
+        Toast.makeText(context, "Poem copied to clipboard! 📋", Toast.LENGTH_SHORT).show()
+    }
+
+    fun copyPoem(context: Context, lines: String, author: String, translation: String? = null) {
+        val textToCopy = buildString {
+            append(lines.trim())
+            append("\n\n— ")
+            append(author)
+            if (!translation.isNullOrBlank()) {
+                append("\n\nTranslation: ")
+                append(translation.trim())
+            }
+            append("\n\n#KavyaSetu #Poetry")
+        }
+        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        val clip = ClipData.newPlainText("Poem by $author", textToCopy)
+        clipboard.setPrimaryClip(clip)
+        Toast.makeText(context, "Poem copied to clipboard! 📋", Toast.LENGTH_SHORT).show()
+    }
+
+    /**
      * Launches an explicit intent targeting a specific package (e.g. WhatsApp, Twitter),
      * and gracefully falls back to Intent.createChooser if the app is not installed.
      */

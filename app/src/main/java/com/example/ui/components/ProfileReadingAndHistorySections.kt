@@ -6,6 +6,7 @@ import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -34,6 +35,7 @@ import androidx.compose.material.icons.filled.FormatSize
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.NotificationsActive
+import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.AlertDialog
@@ -79,6 +81,8 @@ import com.example.data.model.GeneratedPoemItem
 import com.example.data.model.PoetryStyle
 import com.example.ui.theme.AntiqueGold
 import com.example.ui.theme.DeepMidnight
+import com.example.ui.theme.MysticTeal
+import com.example.ui.theme.MysticTealSoft
 import com.example.ui.theme.SoftGold
 import com.example.ui.theme.VelvetRose
 import com.example.util.SocialShareHelper
@@ -805,6 +809,7 @@ fun AccountPreferencesSection(
     onUpdateTypography: (Float, Float, String) -> Unit,
     fcmToken: String?,
     onTriggerHourlySync: (() -> Unit)? = null,
+    onOpenBetaTesting: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -816,6 +821,82 @@ fun AccountPreferencesSection(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        // Google Play Beta Testing & Early Access Card
+        if (onOpenBetaTesting != null) {
+            Card(
+                shape = RoundedCornerShape(22.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                border = BorderStroke(1.dp, MysticTeal.copy(alpha = 0.45f)),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onOpenBetaTesting() }
+                    .testTag("card_beta_testing_preferences")
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(18.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Surface(
+                            shape = CircleShape,
+                            color = MysticTeal.copy(alpha = 0.2f),
+                            modifier = Modifier.size(42.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = Icons.Default.Science,
+                                    contentDescription = null,
+                                    tint = MysticTealSoft,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+                        }
+                        Column {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Text(
+                                    text = "Google Play Beta Testing",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 13.sp,
+                                    color = MysticTealSoft
+                                )
+                                Surface(
+                                    shape = RoundedCornerShape(6.dp),
+                                    color = MysticTeal.copy(alpha = 0.25f)
+                                ) {
+                                    Text(
+                                        text = "INTERNAL TRACK",
+                                        fontSize = 9.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MysticTealSoft,
+                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                    )
+                                }
+                            }
+                            Text(
+                                text = "Get early access to future builds & experimental Gemini AI features",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    Button(
+                        onClick = onOpenBetaTesting,
+                        colors = ButtonDefaults.buttonColors(containerColor = MysticTeal),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Text("Join Track", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                    }
+                }
+            }
+        }
+
         // Hourly Auto-Sync & Background Refresh Card
         Card(
             shape = RoundedCornerShape(22.dp),

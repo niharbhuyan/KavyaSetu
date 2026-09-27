@@ -37,6 +37,7 @@ import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -810,12 +811,16 @@ fun AccountPreferencesSection(
     fcmToken: String?,
     onTriggerHourlySync: (() -> Unit)? = null,
     onOpenBetaTesting: (() -> Unit)? = null,
+    onCheckAppUpdate: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     var currentFontSize by remember(fontSize) { mutableFloatStateOf(fontSize) }
     var currentLineHeight by remember(lineHeightMult) { mutableFloatStateOf(lineHeightMult) }
     var currentFontFamily by remember(fontFamily) { mutableStateOf(fontFamily) }
+    var isAnalyticsEnabled by remember { mutableStateOf(com.example.analytics.KavyaAnalytics.isAnalyticsEnabled(context)) }
+    var isAutoUpdateEnabled by remember { mutableStateOf(com.example.update.AppUpdateManager.isAutoCheckEnabled(context)) }
+    var isWifiOnlyUpdate by remember { mutableStateOf(com.example.update.AppUpdateManager.isWifiOnly(context)) }
 
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -969,6 +974,250 @@ fun AccountPreferencesSection(
                     Icon(Icons.Default.AutoAwesome, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Sync & Refresh Now (Manual Trigger)", fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+
+        // In-App Auto-Updates & Version Manager Card
+        Card(
+            shape = RoundedCornerShape(22.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            border = BorderStroke(1.dp, AntiqueGold.copy(alpha = 0.35f))
+        ) {
+            Column(modifier = Modifier.padding(20.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Surface(
+                            shape = CircleShape,
+                            color = AntiqueGold.copy(alpha = 0.2f),
+                            modifier = Modifier.size(42.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = Icons.Default.SystemUpdate,
+                                    contentDescription = null,
+                                    tint = AntiqueGold,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+                        }
+                        Column {
+                            Text(
+                                text = "App Auto-Updates & Version",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "Installed: v1.2.3 • Build 6 (Release)",
+                                fontSize = 12.sp,
+                                color = AntiqueGold
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Text(
+                    text = "Kavya Setu automatically checks for new releases, cultural poetry modules, and classical arts updates in the background every hour.",
+                    fontSize = 13.sp,
+                    lineHeight = 19.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Auto Check Switch
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Automatic Hourly Update Checks",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "Receive notifications when new cultural releases are ready",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    androidx.compose.material3.Switch(
+                        checked = isAutoUpdateEnabled,
+                        onCheckedChange = { checked ->
+                            isAutoUpdateEnabled = checked
+                            com.example.update.AppUpdateManager.setAutoCheckEnabled(context, checked)
+                        },
+                        colors = androidx.compose.material3.SwitchDefaults.colors(
+                            checkedThumbColor = AntiqueGold,
+                            checkedTrackColor = AntiqueGold.copy(alpha = 0.4f)
+                        )
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Wi-Fi Only Switch
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Check Updates on Wi-Fi Only",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "Conserve cellular mobile data usage",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    androidx.compose.material3.Switch(
+                        checked = isWifiOnlyUpdate,
+                        onCheckedChange = { checked ->
+                            isWifiOnlyUpdate = checked
+                            com.example.update.AppUpdateManager.setWifiOnly(context, checked)
+                        },
+                        colors = androidx.compose.material3.SwitchDefaults.colors(
+                            checkedThumbColor = AntiqueGold,
+                            checkedTrackColor = AntiqueGold.copy(alpha = 0.4f)
+                        )
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                Button(
+                    onClick = {
+                        onCheckAppUpdate?.invoke()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = AntiqueGold),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Default.SystemUpdate, contentDescription = null, tint = DeepMidnight, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Check for Updates Now", color = DeepMidnight, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+
+        // Privacy-Focused Anonymous Analytics Card (Firebase Analytics)
+        Card(
+            shape = RoundedCornerShape(22.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            border = BorderStroke(1.dp, MysticTeal.copy(alpha = 0.4f))
+        ) {
+            Column(modifier = Modifier.padding(20.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Surface(
+                            shape = CircleShape,
+                            color = MysticTeal.copy(alpha = 0.2f),
+                            modifier = Modifier.size(42.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text("🛡️", fontSize = 20.sp)
+                            }
+                        }
+                        Column {
+                            Text(
+                                text = "Anonymous Analytics (Privacy-First)",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "Zero PII • Anonymous Retention Metrics",
+                                fontSize = 12.sp,
+                                color = MysticTealSoft
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Text(
+                    text = "Kavya Setu utilizes lightweight Firebase Analytics with zero Personally Identifiable Information (PII). No usernames, emails, or personal poetry drafts are ever tracked. Metrics are restricted strictly to anonymous retention streaks (D1, D3, D7, D30) and feature interaction counts to help improve the poetry experience.",
+                    fontSize = 13.sp,
+                    lineHeight = 19.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Enable Anonymous Usage Analytics",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = if (isAnalyticsEnabled) "Active: Anonymous pattern insights enabled" else "Disabled: Analytics collection completely turned off",
+                            fontSize = 11.sp,
+                            color = if (isAnalyticsEnabled) AntiqueGold else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    androidx.compose.material3.Switch(
+                        checked = isAnalyticsEnabled,
+                        onCheckedChange = { checked ->
+                            isAnalyticsEnabled = checked
+                            com.example.analytics.KavyaAnalytics.setAnalyticsEnabled(context, checked)
+                            android.widget.Toast.makeText(
+                                context,
+                                if (checked) "Anonymous analytics enabled" else "Analytics collection disabled",
+                                android.widget.Toast.LENGTH_SHORT
+                            ).show()
+                        },
+                        colors = androidx.compose.material3.SwitchDefaults.colors(
+                            checkedThumbColor = MysticTealSoft,
+                            checkedTrackColor = MysticTeal.copy(alpha = 0.4f)
+                        )
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedButton(
+                    onClick = {
+                        com.example.analytics.KavyaAnalytics.resetLocalAnalytics(context)
+                        android.widget.Toast.makeText(context, "Local analytics and anonymous identifiers cleared.", android.widget.Toast.LENGTH_SHORT).show()
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Reset Anonymous Analytics Identifier", fontSize = 12.sp)
                 }
             }
         }

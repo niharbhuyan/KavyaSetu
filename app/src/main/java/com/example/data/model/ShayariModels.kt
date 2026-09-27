@@ -300,6 +300,8 @@ data class Shayari(
     val moderationSeverity: String = "SAFE", // "SAFE", "SUSPICIOUS", "HIGH_RISK"
     val moderatedAt: Long? = null
 ) {
+    val poet: String get() = if (penName.isNotBlank()) penName else author
+
     fun getCategoryEnum(): PoemCategory = PoemCategory.fromId(category)
 
     fun getAllTags(): List<String> {

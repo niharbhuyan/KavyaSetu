@@ -26,6 +26,8 @@ class ShayariApplication : Application() {
         com.example.widget.ShayariDailyWidgetProvider.schedule24HourUpdate(this)
         com.example.sync.HourlySyncManager.scheduleHourlySync(this)
         com.example.ads.AdMobManager.initialize(this)
+        com.example.analytics.KavyaAnalytics.initialize(this)
+        com.example.analytics.KavyaAnalytics.trackSessionStart(this)
 
         // Initialize feature managers
         com.example.data.local.TakhallusSealManager.initialize(this)

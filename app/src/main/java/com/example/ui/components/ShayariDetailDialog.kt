@@ -104,10 +104,21 @@ fun ShayariDetailDialog(
     var showLafzOMaani by remember { mutableStateOf(false) }
     var showCalligraphy by remember { mutableStateOf(false) }
     var showUstaadIslah by remember { mutableStateOf(false) }
+    var showWallpaperStudio by remember { mutableStateOf(false) }
+    var showTakhallusStudio by remember { mutableStateOf(false) }
+    var showMeterAnalyzer by remember { mutableStateOf(false) }
 
     val scrollState = rememberScrollState()
     val readingMetrics = remember(shayari.lines, shayari.translationEnglish) {
         calculatePoemReadingMetrics(shayari.lines, shayari.translationEnglish)
+    }
+
+    androidx.compose.runtime.LaunchedEffect(shayari.id) {
+        com.example.analytics.KavyaAnalytics.trackPoetryInteraction(
+            action = "read",
+            category = shayari.category,
+            language = shayari.language
+        )
     }
 
     Dialog(
@@ -463,7 +474,10 @@ fun ShayariDetailDialog(
                     horizontalArrangement = Arrangement.spacedBy(5.dp)
                 ) {
                     FilledTonalButton(
-                        onClick = { onReciteClick(shayari.lines, shayari.language) },
+                        onClick = {
+                            com.example.analytics.KavyaAnalytics.trackPoetryInteraction("audio_recite", shayari.category, shayari.language)
+                            onReciteClick(shayari.lines, shayari.language)
+                        },
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.weight(1f),
                         contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 6.dp)
@@ -474,7 +488,10 @@ fun ShayariDetailDialog(
                     }
 
                     FilledTonalButton(
-                        onClick = { SocialShareHelper.sharePoem(context, shayari) },
+                        onClick = {
+                            com.example.analytics.KavyaAnalytics.trackPoetryInteraction("share", shayari.category, shayari.language)
+                            SocialShareHelper.sharePoem(context, shayari)
+                        },
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.weight(1f).testTag("detail_primary_share_button"),
                         contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 6.dp)
@@ -485,7 +502,10 @@ fun ShayariDetailDialog(
                     }
 
                     FilledTonalButton(
-                        onClick = { SocialShareHelper.copyPoem(context, shayari) },
+                        onClick = {
+                            com.example.analytics.KavyaAnalytics.trackPoetryInteraction("copy", shayari.category, shayari.language)
+                            SocialShareHelper.copyPoem(context, shayari)
+                        },
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.weight(1f).testTag("detail_primary_copy_button"),
                         contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 6.dp)
@@ -496,7 +516,10 @@ fun ShayariDetailDialog(
                     }
 
                     FilledTonalButton(
-                        onClick = { onOpenCardStudio(shayari) },
+                        onClick = {
+                            com.example.analytics.KavyaAnalytics.trackFeatureUsed("card_studio")
+                            onOpenCardStudio(shayari)
+                        },
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.weight(1f),
                         contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 6.dp)
@@ -540,9 +563,12 @@ fun ShayariDetailDialog(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
-                            // Tarannum Singing
+                            // Tarannum Singing & Audio Reels
                             Button(
-                                onClick = { showTarannum = true },
+                                onClick = {
+                                    com.example.analytics.KavyaAnalytics.trackFeatureUsed("tarannum_synth")
+                                    showTarannum = true
+                                },
                                 colors = ButtonDefaults.buttonColors(containerColor = VelvetRose),
                                 shape = RoundedCornerShape(8.dp),
                                 modifier = Modifier.weight(1f),
@@ -551,20 +577,26 @@ fun ShayariDetailDialog(
                                 Text("🪕 Tarannum", fontSize = 11.sp, maxLines = 1)
                             }
 
-                            // Lafz-o-Maani Word Roots
+                            // Lafz-o-Maani Word Roots (Lughat)
                             Button(
-                                onClick = { showLafzOMaani = true },
+                                onClick = {
+                                    com.example.analytics.KavyaAnalytics.trackFeatureUsed("lughat_lookup")
+                                    showLafzOMaani = true
+                                },
                                 colors = ButtonDefaults.buttonColors(containerColor = AntiqueGold),
                                 shape = RoundedCornerShape(8.dp),
                                 modifier = Modifier.weight(1f),
                                 contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 6.dp)
                             ) {
-                                Text("🔍 Lafz Roots", fontSize = 11.sp, color = DeepMidnight, fontWeight = FontWeight.Bold, maxLines = 1)
+                                Text("🔍 Lughat", fontSize = 11.sp, color = DeepMidnight, fontWeight = FontWeight.Bold, maxLines = 1)
                             }
 
                             // Qalam Calligraphy
                             FilledTonalButton(
-                                onClick = { showCalligraphy = true },
+                                onClick = {
+                                    com.example.analytics.KavyaAnalytics.trackFeatureUsed("calligraphy_studio")
+                                    showCalligraphy = true
+                                },
                                 shape = RoundedCornerShape(8.dp),
                                 modifier = Modifier.weight(1f),
                                 contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 6.dp)
@@ -572,9 +604,58 @@ fun ShayariDetailDialog(
                                 Text("📜 Qalam", fontSize = 11.sp, maxLines = 1)
                             }
 
+                            // AMOLED Wallpaper
+                            FilledTonalButton(
+                                onClick = {
+                                    com.example.analytics.KavyaAnalytics.trackFeatureUsed("wallpaper_studio")
+                                    showWallpaperStudio = true
+                                },
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.weight(1f),
+                                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 6.dp)
+                            ) {
+                                Text("📱 Wallpaper", fontSize = 11.sp, maxLines = 1)
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            // Bahr & Taqti Meter
+                            FilledTonalButton(
+                                onClick = {
+                                    com.example.analytics.KavyaAnalytics.trackFeatureUsed("bahr_meter")
+                                    showMeterAnalyzer = true
+                                },
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.weight(1f),
+                                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 6.dp)
+                            ) {
+                                Text("⚖️ Bahr Meter", fontSize = 11.sp, maxLines = 1)
+                            }
+
+                            // Shahi Mohar Seal
+                            FilledTonalButton(
+                                onClick = {
+                                    com.example.analytics.KavyaAnalytics.trackFeatureUsed("takhallus_seal")
+                                    showTakhallusStudio = true
+                                },
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.weight(1f),
+                                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 6.dp)
+                            ) {
+                                Text("🎴 Shahi Mohar", fontSize = 11.sp, maxLines = 1)
+                            }
+
                             // Master Ustaad Islah
                             FilledTonalButton(
-                                onClick = { showUstaadIslah = true },
+                                onClick = {
+                                    com.example.analytics.KavyaAnalytics.trackFeatureUsed("ustaad_islah")
+                                    showUstaadIslah = true
+                                },
                                 shape = RoundedCornerShape(8.dp),
                                 modifier = Modifier.weight(1f),
                                 contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 6.dp)
@@ -722,6 +803,27 @@ fun ShayariDetailDialog(
             initialDraft = shayari.lines,
             audioReciter = audioReciter,
             onDismiss = { showUstaadIslah = false }
+        )
+    }
+
+    if (showWallpaperStudio) {
+        WallpaperStudioDialog(
+            shayari = shayari,
+            onDismiss = { showWallpaperStudio = false }
+        )
+    }
+
+    if (showTakhallusStudio) {
+        TakhallusStudioDialog(
+            initialPenName = shayari.poet,
+            onDismiss = { showTakhallusStudio = false }
+        )
+    }
+
+    if (showMeterAnalyzer) {
+        BahrTaqtiMeterDialog(
+            couplet = shayari.lines,
+            onDismiss = { showMeterAnalyzer = false }
         )
     }
 }

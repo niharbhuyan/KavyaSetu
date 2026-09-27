@@ -1,5 +1,46 @@
 package com.example.ui.components
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import com.example.ui.theme.AntiqueGold
+import com.example.ui.theme.DeepMidnight
+import com.example.ui.theme.MysticTeal
+import com.example.ui.theme.MysticTealSoft
+import com.example.ui.theme.VelvetRose
+
 data class MeterAnalysisResult(
     val line1Syllables: Int,
     val line2Syllables: Int,
@@ -130,5 +171,272 @@ object PoeticMeterAnalyzer {
             sb.append(" ")
         }
         return sb.toString().trim().ifEmpty { "| S | S" }
+    }
+}
+
+@Composable
+fun BahrTaqtiMeterDialog(
+    couplet: String,
+    onDismiss: () -> Unit
+) {
+    val analysis = remember(couplet) {
+        PoeticMeterAnalyzer.analyzeCouplet(couplet)
+    }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth(0.92f)
+                .padding(vertical = 16.dp)
+                .testTag("bahr_taqti_meter_dialog"),
+            shape = RoundedCornerShape(24.dp),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 8.dp,
+            border = BorderStroke(1.dp, AntiqueGold.copy(alpha = 0.5f))
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp)
+                    .verticalScroll(rememberScrollState())
+            ) {
+                // Header
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(text = "⚖️", fontSize = 22.sp)
+                        Column {
+                            Text(
+                                text = "Bahr & Taqti Analyzer",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = AntiqueGold
+                            )
+                            Text(
+                                text = "बह्र और तक़्तीअ • Ghazal Metronome",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    IconButton(onClick = onDismiss) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Close",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Detected Meter Badge
+                Card(
+                    shape = RoundedCornerShape(14.dp),
+                    colors = CardDefaults.cardColors(containerColor = AntiqueGold.copy(alpha = 0.15f)),
+                    border = BorderStroke(1.dp, AntiqueGold.copy(alpha = 0.4f))
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(14.dp)
+                    ) {
+                        Text(
+                            text = "Detected Beher / Meter (बह्र):",
+                            fontSize = 11.sp,
+                            color = AntiqueGold,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            text = analysis.detectedBeherOrChhanda,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Symmetry Score Card
+                Card(
+                    shape = RoundedCornerShape(14.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(14.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Rhythm Symmetry Score:",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "${analysis.symmetryScore}%",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (analysis.symmetryScore >= 80) AntiqueGold else VelvetRose
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(6.dp))
+                        LinearProgressIndicator(
+                            progress = { analysis.symmetryScore / 100f },
+                            modifier = Modifier.fillMaxWidth(),
+                            color = AntiqueGold,
+                            trackColor = AntiqueGold.copy(alpha = 0.2f)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = analysis.rhythmBalanceComment,
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Breakdown: Misra 1 & Misra 2
+                Text(
+                    text = "Hemistich (Misra) Breakdown:",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = AntiqueGold
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+
+                // Misra 1
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(text = "Misra 1 (पहला मिसरा):", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(text = "${analysis.line1Syllables} Syllables • ${analysis.line1Matras} Matras", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                }
+                Surface(
+                    shape = RoundedCornerShape(6.dp),
+                    color = AntiqueGold.copy(alpha = 0.08f),
+                    modifier = Modifier.padding(vertical = 4.dp)
+                ) {
+                    Text(
+                        text = "Weight Pattern: ${analysis.line1Pattern} (| = Laghu, S = Guru)",
+                        fontSize = 11.sp,
+                        fontFamily = FontFamily.Monospace,
+                        color = AntiqueGold,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Misra 2
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(text = "Misra 2 (दूसरा मिसरा):", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(text = "${analysis.line2Syllables} Syllables • ${analysis.line2Matras} Matras", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                }
+                Surface(
+                    shape = RoundedCornerShape(6.dp),
+                    color = AntiqueGold.copy(alpha = 0.08f),
+                    modifier = Modifier.padding(vertical = 4.dp)
+                ) {
+                    Text(
+                        text = "Weight Pattern: ${analysis.line2Pattern} (| = Laghu, S = Guru)",
+                        fontSize = 11.sp,
+                        fontFamily = FontFamily.Monospace,
+                        color = AntiqueGold,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
+
+                // Radif & Qafiya
+                if (analysis.identifiedRadif != null || analysis.identifiedQafiya != null) {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        val radifVal = analysis.identifiedRadif
+                        if (radifVal != null) {
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = MysticTeal.copy(alpha = 0.2f),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Column(modifier = Modifier.padding(8.dp)) {
+                                    Text("Radif (रदीफ़)", fontSize = 10.sp, color = MysticTealSoft)
+                                    Text("'$radifVal'", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MysticTealSoft)
+                                }
+                            }
+                        }
+                        val qafiyaVal = analysis.identifiedQafiya
+                        if (qafiyaVal != null) {
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = VelvetRose.copy(alpha = 0.2f),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Column(modifier = Modifier.padding(8.dp)) {
+                                    Text("Qafiya (क़ाफ़िया)", fontSize = 10.sp, color = AntiqueGold)
+                                    Text("${qafiyaVal.first} / ${qafiyaVal.second}", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = AntiqueGold)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Poetic Suggestions
+                analysis.poeticSuggestions.forEach { sug ->
+                    Row(
+                        modifier = Modifier.padding(vertical = 2.dp),
+                        verticalAlignment = Alignment.Top,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text("💡", fontSize = 12.sp)
+                        Text(
+                            text = sug,
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    onClick = onDismiss,
+                    colors = ButtonDefaults.buttonColors(containerColor = AntiqueGold),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "Close Meter Metronome",
+                        color = DeepMidnight,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
     }
 }

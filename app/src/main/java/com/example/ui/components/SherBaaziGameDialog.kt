@@ -80,6 +80,10 @@ fun SherBaaziGameDialog(
     var score by remember { mutableIntStateOf(10) }
     var streak by remember { mutableIntStateOf(1) }
 
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        com.example.analytics.KavyaAnalytics.trackCommunityEngagement("sher_baazi", "game_started")
+    }
+
     val gameTurns = remember {
         mutableStateListOf(
             SherBaaziTurn(

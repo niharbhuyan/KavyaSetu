@@ -124,5 +124,13 @@ object HourlySyncManager {
         } catch (e: Exception) {
             Log.w(TAG, "Feature state refresh error: ${e.message}")
         }
+
+        // 5. Automated Background In-App Updates Check
+        try {
+            com.example.update.AppUpdateManager.performSilentBackgroundUpdateCheck(context)
+            Log.d(TAG, "Hourly auto-update check executed")
+        } catch (e: Exception) {
+            Log.w(TAG, "Hourly auto-update check error: ${e.message}")
+        }
     }
 }

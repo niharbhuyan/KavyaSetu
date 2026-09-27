@@ -120,6 +120,7 @@ fun DastaangoiMehfilDialog(
 
     LaunchedEffect(isLiveDastaanPlaying, selectedChapterIndex) {
         if (isLiveDastaanPlaying) {
+            com.example.analytics.KavyaAnalytics.trackCommunityEngagement("dastaangoi", "playback_started")
             ambientPlayer.play(AmbientSoundPreset.TANPURA)
             currentSpeakerLine = currentChapter.narrativeExcerpt
             audioReciter.speak(currentChapter.narrativeExcerpt, "hindi")

@@ -69,6 +69,32 @@ class MainViewModel(private val repository: ShayariRepository) : ViewModel() {
     val authError = MutableStateFlow<String?>(null)
     val authSuccessMessage = MutableStateFlow<String?>(null)
 
+    // In-App Auto-Update & Version Manager State
+    val appUpdateInfo = MutableStateFlow<com.example.update.AppUpdateInfo?>(null)
+    val showUpdateDialog = MutableStateFlow(false)
+    val isCheckingUpdate = MutableStateFlow(false)
+
+    fun checkForAppUpdate(context: Context, force: Boolean = false) {
+        viewModelScope.launch {
+            isCheckingUpdate.value = true
+            try {
+                val info = com.example.update.AppUpdateManager.checkForUpdate(context, force)
+                appUpdateInfo.value = info
+                if (info.isUpdateAvailable) {
+                    showUpdateDialog.value = true
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("MainViewModel", "Error checking for update: ${e.message}")
+            } finally {
+                isCheckingUpdate.value = false
+            }
+        }
+    }
+
+    fun dismissUpdateDialog() {
+        showUpdateDialog.value = false
+    }
+
     init {
         viewModelScope.launch {
             repository.getUserProfile("local_poet_guest").collect { p ->

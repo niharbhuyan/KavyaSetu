@@ -148,4 +148,46 @@ object DailyNotificationManager {
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.notify(NOTIFICATION_ID, notification)
     }
+
+    fun showUpdateNotification(context: Context, updateInfo: com.example.update.AppUpdateInfo) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(
+                    context,
+                    android.Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                return
+            }
+        }
+
+        val openAppIntent = Intent(context, MainActivity::class.java).apply {
+            action = Intent.ACTION_VIEW
+            putExtra("open_update_dialog", true)
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            9922,
+            openAppIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setContentTitle("✨ Kavya Setu Update: ${updateInfo.latestVersionName}")
+            .setContentText("New poetry studio features & AMOLED wallpapers ready!")
+            .setStyle(
+                NotificationCompat.BigTextStyle().bigText(
+                    "Version ${updateInfo.latestVersionName} is available.\n• Tarannum Audio Reels\n• AMOLED Wallpapers & Lock Screen Art\n• Bahr & Taqti Meter Metronome\nTap to install seamlessly!"
+                )
+            )
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
+            .build()
+
+        val notificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.notify(1002, notification)
+    }
 }

@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
@@ -187,6 +188,9 @@ fun MainAppContainer(
         contract = ActivityResultContracts.RequestPermission()
     ) { _ -> }
 
+    val showUpdateDialog by viewModel.showUpdateDialog.collectAsStateWithLifecycle()
+    val appUpdateInfo by viewModel.appUpdateInfo.collectAsStateWithLifecycle()
+
     LaunchedEffect(Unit) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(
@@ -197,6 +201,25 @@ fun MainAppContainer(
                 notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
         }
+        val openUpdate = (context as? android.app.Activity)?.intent?.getBooleanExtra("open_update_dialog", false) == true
+        if (openUpdate) {
+            viewModel.checkForAppUpdate(context, force = true)
+        } else if (com.example.update.AppUpdateManager.isAutoCheckEnabled(context)) {
+            // Auto-check for app updates on app launch seamlessly
+            viewModel.checkForAppUpdate(context, force = false)
+        }
+    }
+
+    LaunchedEffect(currentNavigationTab) {
+        val screenName = when (currentNavigationTab) {
+            0 -> "feed"
+            1 -> "ai_studio"
+            2 -> "offline"
+            3 -> "moderation"
+            4 -> "profile"
+            else -> "unknown"
+        }
+        com.example.analytics.KavyaAnalytics.trackScreenView(screenName)
     }
 
     val downloadedCount by viewModel.downloadedCount.collectAsStateWithLifecycle()
@@ -311,6 +334,30 @@ fun MainAppContainer(
                             contentDescription = "FCM Morning Push Center",
                             tint = AntiqueGold
                         )
+                    }
+
+                    // In-App Update Checker & Version Center
+                    IconButton(
+                        onClick = {
+                            viewModel.checkForAppUpdate(context, force = true)
+                        },
+                        modifier = Modifier.testTag("appbar_update_action")
+                    ) {
+                        BadgedBox(
+                            badge = {
+                                if (appUpdateInfo?.isUpdateAvailable == true) {
+                                    Badge(containerColor = VelvetRose, contentColor = Color.White) {
+                                        Text("NEW")
+                                    }
+                                }
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.SystemUpdate,
+                                contentDescription = "Check for App Updates",
+                                tint = if (appUpdateInfo?.isUpdateAvailable == true) AntiqueGold else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -551,6 +598,17 @@ fun MainAppContainer(
                     onApplySettings = { newSize, newMult, newFont ->
                         viewModel.updatePoetryDisplaySettings(context, newSize, newMult, newFont)
                         Toast.makeText(context, "Readability preferences applied!", Toast.LENGTH_SHORT).show()
+                    }
+                )
+            }
+
+            // In-App Auto-Update Dialog
+            if (showUpdateDialog && appUpdateInfo != null) {
+                com.example.ui.components.InAppUpdateDialog(
+                    updateInfo = appUpdateInfo!!,
+                    onDismiss = { viewModel.dismissUpdateDialog() },
+                    onUpdateCompleted = {
+                        viewModel.dismissUpdateDialog()
                     }
                 )
             }

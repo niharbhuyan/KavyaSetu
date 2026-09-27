@@ -1166,6 +1166,9 @@ fun ProfileScreen(
                     },
                     onOpenBetaTesting = {
                         selectedTab = 7
+                    },
+                    onCheckAppUpdate = {
+                        viewModel.checkForAppUpdate(context, force = true)
                     }
                 )
             }

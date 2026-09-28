@@ -34,9 +34,9 @@ android {
         else -> debugKey
       }
       storeFile = keyFile
-      storePassword = if (keyFile == debugKey) "android" else (System.getenv("STORE_PASSWORD") ?: "kavyasetu2026")
-      keyAlias = if (keyFile == debugKey) "androiddebugkey" else (System.getenv("KEY_ALIAS") ?: "upload")
-      keyPassword = if (keyFile == debugKey) "android" else (System.getenv("KEY_PASSWORD") ?: "kavyasetu2026")
+      storePassword = if (keyFile.name == debugKey.name) "android" else (System.getenv("STORE_PASSWORD") ?: "kavyasetu2026")
+      keyAlias = if (keyFile.name == debugKey.name) "androiddebugkey" else (System.getenv("KEY_ALIAS") ?: "upload")
+      keyPassword = if (keyFile.name == debugKey.name) "android" else (System.getenv("KEY_PASSWORD") ?: "kavyasetu2026")
     }
     create("debugConfig") {
       storeFile = file("${rootDir}/debug.keystore")
@@ -123,6 +123,7 @@ dependencies {
   implementation(libs.androidx.credentials.play.services)
   implementation(libs.googleid)
   implementation(libs.play.services.ads)
+  implementation(libs.androidx.work.runtime.ktx)
   implementation(libs.firebase.appcheck.recaptcha)
   implementation(libs.firebase.appcheck.debug)
   implementation(libs.kotlinx.coroutines.android)

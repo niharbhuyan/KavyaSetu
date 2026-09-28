@@ -116,6 +116,7 @@ fun ShayariDetailDialog(
     }
 
     androidx.compose.runtime.LaunchedEffect(shayari.id) {
+        com.example.data.local.PoeticStreakManager.recordPoemRead(context, shayari.id)
         com.example.analytics.KavyaAnalytics.trackPoetryInteraction(
             action = "read",
             category = shayari.category,
@@ -147,6 +148,7 @@ fun ShayariDetailDialog(
                     shayari = shayari,
                     onPoemFinished = {
                         com.example.data.local.ReadingProgressManager.recordPoemRead(context, shayari)
+                        com.example.data.local.PoeticStreakManager.recordPoemRead(context, shayari.id)
                     },
                     onSharePoem = {
                         SocialShareHelper.sharePoem(context, shayari)

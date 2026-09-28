@@ -95,6 +95,7 @@ import com.example.util.FirebaseDynamicLinkManager
 class MainActivity : ComponentActivity() {
     private var audioReciter: AudioReciter? = null
     private val pendingDeepLinkShayariId = mutableStateOf<String?>(null)
+    private val pendingOpenStreak = mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -102,13 +103,18 @@ class MainActivity : ComponentActivity() {
 
         audioReciter = AudioReciter(this)
         handleDeepLinkIntent(intent)
+        if (intent?.getBooleanExtra("open_streak_dialog", false) == true) {
+            pendingOpenStreak.value = true
+        }
 
         setContent {
             ShayariTheme(darkTheme = true) {
                 MainAppContainer(
                     audioReciter = audioReciter!!,
                     incomingDeepLinkId = pendingDeepLinkShayariId.value,
-                    onDeepLinkConsumed = { pendingDeepLinkShayariId.value = null }
+                    incomingOpenStreak = pendingOpenStreak.value,
+                    onDeepLinkConsumed = { pendingDeepLinkShayariId.value = null },
+                    onOpenStreakConsumed = { pendingOpenStreak.value = false }
                 )
             }
         }
@@ -118,6 +124,9 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         handleDeepLinkIntent(intent)
+        if (intent.getBooleanExtra("open_streak_dialog", false)) {
+            pendingOpenStreak.value = true
+        }
     }
 
     private fun handleDeepLinkIntent(intent: Intent?) {
@@ -140,7 +149,9 @@ class MainActivity : ComponentActivity() {
 fun MainAppContainer(
     audioReciter: AudioReciter,
     incomingDeepLinkId: String? = null,
-    onDeepLinkConsumed: () -> Unit = {}
+    incomingOpenStreak: Boolean = false,
+    onDeepLinkConsumed: () -> Unit = {},
+    onOpenStreakConsumed: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val app = context.applicationContext as ShayariApplication
@@ -164,8 +175,17 @@ fun MainAppContainer(
     // Initialize FCM and retrieve token, load saved reading display settings, auto-update all features
     LaunchedEffect(Unit) {
         viewModel.initFcm(context)
+        viewModel.initManagers(context)
         viewModel.loadDisplayPreferences(context)
         viewModel.triggerHourlySyncNow(context)
+    }
+
+    // Process incoming open streak trigger from WorkManager notification
+    LaunchedEffect(incomingOpenStreak) {
+        if (incomingOpenStreak) {
+            viewModel.openDailyStreakDialog()
+            onOpenStreakConsumed()
+        }
     }
 
     // Process incoming deep link from FCM push notification or deep link URL
@@ -251,6 +271,23 @@ fun MainAppContainer(
                     }
                 },
                 actions = {
+                    // Daily Poetic Streak Flame Action
+                    val streakState by viewModel.poeticStreakState.collectAsStateWithLifecycle()
+                    IconButton(
+                        onClick = { viewModel.openDailyStreakDialog() },
+                        modifier = Modifier.testTag("appbar_streak_action")
+                    ) {
+                        BadgedBox(
+                            badge = {
+                                Badge(containerColor = AntiqueGold, contentColor = DeepMidnight) {
+                                    Text("${streakState.currentStreak}")
+                                }
+                            }
+                        ) {
+                            Text("🔥", fontSize = 18.sp)
+                        }
+                    }
+
                     // Offline Vault shortcut with badge
                     IconButton(
                         onClick = { currentNavigationTab = 2 },
@@ -602,6 +639,23 @@ fun MainAppContainer(
                     onDismiss = { viewModel.dismissUpdateDialog() },
                     onUpdateCompleted = {
                         viewModel.dismissUpdateDialog()
+                    }
+                )
+            }
+
+            // Daily Poetic Streak Dialog
+            val showDailyStreakDialog by viewModel.showDailyStreakDialog.collectAsStateWithLifecycle()
+            if (showDailyStreakDialog) {
+                com.example.ui.components.DailyPoeticStreakDialog(
+                    onDismiss = { viewModel.closeDailyStreakDialog() },
+                    onOpenDailyPick = {
+                        val pick = viewModel.dailyPick.value ?: viewModel.allShayaris.value.firstOrNull()
+                        if (pick != null) {
+                            viewModel.openShayariDetail(pick)
+                        }
+                    },
+                    onNavigateToComposer = {
+                        currentNavigationTab = 1
                     }
                 )
             }

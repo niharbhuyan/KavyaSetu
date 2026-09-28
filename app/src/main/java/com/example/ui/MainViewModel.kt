@@ -46,6 +46,11 @@ class MainViewModel(private val repository: ShayariRepository) : ViewModel() {
     val readingProgress: StateFlow<com.example.data.local.ReadingProgressState> =
         com.example.data.local.ReadingProgressManager.readingState
 
+    // Daily Poetic Streak State
+    val poeticStreakState: StateFlow<com.example.data.local.PoeticStreakState> =
+        com.example.data.local.PoeticStreakManager.streakState
+    val showDailyStreakDialog = MutableStateFlow(false)
+
     // Generated Poem History
     val generatedPoemHistory: StateFlow<List<com.example.data.model.GeneratedPoemItem>> =
         com.example.data.local.GeneratedPoemManager.history
@@ -428,6 +433,9 @@ class MainViewModel(private val repository: ShayariRepository) : ViewModel() {
                         penName = penName,
                         content = text
                     )
+                    com.example.data.local.PoeticStreakManager.recordPoemComposed(context, topic)
+                    val streak = com.example.data.local.PoeticStreakManager.streakState.value.currentStreak
+                    _userProfileState.value = _userProfileState.value.copy(streakDays = streak)
                 }
                 repository.recordActivity(
                     ActivityType.COMPOSE,
@@ -745,12 +753,33 @@ class MainViewModel(private val repository: ShayariRepository) : ViewModel() {
 
     fun initManagers(context: Context) {
         com.example.data.local.ReadingProgressManager.initialize(context)
+        com.example.data.local.PoeticStreakManager.initialize(context)
         com.example.data.local.GeneratedPoemManager.initialize(context)
         loadDisplayPreferences(context)
+        // Sync profile streak with PoeticStreakManager
+        val streak = com.example.data.local.PoeticStreakManager.streakState.value.currentStreak
+        _userProfileState.value = _userProfileState.value.copy(streakDays = streak)
     }
 
     fun recordPoemRead(context: Context, shayari: Shayari) {
         com.example.data.local.ReadingProgressManager.recordPoemRead(context, shayari)
+        com.example.data.local.PoeticStreakManager.recordPoemRead(context, shayari.id)
+        val streak = com.example.data.local.PoeticStreakManager.streakState.value.currentStreak
+        _userProfileState.value = _userProfileState.value.copy(streakDays = streak)
+    }
+
+    fun recordPoemComposed(context: Context, title: String = "") {
+        com.example.data.local.PoeticStreakManager.recordPoemComposed(context, title)
+        val streak = com.example.data.local.PoeticStreakManager.streakState.value.currentStreak
+        _userProfileState.value = _userProfileState.value.copy(streakDays = streak)
+    }
+
+    fun openDailyStreakDialog() {
+        showDailyStreakDialog.value = true
+    }
+
+    fun closeDailyStreakDialog() {
+        showDailyStreakDialog.value = false
     }
 
     fun setBookmark(context: Context, shayari: Shayari) {

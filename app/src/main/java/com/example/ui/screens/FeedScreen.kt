@@ -125,6 +125,26 @@ fun FeedScreen(
     var showRiyazJournal by remember { mutableStateOf(false) }
     var showRaatMehfil by remember { mutableStateOf(false) }
     var showDastaangoi by remember { mutableStateOf(false) }
+    var showDailyStreakDialog by remember { mutableStateOf(false) }
+    val vmShowDailyStreak by viewModel.showDailyStreakDialog.collectAsStateWithLifecycle()
+
+    if (showDailyStreakDialog || vmShowDailyStreak) {
+        com.example.ui.components.DailyPoeticStreakDialog(
+            onDismiss = {
+                showDailyStreakDialog = false
+                viewModel.closeDailyStreakDialog()
+            },
+            onOpenDailyPick = {
+                val pick = dailyPick ?: shayaris.firstOrNull()
+                if (pick != null) {
+                    viewModel.openShayariDetail(pick)
+                }
+            },
+            onNavigateToComposer = {
+                onNavigateToAiStudio()
+            }
+        )
+    }
 
     val isOfflineSimulated by viewModel.isOfflineSimulated.collectAsStateWithLifecycle()
 
@@ -285,6 +305,95 @@ fun FeedScreen(
                         ) {
                             Text("Go Online", fontSize = 12.sp, color = AntiqueGold)
                         }
+                    }
+                }
+            }
+        }
+
+        // Daily Poetic Streak Engagement Banner
+        item(key = "daily_poetic_streak_banner") {
+            val streakState by viewModel.poeticStreakState.collectAsStateWithLifecycle()
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { showDailyStreakDialog = true }
+                    .testTag("feed_daily_streak_banner"),
+                shape = RoundedCornerShape(18.dp),
+                color = Color(0xFF1B1124),
+                border = BorderStroke(1.2.dp, AntiqueGold.copy(alpha = 0.5f)),
+                shadowElevation = 4.dp
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Surface(
+                            shape = CircleShape,
+                            color = AntiqueGold.copy(alpha = 0.2f),
+                            border = BorderStroke(1.5.dp, AntiqueGold),
+                            modifier = Modifier.size(42.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text(
+                                    text = "🔥 ${streakState.currentStreak}",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = AntiqueGold
+                                )
+                            }
+                        }
+
+                        Column {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Text(
+                                    text = "${streakState.currentStreak}-Day Poetic Streak",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                                Surface(
+                                    shape = RoundedCornerShape(6.dp),
+                                    color = AntiqueGold.copy(alpha = 0.15f)
+                                ) {
+                                    Text(
+                                        text = streakState.streakTitle,
+                                        fontSize = 10.sp,
+                                        color = AntiqueGold,
+                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                    )
+                                }
+                            }
+                            Text(
+                                text = if (streakState.isCompletedToday) "✨ Today's verse recorded! Streak secured." else "⏳ Read or compose today's verse to protect your streak.",
+                                fontSize = 11.sp,
+                                color = if (streakState.isCompletedToday) Color(0xFF4ADE80) else AntiqueGold.copy(alpha = 0.9f)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = VelvetRose.copy(alpha = 0.25f),
+                        border = BorderStroke(1.dp, VelvetRose.copy(alpha = 0.6f))
+                    ) {
+                        Text(
+                            text = "Streak ➔",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = VelvetRose,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)
+                        )
                     }
                 }
             }

@@ -145,7 +145,9 @@ fun ProfileScreen(
     val poetryLineHeightMult by viewModel.poetryLineHeightMult.collectAsStateWithLifecycle()
     val poetryFontFamilyType by viewModel.poetryFontFamilyType.collectAsStateWithLifecycle()
     val fcmToken by viewModel.fcmToken.collectAsStateWithLifecycle()
+    val poeticStreakState by viewModel.poeticStreakState.collectAsStateWithLifecycle()
 
+    var showStreakDialog by remember { mutableStateOf(false) }
     var selectedTab by remember { mutableIntStateOf(0) }
     var selectedSavedLanguageFilter by remember { mutableStateOf("all") }
     var cardStudioShayari by remember { mutableStateOf<Shayari?>(null) }
@@ -292,6 +294,21 @@ fun ProfileScreen(
     if (showBetaTestingDialog) {
         BetaTestingDialog(
             onDismiss = { showBetaTestingDialog = false }
+        )
+    }
+
+    if (showStreakDialog) {
+        com.example.ui.components.DailyPoeticStreakDialog(
+            onDismiss = { showStreakDialog = false },
+            onOpenDailyPick = {
+                val dailyPick = viewModel.dailyPick.value ?: viewModel.allShayaris.value.firstOrNull()
+                if (dailyPick != null) {
+                    viewModel.openShayariDetail(dailyPick)
+                }
+            },
+            onNavigateToComposer = {
+                onNavigateToAiStudio()
+            }
         )
     }
 
@@ -465,8 +482,11 @@ fun ProfileScreen(
                     Surface(
                         shape = RoundedCornerShape(14.dp),
                         color = AntiqueGold.copy(alpha = 0.12f),
-                        border = BorderStroke(1.dp, AntiqueGold.copy(alpha = 0.25f)),
-                        modifier = Modifier.fillMaxWidth()
+                        border = BorderStroke(1.dp, AntiqueGold.copy(alpha = 0.35f)),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { showStreakDialog = true }
+                            .testTag("profile_streak_clickable_card")
                     ) {
                         Row(
                             modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
@@ -477,18 +497,24 @@ fun ProfileScreen(
                                 Text(text = "🔥", fontSize = 20.sp)
                                 Column {
                                     Text(
-                                        text = "${profile.streakDays} Day Reading Streak",
+                                        text = "${poeticStreakState.currentStreak} Day Poetic Streak • ${poeticStreakState.streakTitle}",
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 13.sp,
                                         color = AntiqueGold
                                     )
                                     Text(
-                                        text = "Engaging with daily wisdom across Hindi, Odia & English",
+                                        text = if (poeticStreakState.isCompletedToday) "Today's goal completed • Tap to view streak journey" else "Streak pending today • Tap to complete & maintain",
                                         fontSize = 11.sp,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        color = if (poeticStreakState.isCompletedToday) Color(0xFF4ADE80) else MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
                             }
+                            Text(
+                                text = "➔",
+                                color = AntiqueGold,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold
+                            )
                         }
                     }
 
@@ -500,7 +526,7 @@ fun ProfileScreen(
                         horizontalArrangement = Arrangement.SpaceAround
                     ) {
                         MetricItem(
-                            value = "${readingProgress.readingStreakDays}d",
+                            value = "${poeticStreakState.currentStreak}d",
                             label = "Read Streak",
                             testTag = "metric_streak_count"
                         )

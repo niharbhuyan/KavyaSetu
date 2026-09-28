@@ -430,4 +430,63 @@ class ExampleRobolectricTest {
     assertTrue(formatted.contains("https://kavyasetu.page.link"))
     assertTrue(formatted.contains("ghalib_dil_e_nadan"))
   }
+
+  @Test
+  fun `verify daily poetic streak manager tracking and milestone honorifics`() {
+    val context = ApplicationProvider.getApplicationContext<Context>()
+    val manager = com.example.data.local.PoeticStreakManager
+    manager.initialize(context)
+
+    val initialState = manager.streakState.value
+    assertNotNull(initialState)
+    assertTrue(initialState.currentStreak >= 1)
+
+    // Record reading activity
+    manager.recordPoemRead(context, "test_poem_1")
+    val afterReadState = manager.streakState.value
+    assertTrue(afterReadState.isCompletedToday)
+    assertEquals(1, afterReadState.todayReadCount)
+    assertNotNull(afterReadState.streakTitle)
+    assertTrue(afterReadState.weeklyHistory.isNotEmpty())
+    assertEquals(7, afterReadState.weeklyHistory.size)
+
+    // Record composing activity
+    manager.recordPoemComposed(context, "My Test Ghazal")
+    val afterComposeState = manager.streakState.value
+    assertTrue(afterComposeState.isCompletedToday)
+    assertEquals(1, afterComposeState.todayComposedCount)
+    assertEquals(2, afterComposeState.totalActivitiesToday)
+
+    // Verify milestones structure
+    assertTrue(afterComposeState.allMilestones.size >= 5)
+    val firstMilestone = afterComposeState.allMilestones.first()
+    assertEquals("शायर-ए-मुब्तदी", firstMilestone.title)
+    assertTrue(firstMilestone.isUnlocked)
+
+    // Verify share text generation
+    val shareText = manager.getStreakShareText()
+    assertTrue(shareText.contains("Daily Poetic Streak"))
+    assertTrue(shareText.contains("Kavya Setu"))
+  }
+
+  @Test
+  fun `verify workmanager streak reminder scheduling and configuration`() {
+    val context = ApplicationProvider.getApplicationContext<Context>()
+    
+    // 1. Schedule daily reminder via StreakReminderScheduler
+    com.example.notification.StreakReminderScheduler.scheduleDailyReminder(context, 19, 30)
+    assertTrue(com.example.data.local.PoeticStreakManager.isReminderEnabled(context))
+    val (hour, minute) = com.example.data.local.PoeticStreakManager.getReminderTime(context)
+    assertEquals(19, hour)
+    assertEquals(30, minute)
+
+    // 2. Trigger instant test reminder via WorkManager
+    com.example.notification.StreakReminderScheduler.triggerInstantTestReminder(context)
+    val workManager = androidx.work.WorkManager.getInstance(context)
+    assertNotNull(workManager)
+
+    // 3. Cancel reminder and verify state
+    com.example.notification.StreakReminderScheduler.cancelDailyReminder(context)
+    assertEquals(false, com.example.data.local.PoeticStreakManager.isReminderEnabled(context))
+  }
 }

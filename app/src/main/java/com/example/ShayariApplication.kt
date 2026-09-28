@@ -30,6 +30,8 @@ class ShayariApplication : Application() {
         com.example.analytics.KavyaAnalytics.trackSessionStart(this)
 
         // Initialize feature managers
+        com.example.data.local.PoeticStreakManager.initialize(this)
+        com.example.notification.StreakReminderScheduler.scheduleDailyReminder(this)
         com.example.data.local.TakhallusSealManager.initialize(this)
         com.example.data.local.TarhiMushairaManager.initialize(this)
         com.example.data.local.RiyazJournalManager.initialize(this)

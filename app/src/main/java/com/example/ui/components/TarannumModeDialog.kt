@@ -31,6 +31,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.GraphicEq
+import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
@@ -92,6 +93,7 @@ fun TarannumModeDialog(
     val droneVolume by synthesizer.volume.collectAsState()
 
     var isSingingVoice by remember { mutableStateOf(false) }
+    var showDynamicLinkDialog by remember { mutableStateOf(false) }
 
     DisposableEffect(Unit) {
         onDispose {
@@ -161,11 +163,23 @@ fun TarannumModeDialog(
                         }
                     }
 
-                    IconButton(
-                        onClick = onDismiss,
-                        modifier = Modifier.testTag("close_tarannum_dialog")
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        Icon(Icons.Default.Close, contentDescription = "Close", tint = Color.White)
+                        IconButton(
+                            onClick = { showDynamicLinkDialog = true },
+                            modifier = Modifier.testTag("tarannum_dynamic_link_button")
+                        ) {
+                            Icon(Icons.Default.Link, contentDescription = "Share Dynamic Link", tint = AntiqueGold)
+                        }
+
+                        IconButton(
+                            onClick = onDismiss,
+                            modifier = Modifier.testTag("close_tarannum_dialog")
+                        ) {
+                            Icon(Icons.Default.Close, contentDescription = "Close", tint = Color.White)
+                        }
                     }
                 }
 
@@ -457,5 +471,12 @@ fun TarannumModeDialog(
                 }
             }
         }
+    }
+
+    if (showDynamicLinkDialog) {
+        DynamicLinkShareDialog(
+            shayari = shayari,
+            onDismiss = { showDynamicLinkDialog = false }
+        )
     }
 }

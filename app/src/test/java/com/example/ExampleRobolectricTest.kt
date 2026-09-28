@@ -384,4 +384,50 @@ class ExampleRobolectricTest {
     val alarmManager = context.getSystemService(android.content.Context.ALARM_SERVICE) as android.app.AlarmManager
     assertNotNull(alarmManager)
   }
+
+  @Test
+  fun `verify dynamic deep link generation and id extraction`() {
+    val context = ApplicationProvider.getApplicationContext<Context>()
+    val shayari = com.example.data.model.Shayari(
+      id = "ghalib_hazaaron_khwahishen",
+      lines = "हज़ारों ख़्वाहिशें ऐसी कि हर ख़्वाहिश पे दम निकले\nबहुत निकले मिरे अरमान लेकिन फिर भी कम निकले",
+      author = "Mirza Ghalib",
+      penName = "Ghalib",
+      language = "hindi",
+      emotion = "dard"
+    )
+
+    // 1. Verify deterministic dynamic link contains the target uri and parameters
+    val dynamicLink = com.example.util.FirebaseDynamicLinkManager.buildDeterministicDynamicLink(context, shayari)
+    assertTrue(dynamicLink.startsWith("https://kavyasetu.page.link"))
+    assertTrue(dynamicLink.contains("ghalib_hazaaron_khwahishen"))
+    assertTrue(dynamicLink.contains("apn=com.example"))
+
+    // 2. Verify extraction from nested Firebase Dynamic Link URI
+    val nestedUri = android.net.Uri.parse(dynamicLink)
+    val extractedId = com.example.util.FirebaseDynamicLinkManager.extractPoemId(nestedUri)
+    assertEquals("ghalib_hazaaron_khwahishen", extractedId)
+
+    // 3. Verify extraction from standard App Link
+    val appLink = android.net.Uri.parse("https://kavyasetu.app/poem?id=ghalib_hazaaron_khwahishen")
+    val extractedFromAppLink = com.example.util.FirebaseDynamicLinkManager.extractPoemId(appLink)
+    assertEquals("ghalib_hazaaron_khwahishen", extractedFromAppLink)
+
+    // 4. Verify extraction from custom scheme
+    val customScheme = android.net.Uri.parse("shayari://detail?id=ghalib_hazaaron_khwahishen")
+    val extractedFromCustomScheme = com.example.util.FirebaseDynamicLinkManager.extractPoemId(customScheme)
+    assertEquals("ghalib_hazaaron_khwahishen", extractedFromCustomScheme)
+  }
+
+  @Test
+  fun `verify formatted poem includes dynamic deep link for social sharing`() {
+    val formatted = com.example.util.SocialShareHelper.formatPoemForSocial(
+      lines = "दिल-ए-नादाँ तुझे हुआ क्या है\nआख़िर इस दर्द की दवा क्या है",
+      author = "Mirza Ghalib",
+      language = "hindi",
+      id = "ghalib_dil_e_nadan"
+    )
+    assertTrue(formatted.contains("https://kavyasetu.page.link"))
+    assertTrue(formatted.contains("ghalib_dil_e_nadan"))
+  }
 }

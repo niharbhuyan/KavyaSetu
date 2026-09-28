@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.FileDownloadDone
 import androidx.compose.material.icons.filled.FormatQuote
+import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Translate
@@ -107,6 +108,7 @@ fun ShayariDetailDialog(
     var showWallpaperStudio by remember { mutableStateOf(false) }
     var showTakhallusStudio by remember { mutableStateOf(false) }
     var showMeterAnalyzer by remember { mutableStateOf(false) }
+    var showDynamicLinkDialog by remember { mutableStateOf(false) }
 
     val scrollState = rememberScrollState()
     val readingMetrics = remember(shayari.lines, shayari.translationEnglish) {
@@ -202,11 +204,24 @@ fun ShayariDetailDialog(
                             }
                         }
 
-                        // Top Action Icons: Native Share Intent, Copy to Clipboard & Close Dialog
+                        // Top Action Icons: Dynamic Deep Link, Native Share Intent, Copy to Clipboard & Close Dialog
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
+                            IconButton(
+                                onClick = {
+                                    showDynamicLinkDialog = true
+                                },
+                                modifier = Modifier.size(36.dp).testTag("header_dynamic_link_button")
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Link,
+                                    contentDescription = "Share Dynamic Deep Link",
+                                    tint = AntiqueGold
+                                )
+                            }
+
                             IconButton(
                                 onClick = {
                                     SocialShareHelper.sharePoem(context, shayari)
@@ -739,6 +754,35 @@ fun ShayariDetailDialog(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
+                // Firebase Dynamic Link Direct Share Button
+                OutlinedButton(
+                    onClick = {
+                        showDynamicLinkDialog = true
+                    },
+                    shape = RoundedCornerShape(14.dp),
+                    border = BorderStroke(1.dp, AntiqueGold.copy(alpha = 0.7f)),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        containerColor = AntiqueGold.copy(alpha = 0.08f)
+                    ),
+                    modifier = Modifier.fillMaxWidth().testTag("detail_share_dynamic_link_button")
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Link,
+                        contentDescription = null,
+                        tint = AntiqueGold,
+                        modifier = Modifier.size(17.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Share Dynamic Deep Link 🔗 (Opens in App)",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = AntiqueGold
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
                 // Gemini AI Poetic Analysis Button
                 OutlinedButton(
                     onClick = { onAnalyzeWithGemini(shayari) },
@@ -824,6 +868,13 @@ fun ShayariDetailDialog(
         BahrTaqtiMeterDialog(
             couplet = shayari.lines,
             onDismiss = { showMeterAnalyzer = false }
+        )
+    }
+
+    if (showDynamicLinkDialog) {
+        DynamicLinkShareDialog(
+            shayari = shayari,
+            onDismiss = { showDynamicLinkDialog = false }
         )
     }
 }

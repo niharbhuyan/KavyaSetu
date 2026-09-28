@@ -601,6 +601,7 @@ fun ShayariCard(
             emotion = shayari.emotion,
             style = shayari.category,
             penName = shayari.penName,
+            id = shayari.id,
             onDismiss = { showShareDialog = false }
         )
     }

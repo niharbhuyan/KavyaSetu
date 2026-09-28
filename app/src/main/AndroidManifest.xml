@@ -94,14 +94,41 @@
                 <data android:scheme="shayari" android:host="detail" />
             </intent-filter>
 
+            <!-- Firebase Dynamic Links domain -->
             <intent-filter android:autoVerify="false">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data
                     android:scheme="https"
+                    android:host="kavyasetu.page.link" />
+            </intent-filter>
+
+            <!-- Universal Web & App Links -->
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="https"
+                    android:host="kavyasetu.app"
+                    android:pathPrefix="/poem" />
+                <data
+                    android:scheme="https"
+                    android:host="kavyasetu.app"
+                    android:pathPrefix="/detail" />
+                <data
+                    android:scheme="https"
                     android:host="shayari.app"
                     android:pathPrefix="/detail" />
+                <data
+                    android:scheme="https"
+                    android:host="ais-dev-om5rsf22wxxclflaszhhtg-613265325843.asia-east1.run.app"
+                    android:pathPrefix="/poem" />
+                <data
+                    android:scheme="https"
+                    android:host="ais-pre-om5rsf22wxxclflaszhhtg-613265325843.asia-east1.run.app"
+                    android:pathPrefix="/poem" />
             </intent-filter>
         </activity>
 

@@ -76,6 +76,7 @@ fun FormattedSocialShareDialog(
     style: String? = null,
     topic: String? = null,
     penName: String? = null,
+    id: String? = null,
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
@@ -86,12 +87,13 @@ fun FormattedSocialShareDialog(
     var includeMetadata by remember { mutableStateOf(true) }
     var includeHashtags by remember { mutableStateOf(true) }
     var includeWatermark by remember { mutableStateOf(true) }
+    var includeDynamicLink by remember { mutableStateOf(!id.isNullOrBlank()) }
 
     val formattedPreview = remember(
-        lines, author, penName, language, emotion, style, topic,
-        selectedPreset, includeSeal, includeMetadata, includeHashtags, includeWatermark, currentSeal
+        lines, author, penName, language, emotion, style, topic, id,
+        selectedPreset, includeSeal, includeMetadata, includeHashtags, includeWatermark, includeDynamicLink, currentSeal
     ) {
-        SocialShareHelper.buildCustomFormattedPoem(
+        val base = SocialShareHelper.buildCustomFormattedPoem(
             lines = lines,
             author = author,
             penName = penName,
@@ -106,6 +108,12 @@ fun FormattedSocialShareDialog(
             includeMetadata = includeMetadata,
             takhallusSealText = currentSeal.takhallus
         )
+        if (includeDynamicLink && !id.isNullOrBlank()) {
+            val deepLink = SocialShareHelper.getDynamicDeepLink(id)
+            "$base\n\n✨ Open & Recite in App:\n$deepLink"
+        } else {
+            base
+        }
     }
 
     val charCount = formattedPreview.length
@@ -258,6 +266,17 @@ fun FormattedSocialShareDialog(
                         onClick = { includeWatermark = !includeWatermark },
                         label = { Text("🖋️ Kavya Setu Tag", fontSize = 11.sp) }
                     )
+                    if (!id.isNullOrBlank()) {
+                        FilterChip(
+                            selected = includeDynamicLink,
+                            onClick = { includeDynamicLink = !includeDynamicLink },
+                            label = { Text("🔗 Dynamic Link", fontSize = 11.sp) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = AntiqueGold.copy(alpha = 0.2f),
+                                selectedLabelColor = AntiqueGold
+                            )
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(14.dp))

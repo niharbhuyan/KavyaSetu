@@ -474,6 +474,14 @@ object SocialShareHelper {
     }
 
     /**
+     * Generates a deterministic Firebase Dynamic Link URL for a given poem id.
+     */
+    fun getDynamicDeepLink(id: String): String {
+        val target = Uri.encode("${FirebaseDynamicLinkManager.APP_DEEP_LINK_HOST}/poem?id=$id")
+        return "${FirebaseDynamicLinkManager.DYNAMIC_LINK_DOMAIN}/?link=$target&apn=com.niharsales.kavyasetu"
+    }
+
+    /**
      * Formats a classic or community poem for social media posting.
      */
     fun formatPoemForSocial(
@@ -499,7 +507,8 @@ object SocialShareHelper {
             includeMetadata = true
         )
         return if (!id.isNullOrBlank()) {
-            "$base\n\n🔗 Read in App: shayari://detail?id=$id"
+            val deepLink = getDynamicDeepLink(id)
+            "$base\n\n✨ Open in Kavya Setu:\n$deepLink"
         } else {
             base
         }

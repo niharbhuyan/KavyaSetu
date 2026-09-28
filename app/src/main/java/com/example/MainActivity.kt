@@ -90,6 +90,7 @@ import com.example.ui.theme.AntiqueGold
 import com.example.ui.theme.DeepMidnight
 import com.example.ui.theme.ShayariTheme
 import com.example.ui.theme.VelvetRose
+import com.example.util.FirebaseDynamicLinkManager
 
 class MainActivity : ComponentActivity() {
     private var audioReciter: AudioReciter? = null
@@ -121,18 +122,10 @@ class MainActivity : ComponentActivity() {
 
     private fun handleDeepLinkIntent(intent: Intent?) {
         if (intent == null) return
-        var shayariId = intent.getStringExtra(ShayariFirebaseMessagingService.EXTRA_SHAYARI_ID)
-            ?: intent.getStringExtra("shayari_id")
-            ?: intent.getStringExtra("id")
-
-        val dataUri = intent.data
-        if (shayariId == null && dataUri != null) {
-            shayariId = dataUri.getQueryParameter("id")
-                ?: dataUri.lastPathSegment?.takeIf { it != "detail" && it.isNotEmpty() }
-        }
-
-        if (!shayariId.isNullOrBlank()) {
-            pendingDeepLinkShayariId.value = shayariId
+        FirebaseDynamicLinkManager.processIncomingIntent(this, intent) { resolvedPoemId ->
+            if (resolvedPoemId.isNotBlank()) {
+                pendingDeepLinkShayariId.value = resolvedPoemId
+            }
         }
     }
 

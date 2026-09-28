@@ -1016,7 +1016,7 @@ fun AccountPreferencesSection(
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = "Installed: v1.2.3 • Build 6 (Release)",
+                                text = "Installed: ${com.example.BuildConfig.VERSION_NAME} • Build ${com.example.BuildConfig.VERSION_CODE} (Release)",
                                 fontSize = 12.sp,
                                 color = AntiqueGold
                             )

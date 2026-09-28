@@ -21,8 +21,8 @@ import kotlinx.coroutines.withContext
 data class AppUpdateInfo(
     val currentVersionCode: Int = BuildConfig.VERSION_CODE,
     val currentVersionName: String = BuildConfig.VERSION_NAME,
-    val latestVersionCode: Int = 7,
-    val latestVersionName: String = "v1.2.4",
+    val latestVersionCode: Int = 9,
+    val latestVersionName: String = "v1.2.5",
     val releaseDate: String = "September 2026",
     val isUpdateAvailable: Boolean = true,
     val isCritical: Boolean = false,
@@ -38,7 +38,7 @@ data class AppUpdateInfo(
         "📊 Privacy-Focused Analytics: Zero-PII retention tracking & anonymous interaction metrics"
     ),
     val playStoreUrl: String = "https://play.google.com/store/apps/details?id=com.niharsales.kavyasetu",
-    val directAabUrl: String = "https://ais-dev-om5rsf22wxxclflaszhhtg-613265325843.asia-east1.run.app/KavyaSetu-v1.2.3-release.aab"
+    val directAabUrl: String = "https://ais-dev-om5rsf22wxxclflaszhhtg-613265325843.asia-east1.run.app/KavyaSetu-v1.2.5-release.aab"
 )
 
 /**
@@ -137,14 +137,14 @@ object AppUpdateManager {
         val dismissedVersion = prefs.getInt(KEY_DISMISSED_VERSION, 0)
 
         // Target version code for next major feature bundle
-        val targetVersionCode = 7
+        val targetVersionCode = 9
         val isUpdateAvailable = targetVersionCode > currentVersionCode && (force || dismissedVersion < targetVersionCode)
 
         val info = AppUpdateInfo(
             currentVersionCode = currentVersionCode,
             currentVersionName = BuildConfig.VERSION_NAME,
             latestVersionCode = targetVersionCode,
-            latestVersionName = "v1.2.4",
+            latestVersionName = "v1.2.5",
             releaseDate = "September 2026",
             isUpdateAvailable = isUpdateAvailable,
             isCritical = false

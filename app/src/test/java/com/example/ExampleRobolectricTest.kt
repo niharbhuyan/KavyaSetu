@@ -401,7 +401,7 @@ class ExampleRobolectricTest {
     val dynamicLink = com.example.util.FirebaseDynamicLinkManager.buildDeterministicDynamicLink(context, shayari)
     assertTrue(dynamicLink.startsWith("https://kavyasetu.page.link"))
     assertTrue(dynamicLink.contains("ghalib_hazaaron_khwahishen"))
-    assertTrue(dynamicLink.contains("apn=com.example"))
+    assertTrue(dynamicLink.contains("apn=${context.packageName}"))
 
     // 2. Verify extraction from nested Firebase Dynamic Link URI
     val nestedUri = android.net.Uri.parse(dynamicLink)

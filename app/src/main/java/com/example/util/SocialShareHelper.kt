@@ -508,7 +508,7 @@ object SocialShareHelper {
         )
         return if (!id.isNullOrBlank()) {
             val deepLink = getDynamicDeepLink(id)
-            "$base\n\n✨ Open in Kavya Setu:\n$deepLink"
+            "$base\n\n✨ Open in Kavya Setu:\n$deepLink\nshayari://detail?id=$id"
         } else {
             base
         }

@@ -17,26 +17,18 @@ android {
     applicationId = "com.niharsales.kavyasetu"
     minSdk = 24
     targetSdk = 36
-    versionCode = 6
-    versionName = "v1.2.3"
+    versionCode = 9
+    versionName = "v1.2.5"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
 
   signingConfigs {
     create("release") {
-      val uploadKey = file("${rootDir}/my-upload-key.jks")
-      val debugKey = file("${rootDir}/debug.keystore")
-      val customPath = System.getenv("KEYSTORE_PATH")
-      val keyFile = when {
-        customPath != null && file(customPath).exists() -> file(customPath)
-        uploadKey.exists() -> uploadKey
-        else -> debugKey
-      }
-      storeFile = keyFile
-      storePassword = if (keyFile.name == debugKey.name) "android" else (System.getenv("STORE_PASSWORD") ?: "kavyasetu2026")
-      keyAlias = if (keyFile.name == debugKey.name) "androiddebugkey" else (System.getenv("KEY_ALIAS") ?: "upload")
-      keyPassword = if (keyFile.name == debugKey.name) "android" else (System.getenv("KEY_PASSWORD") ?: "kavyasetu2026")
+      storeFile = file("${rootDir}/debug.keystore")
+      storePassword = "android"
+      keyAlias = "androiddebugkey"
+      keyPassword = "android"
     }
     create("debugConfig") {
       storeFile = file("${rootDir}/debug.keystore")

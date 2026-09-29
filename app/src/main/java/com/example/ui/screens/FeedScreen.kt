@@ -92,6 +92,7 @@ import com.example.ui.theme.AntiqueGold
 import com.example.ui.theme.DeepMidnight
 import com.example.ui.theme.RoyalPlum
 import com.example.ui.theme.VelvetRose
+import com.example.ui.theme.MysticTeal
 
 @Composable
 fun FeedScreen(
@@ -125,6 +126,8 @@ fun FeedScreen(
     var showRiyazJournal by remember { mutableStateOf(false) }
     var showRaatMehfil by remember { mutableStateOf(false) }
     var showDastaangoi by remember { mutableStateOf(false) }
+    var showStoryReelStudio by remember { mutableStateOf(false) }
+    var showRiazMetronome by remember { mutableStateOf(false) }
     var showDailyStreakDialog by remember { mutableStateOf(false) }
     val vmShowDailyStreak by viewModel.showDailyStreakDialog.collectAsStateWithLifecycle()
 
@@ -199,6 +202,23 @@ fun FeedScreen(
             initialCoupletToScan = initialVerse,
             audioReciter = audioReciter,
             onDismiss = { showLafzOMaani = false }
+        )
+    }
+
+    if (showStoryReelStudio) {
+        val sampleSher = dailyPick?.lines ?: shayaris.firstOrNull()?.lines ?: "हज़ारों ख़्वाहिशें ऐसी कि हर ख़्वाहिश पे दम निकले।\nबहुत निकले मिरे अरमान लेकिन फिर भी कम निकले॥"
+        val samplePoet = dailyPick?.poet ?: shayaris.firstOrNull()?.poet ?: "मिर्ज़ा असदुल्लाह ख़ान 'ग़ालिब'"
+        com.example.ui.components.VideoStoryStudioDialog(
+            initialPoemText = sampleSher,
+            initialPoetName = samplePoet,
+            audioReciter = audioReciter,
+            onDismiss = { showStoryReelStudio = false }
+        )
+    }
+
+    if (showRiazMetronome) {
+        com.example.ui.components.PoeticRiazMetronomeDialog(
+            onDismiss = { showRiazMetronome = false }
         )
     }
 
@@ -767,6 +787,46 @@ fun FeedScreen(
                                 Spacer(modifier = Modifier.height(6.dp))
                                 Text("Lafz-o-Maani", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = AntiqueGold)
                                 Text("Arabic, Persian & Sanskrit roots lexicon", fontSize = 10.sp, color = Color.LightGray, lineHeight = 13.sp)
+                            }
+                        }
+                    }
+
+                    // 5B. 9:16 Video Story Reel Studio
+                    item {
+                        Card(
+                            modifier = Modifier
+                                .width(155.dp)
+                                .clickable { showStoryReelStudio = true }
+                                .testTag("hub_story_reel_card"),
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFF250D24)),
+                            shape = RoundedCornerShape(14.dp),
+                            border = BorderStroke(1.dp, VelvetRose.copy(alpha = 0.6f))
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Text("🎴", fontSize = 22.sp)
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text("9:16 Reel Studio", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = VelvetRose)
+                                Text("Acoustic scores & HD status video cards", fontSize = 10.sp, color = Color.LightGray, lineHeight = 13.sp)
+                            }
+                        }
+                    }
+
+                    // 5C. Poetic Riaz Metronome
+                    item {
+                        Card(
+                            modifier = Modifier
+                                .width(155.dp)
+                                .clickable { showRiazMetronome = true }
+                                .testTag("hub_riaz_metronome_card"),
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFF131B2A)),
+                            shape = RoundedCornerShape(14.dp),
+                            border = BorderStroke(1.dp, MysticTeal.copy(alpha = 0.5f))
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Text("🪕", fontSize = 22.sp)
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text("Ghazal Metronome", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MysticTeal)
+                                Text("Classical syllable rhythm & bahr practice", fontSize = 10.sp, color = Color.LightGray, lineHeight = 13.sp)
                             }
                         }
                     }

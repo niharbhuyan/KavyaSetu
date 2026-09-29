@@ -28,14 +28,14 @@ data class AppUpdateInfo(
     val isCritical: Boolean = false,
     val updateSizeBytesMb: Float = 17.0f,
     val releaseHighlights: List<String> = listOf(
-        "🎙️ Tarannum Voice Studio: Real-time Sitar & Flute acoustic background scores with 9:16 Video Reels",
-        "🔤 Instant Lafz-o-Maani (लुग़ात): 1-Tap Classical word lookup & Trilingual Nastaliq/Devanagari script switcher",
-        "⚖️ Bahr & Taqti Ghazal Meter Metronome: Syllable weight counter (Haras) & meter analysis",
+        "🎴 9:16 Reel & Story Video Studio: 1080x1920 HD vertical social cards with acoustic Sitar & Bansuri scores",
+        "🪕 Ghazal Riaz & Bahr Metronome: Real-time syllable rhythm, acoustic tabla clicks & tempo tuner",
+        "⚔️ Sher-Baazi Couplet Dueling Antakshari: Classical antakshari verse match with AI Sukhanwar",
+        "🔍 Instant Lafz-o-Lugat Dictionary: Tap-to-lookup etymology, Sanskrit/Persian roots & audio guide",
+        "📱 Dynamic Home Screen Widget: AMOLED glanceable sher auto-refreshing daily at dawn",
+        "🔤 Instant Lafz-o-Maani (लुग़ात): Trilingual Nastaliq & Devanagari script switcher",
         "🎴 Shahi Mohar (शाही मोहर): Personalized Mughal & Kalinga royal seal customizer",
-        "⚔️ Sher-Baazi AI Antakshari: Interactive classical verse dueling game",
-        "📱 Daily AMOLED Poetry Wallpapers: 1-Tap high-res Lock Screen & Home Screen background art",
-        "🔄 Automated In-App Update Engine: Background update notification & automatic hourly sync",
-        "📊 Privacy-Focused Analytics: Zero-PII retention tracking & anonymous interaction metrics"
+        "🔄 Automated In-App & Background Self-Update: Hourly OTA version sync with zero interruptions"
     ),
     val playStoreUrl: String = "https://play.google.com/store/apps/details?id=com.niharsales.kavyasetu",
     val directAabUrl: String = "https://ais-dev-om5rsf22wxxclflaszhhtg-613265325843.asia-east1.run.app/KavyaSetu-v1.2.5-release.aab"

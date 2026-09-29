@@ -9,6 +9,6 @@
     <string name="beta_testing_title">Google Play Internal Testing</string>
     <string name="beta_testing_subtitle">Get early access to future builds</string>
     <!-- Fallback Firebase configuration placeholders to silence missing google_app_id in emulator -->
-    <string name="google_app_id" translatable="false">1:613265325843:android:kavyasetu2026fallback</string>
+    <string name="google_app_id" translatable="false">1:613265325843:android:e67ff989417d5a92693a6932</string>
     <string name="gcm_defaultSenderId" translatable="false">613265325843</string>
 </resources>

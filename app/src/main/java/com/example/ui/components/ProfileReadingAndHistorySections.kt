@@ -1101,6 +1101,44 @@ fun AccountPreferencesSection(
                     )
                 }
 
+                Spacer(modifier = Modifier.height(10.dp))
+
+                var isSeamlessAutoUpdate by remember {
+                    mutableStateOf(com.example.update.AppUpdateManager.isAutoInstallSeamlessEnabled(context))
+                }
+
+                // Seamless Auto-Update & Background Sync Switch
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Automatic Background Updates",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "Check hourly and notify new versions automatically",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    androidx.compose.material3.Switch(
+                        checked = isSeamlessAutoUpdate,
+                        onCheckedChange = { checked ->
+                            isSeamlessAutoUpdate = checked
+                            com.example.update.AppUpdateManager.setAutoInstallSeamlessEnabled(context, checked)
+                        },
+                        colors = androidx.compose.material3.SwitchDefaults.colors(
+                            checkedThumbColor = MysticTeal,
+                            checkedTrackColor = MysticTeal.copy(alpha = 0.4f)
+                        )
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(14.dp))
 
                 Button(

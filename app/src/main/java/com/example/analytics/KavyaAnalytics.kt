@@ -38,12 +38,17 @@ object KavyaAnalytics {
      */
     fun initialize(context: Context) {
         val enabled = isAnalyticsEnabled(context)
-        try {
-            firebaseAnalytics = FirebaseAnalytics.getInstance(context)
-            firebaseAnalytics?.setAnalyticsCollectionEnabled(enabled)
-            Log.d(TAG, "Firebase Analytics initialized. Collection enabled: $enabled")
-        } catch (e: Exception) {
-            Log.w(TAG, "Firebase Analytics could not be initialized: ${e.message}")
+        if (com.example.ads.AdMobManager.isRunningInEmulator) {
+            Log.d(TAG, "Running in emulator; disabling analytics/measurement service binding.")
+            firebaseAnalytics = null
+        } else {
+            try {
+                firebaseAnalytics = FirebaseAnalytics.getInstance(context)
+                firebaseAnalytics?.setAnalyticsCollectionEnabled(enabled)
+                Log.d(TAG, "Firebase Analytics initialized. Collection enabled: $enabled")
+            } catch (e: Exception) {
+                Log.w(TAG, "Firebase Analytics could not be initialized: ${e.message}")
+            }
         }
 
         // Initialize first install tracking timestamp if not present
@@ -146,7 +151,7 @@ object KavyaAnalytics {
             prefs.edit().putInt(KEY_TOTAL_SESSIONS, totalSessions).apply()
         }
 
-        logEvent("session_start", Bundle().apply {
+        logEvent("user_session_start", Bundle().apply {
             putInt("session_number", totalSessions)
             putInt("streak_days", streak)
         })

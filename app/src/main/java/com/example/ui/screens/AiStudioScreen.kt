@@ -120,6 +120,8 @@ fun AiStudioScreen(
     var showLafzOMaani by remember { mutableStateOf(false) }
     var showTarhiMushaira by remember { mutableStateOf(false) }
     var showRiyazJournal by remember { mutableStateOf(false) }
+    var showStoryReelStudio by remember { mutableStateOf(false) }
+    var showRiazMetronome by remember { mutableStateOf(false) }
     val allShayaris by viewModel.allShayaris.collectAsStateWithLifecycle()
 
     val tabs = listOf("Compose (Flash)", "High Thinking (Pro)", "Rhymes (Lite)", "Card Art (3 Pro)", "Meter & Beher")
@@ -161,6 +163,23 @@ fun AiStudioScreen(
         )
     }
 
+    if (showRiazMetronome) {
+        com.example.ui.components.PoeticRiazMetronomeDialog(
+            onDismiss = { showRiazMetronome = false }
+        )
+    }
+
+    if (showStoryReelStudio) {
+        val sampleSher = allShayaris.firstOrNull()?.lines ?: "हज़ारों ख़्वाहिशें ऐसी कि हर ख़्वाहिश पे दम निकले।\nबहुत निकले मिरे अरमान लेकिन फिर भी कम निकले॥"
+        val samplePoet = allShayaris.firstOrNull()?.poet ?: "मिर्ज़ा असदुल्लाह ख़ान 'ग़ालिब'"
+        com.example.ui.components.VideoStoryStudioDialog(
+            initialPoemText = sampleSher,
+            initialPoetName = samplePoet,
+            audioReciter = audioReciter,
+            onDismiss = { showStoryReelStudio = false }
+        )
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -184,6 +203,53 @@ fun AiStudioScreen(
                         )
                     }
                 )
+            }
+        }
+
+        // 9:16 Video Reel Story Studio Quick Banner
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 4.dp)
+                .clickable { showStoryReelStudio = true }
+                .testTag("video_story_reel_banner"),
+            shape = RoundedCornerShape(14.dp),
+            color = Color(0xFF1E0E2A),
+            border = BorderStroke(1.dp, VelvetRose.copy(alpha = 0.6f))
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 9.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(text = "🎴", fontSize = 18.sp)
+                    Column {
+                        Text(
+                            text = "9:16 Reel & Story Studio (रील स्टूडियो)",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = VelvetRose
+                        )
+                        Text(
+                            text = "Acoustic Sitar scores & 1080x1920 HD vertical social cards",
+                            fontSize = 10.sp,
+                            color = Color.LightGray
+                        )
+                    }
+                }
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = VelvetRose
+                ) {
+                    Text(
+                        text = "Create",
+                        color = Color.White,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                    )
+                }
             }
         }
 
@@ -317,8 +383,8 @@ fun AiStudioScreen(
                 modifier = Modifier
                     .weight(1f)
                     .clip(RoundedCornerShape(12.dp))
-                    .clickable { showRiyazJournal = true }
-                    .testTag("ai_studio_riyaz_btn"),
+                    .clickable { showRiazMetronome = true }
+                    .testTag("ai_studio_metronome_btn"),
                 color = Color(0xFF281C15),
                 border = BorderStroke(1.dp, Color(0xFFD4A373).copy(alpha = 0.6f))
             ) {

@@ -17,8 +17,8 @@ android {
     applicationId = "com.niharsales.kavyasetu"
     minSdk = 24
     targetSdk = 36
-    versionCode = 9
-    versionName = "v1.2.5"
+    versionCode = 10
+    versionName = "v1.2.6"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
@@ -117,7 +117,7 @@ dependencies {
   implementation(libs.androidx.room.runtime)
   implementation(libs.coil.compose)
   implementation(libs.converter.moshi)
-  implementation(libs.firebase.analytics)
+  // implementation(libs.firebase.analytics)
   implementation(libs.firebase.dynamic.links)
   implementation(libs.firebase.ai)
   implementation(libs.firebase.firestore)
@@ -128,7 +128,7 @@ dependencies {
   implementation(libs.androidx.credentials)
   implementation(libs.androidx.credentials.play.services)
   implementation(libs.googleid)
-  implementation(libs.play.services.ads)
+  // implementation(libs.play.services.ads)
   implementation(libs.androidx.work.runtime.ktx)
   implementation(libs.firebase.appcheck.recaptcha)
   implementation(libs.firebase.appcheck.debug)
@@ -157,4 +157,16 @@ dependencies {
   debugImplementation(libs.androidx.compose.ui.tooling)
   "ksp"(libs.androidx.room.compiler)
   "ksp"(libs.moshi.kotlin.codegen)
+}
+
+configurations.all {
+    exclude(group = "com.google.android.gms", module = "play-services-measurement")
+    exclude(group = "com.google.android.gms", module = "play-services-measurement-sdk")
+    exclude(group = "com.google.android.gms", module = "play-services-measurement-impl")
+    exclude(group = "com.google.android.gms", module = "play-services-measurement-api")
+    exclude(group = "com.google.android.gms", module = "play-services-measurement-base")
+    exclude(group = "com.google.android.gms", module = "play-services-ads-identifier")
+    exclude(group = "androidx.privacysandbox.ads")
+    exclude(group = "com.google.android.gms", module = "play-services-appset")
+    // exclude firebase-measurement-connector
 }

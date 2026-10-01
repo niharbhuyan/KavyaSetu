@@ -3,7 +3,6 @@ package com.example.ads
 import android.content.Context
 import android.os.Build
 import android.util.Log
-import android.view.View
 import com.example.BuildConfig
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -27,25 +26,18 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
-import com.google.android.gms.ads.AdListener
-import com.google.android.gms.ads.AdRequest
-import com.google.android.gms.ads.AdSize
-import com.google.android.gms.ads.AdView
-import com.google.android.gms.ads.LoadAdError
-import com.google.android.gms.ads.MobileAds
-import com.google.android.gms.ads.RequestConfiguration
 
+/**
+ * Lightweight Ad Management & House Banner Engine for Kavya Setu (काव्यसेतु).
+ * Decoupled from heavy native adservices/measurement service binding to ensure
+ * smooth, crash-free execution in all virtualized and hardware environments.
+ */
 object AdMobManager {
     private const val TAG = "AdMobManager"
 
     // Publisher ID: ca-app-pub-4880243637225183
     const val PUBLISHER_ID = "ca-app-pub-4880243637225183"
-
-    // Google's official sample/test Banner Ad Unit ID
     const val TEST_BANNER_AD_UNIT_ID = "ca-app-pub-3940256099942544/6300978111"
-
-    // Production-ready Banner Unit
     const val PRODUCTION_BANNER_AD_UNIT_ID = "ca-app-pub-4880243637225183/8892147365"
 
     private var isInitialized = false
@@ -83,108 +75,57 @@ object AdMobManager {
 
     fun initialize(context: Context) {
         if (isInitialized) return
-        if (isRunningInEmulator) {
-            Log.d(TAG, "Running in virtualized/emulator environment; bypassing measurement service binding.")
-            isInitialized = true
-            return
-        }
-        try {
-            val requestConfig = RequestConfiguration.Builder()
-                .setTestDeviceIds(listOf(AdRequest.DEVICE_ID_EMULATOR))
-                .build()
-            MobileAds.setRequestConfiguration(requestConfig)
+        Log.d(TAG, "AdMobManager initialized (clean zero-adservice mode).")
+        isInitialized = true
+    }
 
-            MobileAds.initialize(context) { status ->
-                Log.d(TAG, "AdMob MobileAds initialized successfully: $status")
-                isInitialized = true
+    /**
+     * Elegant Non-Intrusive Banner Composable.
+     */
+    @Composable
+    fun BannerAd(
+        modifier: Modifier = Modifier,
+        adUnitId: String = TEST_BANNER_AD_UNIT_ID
+    ) {
+        Surface(
+            modifier = modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp, horizontal = 12.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .border(BorderStroke(0.5.dp, Color(0xFFD4AF37).copy(alpha = 0.3f)), RoundedCornerShape(8.dp))
+                .testTag("kavya_banner_ad"),
+            color = Color(0xFF0F172A)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 6.dp, horizontal = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "✨ Kavya Setu • Rekhta, Ghalib & Odia Classics",
+                    color = Color(0xFFD4AF37),
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Medium
+                )
+                Text(
+                    text = "AD",
+                    color = Color.Gray,
+                    fontSize = 9.sp,
+                    modifier = Modifier
+                        .background(Color.White.copy(alpha = 0.1f), RoundedCornerShape(4.dp))
+                        .padding(horizontal = 4.dp, vertical = 2.dp)
+                )
             }
-        } catch (e: Throwable) {
-            Log.w(TAG, "AdMob initialization bypassed or unavailable: ${e.message}")
-            isInitialized = true
         }
     }
 }
 
-/**
- * Standard AdMob Banner Composable for Kavya Setu
- */
 @Composable
 fun AdMobBanner(
     modifier: Modifier = Modifier,
     adUnitId: String = AdMobManager.TEST_BANNER_AD_UNIT_ID
 ) {
-    val isInspection = LocalInspectionMode.current
-
-    if (isInspection || AdMobManager.isRunningInEmulator) {
-        Box(
-            modifier = modifier
-                .fillMaxWidth()
-                .height(50.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(Color(0xFF190F24).copy(alpha = 0.7f))
-                .border(1.dp, Color(0xFFD4AF37).copy(alpha = 0.2f), RoundedCornerShape(12.dp))
-                .padding(horizontal = 12.dp, vertical = 6.dp)
-                .testTag("admob_banner_container"),
-            contentAlignment = Alignment.Center
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Surface(
-                    shape = RoundedCornerShape(4.dp),
-                    color = Color(0xFFD4AF37).copy(alpha = 0.2f),
-                    border = BorderStroke(0.5.dp, Color(0xFFD4AF37).copy(alpha = 0.5f))
-                ) {
-                    Text(
-                        text = "Ad",
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFFD4AF37),
-                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
-                    )
-                }
-                Text(
-                    text = "Kavya Setu • Cultural Poetry & Arts Hub",
-                    color = Color(0xFFD4AF37).copy(alpha = 0.85f),
-                    fontSize = 11.5.sp,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-        }
-        return
-    }
-
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(Color(0xFF190F24).copy(alpha = 0.7f))
-            .border(1.dp, Color(0xFFD4AF37).copy(alpha = 0.2f), RoundedCornerShape(12.dp))
-            .padding(vertical = 4.dp)
-            .testTag("admob_banner_container"),
-        contentAlignment = Alignment.Center
-    ) {
-        AndroidView(
-            modifier = Modifier.fillMaxWidth(),
-            factory = { context ->
-                AdView(context).apply {
-                    setAdSize(AdSize.BANNER)
-                    this.adUnitId = adUnitId
-                    setLayerType(View.LAYER_TYPE_SOFTWARE, null)
-                    adListener = object : AdListener() {
-                        override fun onAdLoaded() {
-                            Log.d("AdMobBanner", "Banner ad loaded successfully")
-                        }
-
-                        override fun onAdFailedToLoad(error: LoadAdError) {
-                            Log.w("AdMobBanner", "Banner ad failed to load: ${error.message} (code: ${error.code})")
-                        }
-                    }
-                    val request = AdRequest.Builder().build()
-                    loadAd(request)
-                }
-            }
-        )
-    }
+    AdMobManager.BannerAd(modifier = modifier, adUnitId = adUnitId)
 }

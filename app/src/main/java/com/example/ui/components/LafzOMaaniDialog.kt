@@ -46,6 +46,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import android.content.Context
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.AnnotatedString
@@ -75,6 +79,21 @@ fun LafzOMaaniDialog(
     var expandedWord by remember { mutableStateOf<PoeticWordDefinition?>(null) }
 
     val clipboardManager = LocalClipboardManager.current
+    val context = LocalContext.current
+    val prefs = remember { context.getSharedPreferences("lafz_recent_searches_prefs", Context.MODE_PRIVATE) }
+    var recentSearches by remember {
+        val saved = prefs.getString("recent_words", "Hijr,Visal,Bismil,Junoon,Raqs") ?: ""
+        mutableStateOf(saved.split(",").filter { it.isNotBlank() })
+    }
+
+    fun saveRecentSearch(term: String) {
+        val trimmed = term.trim()
+        if (trimmed.length >= 2) {
+            val updated = (listOf(trimmed) + recentSearches.filterNot { it.equals(trimmed, ignoreCase = true) }).take(8)
+            recentSearches = updated
+            prefs.edit().putString("recent_words", updated.joinToString(",")).apply()
+        }
+    }
 
     val scannedWords = remember(initialCoupletToScan) {
         if (initialCoupletToScan.isNotBlank()) {
@@ -177,7 +196,12 @@ fun LafzOMaaniDialog(
                 // Search Bar
                 OutlinedTextField(
                     value = searchQuery,
-                    onValueChange = { searchQuery = it },
+                    onValueChange = { 
+                        searchQuery = it 
+                        if (it.length >= 3) {
+                            saveRecentSearch(it)
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .testTag("search_lafz_input"),
@@ -196,6 +220,70 @@ fun LafzOMaaniDialog(
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
+
+                // Recent Searches Row
+                if (recentSearches.isNotEmpty()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Icon(Icons.Default.History, contentDescription = null, tint = AntiqueGold, modifier = Modifier.size(14.dp))
+                            Text(
+                                text = "Recent Lookups:",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = AntiqueGold,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                        Text(
+                            text = "Clear",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.Gray,
+                            modifier = Modifier
+                                .clickable {
+                                    recentSearches = emptyList()
+                                    prefs.edit().remove("recent_words").apply()
+                                }
+                                .padding(horizontal = 4.dp, vertical = 2.dp)
+                                .testTag("clear_recent_searches_btn")
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.fillMaxWidth().testTag("recent_searches_row")
+                    ) {
+                        items(recentSearches) { word ->
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = if (searchQuery.equals(word, ignoreCase = true)) AntiqueGold.copy(alpha = 0.25f) else Color.White.copy(alpha = 0.08f),
+                                border = androidx.compose.foundation.BorderStroke(
+                                    0.5.dp,
+                                    if (searchQuery.equals(word, ignoreCase = true)) AntiqueGold else Color.White.copy(alpha = 0.2f)
+                                ),
+                                modifier = Modifier.clickable {
+                                    searchQuery = word
+                                    saveRecentSearch(word)
+                                }
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Text(
+                                        text = word,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = if (searchQuery.equals(word, ignoreCase = true)) AntiqueGold else Color.LightGray
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
 
                 // Categories
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

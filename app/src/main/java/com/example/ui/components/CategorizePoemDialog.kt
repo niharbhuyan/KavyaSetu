@@ -255,9 +255,49 @@ fun CategorizePoemDialog(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
+                // Popular Metadata Labels (#Ghazal, #Odia, #Favorite, #Nazm, etc.)
+                Text(
+                    text = "Quick Metadata Labels & Vault Tags:",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = AntiqueGold
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    listOf("Ghazal", "Odia", "Favorite", "Nazm", "Mughal", "Classical", "Couplet", "Sufi").forEach { label ->
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = AntiqueGold.copy(alpha = 0.2f),
+                            border = BorderStroke(1.dp, AntiqueGold.copy(alpha = 0.5f)),
+                            onClick = {
+                                val current = customTagsInput.split(",").map { it.trim().lowercase() }.filter { it.isNotEmpty() }
+                                if (!current.contains(label.lowercase())) {
+                                    customTagsInput = if (customTagsInput.isBlank()) label else "$customTagsInput, $label"
+                                }
+                            }
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text("#$label", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = AntiqueGold)
+                                Icon(Icons.Default.Add, contentDescription = "Add $label", tint = AntiqueGold, modifier = Modifier.size(12.dp))
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
                 // Suggested tags based on chosen category
                 Text(
-                    text = "Suggested tags for ${selectedCategory.displayName}:",
+                    text = "Suggested emotion tags for ${selectedCategory.displayName}:",
                     fontSize = 11.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

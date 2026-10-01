@@ -623,15 +623,7 @@ fun OfflineScreen(
                 )
 
                 // Quick Clickable Tag Suggestions
-                val suggestedTags = when (selectedCategory) {
-                    PoemCategory.NATURE -> listOf("rain", "monsoon", "clouds", "flowers", "hills", "earth")
-                    PoemCategory.LOVE -> listOf("love", "passion", "ghalib", "beauty", "heart", "ishq")
-                    PoemCategory.SORROW -> listOf("sorrow", "dard", "heartbreak", "tears", "loss", "gham")
-                    PoemCategory.INSPIRATION -> listOf("inspiration", "courage", "resilience", "storm", "defiance")
-                    PoemCategory.LIFE -> listOf("life", "zindagi", "jeevan", "journey", "struggle", "destiny")
-                    PoemCategory.PHILOSOPHY -> listOf("philosophy", "falsafa", "wisdom", "truth", "darshan", "time")
-                    else -> listOf("rain", "courage", "monsoon", "heartbreak", "ghalib", "zindagi", "falsafa")
-                }
+                val suggestedTags = listOf("Ghazal", "Odia", "Favorite", "Sufi", "Nazm", "Mughal", "Classical", "rain", "ishq", "dard", "hausla", "zindagi", "falsafa")
                 Spacer(modifier = Modifier.height(6.dp))
                 Row(
                     modifier = Modifier

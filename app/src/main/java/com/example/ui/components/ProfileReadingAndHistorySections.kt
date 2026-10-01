@@ -1104,7 +1104,7 @@ fun AccountPreferencesSection(
                 Spacer(modifier = Modifier.height(10.dp))
 
                 var isSeamlessAutoUpdate by remember {
-                    mutableStateOf(com.example.update.AppUpdateManager.isAutoInstallSeamlessEnabled(context))
+                    mutableStateOf(com.example.update.AppUpdateManager.isAutoDownloadEnabled(context))
                 }
 
                 // Seamless Auto-Update & Background Sync Switch
@@ -1130,7 +1130,7 @@ fun AccountPreferencesSection(
                         checked = isSeamlessAutoUpdate,
                         onCheckedChange = { checked ->
                             isSeamlessAutoUpdate = checked
-                            com.example.update.AppUpdateManager.setAutoInstallSeamlessEnabled(context, checked)
+                            com.example.update.AppUpdateManager.setAutoDownloadEnabled(context, checked)
                         },
                         colors = androidx.compose.material3.SwitchDefaults.colors(
                             checkedThumbColor = MysticTeal,

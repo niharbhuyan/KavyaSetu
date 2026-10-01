@@ -21,24 +21,25 @@ import kotlinx.coroutines.withContext
 data class AppUpdateInfo(
     val currentVersionCode: Int = BuildConfig.VERSION_CODE,
     val currentVersionName: String = BuildConfig.VERSION_NAME,
-    val latestVersionCode: Int = 9,
-    val latestVersionName: String = "v1.2.5",
+    val latestVersionCode: Int = 10,
+    val latestVersionName: String = "v1.2.6",
     val releaseDate: String = "September 2026",
     val isUpdateAvailable: Boolean = true,
     val isCritical: Boolean = false,
     val updateSizeBytesMb: Float = 17.0f,
     val releaseHighlights: List<String> = listOf(
+        "🔍 Multi-Scope Saved Collection Search: Instant search across saved couplets, keywords, tags & poet names",
+        "🏷️ Room Database Vault Metadata Tags: Assign custom labels (#Ghazal, #Odia, #Favorite) with instant filtering",
+        "🕒 Lexicon Recent Searches: 1-Tap quick history drawer to revisit recent classical etymology lookups",
         "🎴 9:16 Reel & Story Video Studio: 1080x1920 HD vertical social cards with acoustic Sitar & Bansuri scores",
         "🪕 Ghazal Riaz & Bahr Metronome: Real-time syllable rhythm, acoustic tabla clicks & tempo tuner",
         "⚔️ Sher-Baazi Couplet Dueling Antakshari: Classical antakshari verse match with AI Sukhanwar",
         "🔍 Instant Lafz-o-Lugat Dictionary: Tap-to-lookup etymology, Sanskrit/Persian roots & audio guide",
         "📱 Dynamic Home Screen Widget: AMOLED glanceable sher auto-refreshing daily at dawn",
-        "🔤 Instant Lafz-o-Maani (लुग़ात): Trilingual Nastaliq & Devanagari script switcher",
-        "🎴 Shahi Mohar (शाही मोहर): Personalized Mughal & Kalinga royal seal customizer",
         "🔄 Automated In-App & Background Self-Update: Hourly OTA version sync with zero interruptions"
     ),
     val playStoreUrl: String = "https://play.google.com/store/apps/details?id=com.niharsales.kavyasetu",
-    val directAabUrl: String = "https://ais-dev-om5rsf22wxxclflaszhhtg-613265325843.asia-east1.run.app/KavyaSetu-v1.2.5-release.aab"
+    val directAabUrl: String = "https://ais-dev-om5rsf22wxxclflaszhhtg-613265325843.asia-east1.run.app/KavyaSetu-v1.2.6-release.aab"
 )
 
 /**
@@ -137,7 +138,7 @@ object AppUpdateManager {
         val dismissedVersion = prefs.getInt(KEY_DISMISSED_VERSION, 0)
 
         // Target version code for next major feature bundle
-        val targetVersionCode = 9
+        val targetVersionCode = 10
         val isUpdateAvailable = targetVersionCode > currentVersionCode && (force || dismissedVersion < targetVersionCode)
 
         val info = AppUpdateInfo(

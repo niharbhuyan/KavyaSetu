@@ -60,3 +60,7 @@
 # Coil Image Loading
 -keep class coil.** { *; }
 -dontwarn coil.**
+
+# Keep Firebase Analytics Connector interface for Dynamic Links & Cloud Messaging
+-keep class com.google.firebase.analytics.connector.** { *; }
+-dontwarn com.google.firebase.analytics.connector.**

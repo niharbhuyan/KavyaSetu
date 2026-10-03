@@ -146,6 +146,7 @@ const MIME_TYPES = {
 };
 
 const server = http.createServer((req, res) => {
+  console.log('[HTTP_REQ]', new Date().toISOString(), req.method, req.url, 'from', req.headers['user-agent'] || 'unknown');
   res.on('error', (err) => {
     console.error('Response error:', err.message);
   });

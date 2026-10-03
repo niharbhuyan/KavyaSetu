@@ -67,6 +67,8 @@ fun PoetrySettingsDialog(
     initialFontSizeSp: Float,
     initialLineHeightMult: Float,
     initialFontFamily: String,
+    isDarkTheme: Boolean = true,
+    onToggleTheme: () -> Unit = {},
     onDismiss: () -> Unit,
     onApplySettings: (fontSizeSp: Float, lineHeightMult: Float, fontFamily: String) -> Unit
 ) {
@@ -274,6 +276,70 @@ fun PoetrySettingsDialog(
                                 .testTag("preset_$label")
                         )
                     }
+                }
+
+                Spacer(modifier = Modifier.height(18.dp))
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // COLOR THEME / MODE SELECTION
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(if (isDarkTheme) "🌙" else "☀️", fontSize = 16.sp)
+                        Text(
+                            text = "Reading Color Theme",
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 14.sp,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    FilterChip(
+                        selected = isDarkTheme,
+                        onClick = { if (!isDarkTheme) onToggleTheme() },
+                        label = { Text("🌙 Luxury Dark", fontSize = 11.sp) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = AntiqueGold.copy(alpha = 0.25f),
+                            selectedLabelColor = AntiqueGold
+                        ),
+                        border = FilterChipDefaults.filterChipBorder(
+                            enabled = true,
+                            selected = isDarkTheme,
+                            borderColor = if (isDarkTheme) AntiqueGold else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                        ),
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("theme_chip_dark")
+                    )
+                    FilterChip(
+                        selected = !isDarkTheme,
+                        onClick = { if (isDarkTheme) onToggleTheme() },
+                        label = { Text("☀️ Parchment Light", fontSize = 11.sp) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = AntiqueGold.copy(alpha = 0.25f),
+                            selectedLabelColor = AntiqueGold
+                        ),
+                        border = FilterChipDefaults.filterChipBorder(
+                            enabled = true,
+                            selected = !isDarkTheme,
+                            borderColor = if (!isDarkTheme) AntiqueGold else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                        ),
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("theme_chip_light")
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(18.dp))

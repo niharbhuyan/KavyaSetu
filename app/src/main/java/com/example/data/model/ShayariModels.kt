@@ -4,14 +4,22 @@ import com.squareup.moshi.JsonClass
 
 enum class Language(val displayName: String, val code: String, val scriptSample: String) {
     ALL("All", "all", "✨"),
-    HINDI("हिंदी", "hindi", "शायरी"),
-    ODIA("ଓଡ଼ିଆ", "odia", "କବିତା"),
+    URDU("اردو / Urdu", "urdu", "شاعری"),
+    HINDI("हिंदी / Hindi", "hindi", "शायरी"),
+    ODIA("ଓଡ଼ିଆ / Odia", "odia", "କବିତା"),
     ENGLISH("English", "english", "Poetry");
 
     companion object {
         fun fromCode(code: String): Language =
             entries.find { it.code.equals(code, ignoreCase = true) } ?: ALL
     }
+}
+
+enum class SearchScope(val displayName: String, val icon: String, val hint: String) {
+    ALL("All Fields", "✨", "Search title, verse, poet, language..."),
+    POET("Poet Name", "✍️", "Search Ghalib, Faiz, Meer, Iqbal..."),
+    TITLE_VERSE("Title / Verse", "📜", "Search couplets, keywords, radif..."),
+    LANGUAGE("Language", "🌐", "Search Urdu, Hindi, Odia, English...")
 }
 
 enum class Emotion(
@@ -383,7 +391,8 @@ enum class ActivityType(val emoji: String, val label: String) {
     CARD_EXPORT("🎨", "Card Created"),
     PROMPT_USED("💡", "Prompt Inspiration"),
     LOGIN("🔑", "Authentication"),
-    STREAK("🔥", "Daily Streak")
+    STREAK("🔥", "Daily Streak"),
+    CLOUD_SYNC("☁️", "Cloud Sync")
 }
 
 data class UserActivityItem(
@@ -411,5 +420,28 @@ data class Anthology(
     val icon: String = "📚",
     val shayariIds: Set<String> = emptySet(),
     val createdAt: Long = System.currentTimeMillis()
+)
+
+data class VaultItemUploadStatus(
+    val shayariId: String,
+    val title: String,
+    val poet: String,
+    val language: String,
+    val progress: Float = 0f, // 0.0f to 1.0f
+    val isUploaded: Boolean = false,
+    val isFailed: Boolean = false
+)
+
+data class VaultSyncProgressState(
+    val isSyncing: Boolean = false,
+    val isConnectivityRegained: Boolean = false,
+    val currentItemIndex: Int = 0,
+    val totalItems: Int = 0,
+    val currentItemTitle: String = "",
+    val overallProgress: Float = 0f,
+    val items: List<VaultItemUploadStatus> = emptyList(),
+    val isCompleted: Boolean = false,
+    val successCount: Int = 0,
+    val errorMessage: String? = null
 )
 

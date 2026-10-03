@@ -30,7 +30,9 @@ import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.CloudDone
 import androidx.compose.material.icons.filled.CloudDownload
+import androidx.compose.material.icons.filled.CloudSync
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DownloadDone
 import androidx.compose.material.icons.filled.DownloadForOffline
@@ -41,6 +43,7 @@ import androidx.compose.material.icons.filled.Label
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SignalWifiOff
 import androidx.compose.material.icons.filled.Storage
+import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.AlertDialog
@@ -48,6 +51,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -87,6 +91,7 @@ import com.example.ui.MainViewModel
 import com.example.ui.components.AudioReciter
 import com.example.ui.components.CardStudioDialog
 import com.example.ui.components.CategorizePoemDialog
+import com.example.ui.components.OfflineVaultSyncAnimationCard
 import com.example.ui.components.PoetrySettingsDialog
 import com.example.ui.components.ShayariCard
 import com.example.ui.theme.AntiqueGold
@@ -104,6 +109,8 @@ fun OfflineScreen(
     val savedShayaris by viewModel.savedShayaris.collectAsStateWithLifecycle()
     val downloadedShayaris by viewModel.downloadedShayaris.collectAsStateWithLifecycle()
     val isOfflineSimulated by viewModel.isOfflineSimulated.collectAsStateWithLifecycle()
+    val isVaultSyncing by viewModel.isVaultSyncing.collectAsStateWithLifecycle()
+    val vaultSyncProgress by viewModel.vaultSyncProgressState.collectAsStateWithLifecycle()
     val poetryFontSizeSp by viewModel.poetryFontSizeSp.collectAsStateWithLifecycle()
     val poetryLineHeightMult by viewModel.poetryLineHeightMult.collectAsStateWithLifecycle()
     val poetryFontFamilyType by viewModel.poetryFontFamilyType.collectAsStateWithLifecycle()
@@ -284,6 +291,28 @@ fun OfflineScreen(
                             }
 
                             Row(verticalAlignment = Alignment.CenterVertically) {
+                                // Sync Offline Vault with Cloud Database
+                                IconButton(
+                                    onClick = { viewModel.syncOfflineVault(context) },
+                                    enabled = !isVaultSyncing,
+                                    modifier = Modifier.size(36.dp).testTag("sync_offline_vault_header_btn")
+                                ) {
+                                    if (isVaultSyncing) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(18.dp),
+                                            color = AntiqueGold,
+                                            strokeWidth = 2.dp
+                                        )
+                                    } else {
+                                        Icon(
+                                            imageVector = Icons.Default.CloudSync,
+                                            contentDescription = "Sync Vault with Cloud Database",
+                                            tint = AntiqueGold,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                }
+
                                 IconButton(
                                     onClick = { showSettingsDialog = true },
                                     modifier = Modifier.size(36.dp).testTag("open_font_settings_btn")
@@ -359,7 +388,7 @@ fun OfflineScreen(
 
                                 Switch(
                                     checked = isOfflineSimulated,
-                                    onCheckedChange = { viewModel.toggleOfflineSimulation() },
+                                    onCheckedChange = { viewModel.toggleOfflineSimulation(context) },
                                     colors = SwitchDefaults.colors(
                                         checkedThumbColor = AntiqueGold,
                                         checkedTrackColor = AntiqueGold.copy(alpha = 0.4f)
@@ -368,6 +397,85 @@ fun OfflineScreen(
                                 )
                             }
                         }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        // Offline Vault Cloud Database Sync Card
+                        Surface(
+                            shape = RoundedCornerShape(14.dp),
+                            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.25f),
+                            border = BorderStroke(1.dp, AntiqueGold.copy(alpha = 0.35f)),
+                            modifier = Modifier.fillMaxWidth().testTag("vault_cloud_sync_card")
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.CloudDone,
+                                        contentDescription = null,
+                                        tint = AntiqueGold,
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                    Column {
+                                        Text(
+                                            text = "Cloud Database Sync",
+                                            fontSize = 13.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = Color.White
+                                        )
+                                        Text(
+                                            text = "Syncs saved & downloaded vault verses with Firestore",
+                                            fontSize = 11.sp,
+                                            color = Color.White.copy(alpha = 0.65f)
+                                        )
+                                    }
+                                }
+
+                                OutlinedButton(
+                                    onClick = { viewModel.syncOfflineVault(context) },
+                                    enabled = !isVaultSyncing,
+                                    colors = ButtonDefaults.outlinedButtonColors(contentColor = AntiqueGold),
+                                    border = BorderStroke(1.dp, AntiqueGold),
+                                    shape = RoundedCornerShape(10.dp),
+                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                                    modifier = Modifier.testTag("vault_sync_now_btn")
+                                ) {
+                                    if (isVaultSyncing) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(14.dp),
+                                            color = AntiqueGold,
+                                            strokeWidth = 2.dp
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text("Syncing...", fontSize = 11.sp)
+                                    } else {
+                                        Icon(
+                                            imageVector = Icons.Default.Sync,
+                                            contentDescription = "Sync",
+                                            modifier = Modifier.size(14.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text("Sync Vault", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                    }
+                                }
+                            }
+                        }
+
+                        // Offline Vault Sync Status Animation Card with Individual Item Progress Bars
+                        OfflineVaultSyncAnimationCard(
+                            syncState = vaultSyncProgress,
+                            onDismiss = { viewModel.dismissVaultSyncProgress() },
+                            modifier = Modifier.fillMaxWidth().padding(top = 10.dp)
+                        )
                     }
                 }
             }

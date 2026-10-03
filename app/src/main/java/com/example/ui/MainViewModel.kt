@@ -1,6 +1,11 @@
 package com.example.ui
 
 import android.content.Context
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
+import android.net.NetworkRequest
+import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -11,12 +16,16 @@ import com.example.data.model.Emotion
 import com.example.data.model.Language
 import com.example.data.model.PoemCategory
 import com.example.data.model.PoeticAnalysisResult
+import com.example.data.model.SearchScope
 import com.example.data.model.Shayari
 import com.example.data.model.UserActivityItem
 import com.example.data.model.UserProfile
+import com.example.data.model.VaultItemUploadStatus
+import com.example.data.model.VaultSyncProgressState
 import com.example.data.remote.GeminiClient
 import com.example.data.repository.ShayariRepository
 import com.example.notification.DailyNotificationManager
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -25,6 +34,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.UUID
 
 class MainViewModel(private val repository: ShayariRepository) : ViewModel() {
@@ -33,6 +43,32 @@ class MainViewModel(private val repository: ShayariRepository) : ViewModel() {
     val selectedEmotion = MutableStateFlow<Emotion?>(null)
     val selectedCategory = MutableStateFlow(PoemCategory.ALL)
     val searchQuery = MutableStateFlow("")
+    val searchScope = MutableStateFlow(SearchScope.ALL)
+    val selectedSearchPoet = MutableStateFlow<String?>(null)
+    val selectedSearchLanguage = MutableStateFlow("all")
+
+    // Distinct lists from local Room database for quick search suggestion chips
+    val distinctPoets: StateFlow<List<String>> = repository.distinctPoets
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = listOf(
+                "Mirza Ghalib", "Faiz Ahmad Faiz", "Meer Taqi Meer", "Allama Iqbal",
+                "Rahat Indori", "Jaun Elia", "Kabisurya Baladev Kartha", "Dushyant Kumar"
+            )
+        )
+
+    val distinctLanguages: StateFlow<List<String>> = repository.distinctLanguages
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = listOf("urdu", "hindi", "odia", "english")
+        )
+
+    // Recent search history for fast 1-tap re-queries
+    val recentSearches = MutableStateFlow<List<String>>(
+        listOf("Ghalib", "Faiz", "इश्क़", "Urdu", "Odia", "Dard")
+    )
 
     // Poetry Reading & Typography Preferences
     val poetryFontSizeSp = MutableStateFlow(20f)
@@ -177,40 +213,84 @@ class MainViewModel(private val repository: ShayariRepository) : ViewModel() {
         isOfflineSimulated,
         selectedLanguage,
         selectedEmotion,
-        searchQuery
+        searchQuery,
+        searchScope,
+        selectedSearchPoet,
+        selectedSearchLanguage
     ) { args: Array<Any?> ->
         val all = args[0] as List<Shayari>
         val downloaded = args[1] as List<Shayari>
         val simulatedOffline = args[2] as Boolean
         val lang = args[3] as Language
         val emotion = args[4] as Emotion?
-        val query = args[5] as String
+        val query = (args[5] as String).trim()
+        val scope = args[6] as SearchScope
+        val poetFilter = args[7] as String?
+        val langFilter = args[8] as String
 
         val sourceList = if (simulatedOffline) downloaded else all
         sourceList.filter { shayari ->
+            // Global language filter
             val matchesLang = when (lang) {
                 Language.ALL -> true
                 else -> shayari.language.equals(lang.code, ignoreCase = true)
             }
+            // Direct language filter from search bar chips (Urdu, Hindi, Odia, English)
+            val matchesSearchLang = when {
+                langFilter == "all" -> true
+                else -> shayari.language.equals(langFilter, ignoreCase = true) ||
+                        (langFilter.equals("urdu", ignoreCase = true) && shayari.author.contains("Ghalib", ignoreCase = true))
+            }
+            // Poet chip filter
+            val matchesPoetFilter = poetFilter.isNullOrBlank() ||
+                    shayari.author.contains(poetFilter, ignoreCase = true) ||
+                    shayari.penName.contains(poetFilter, ignoreCase = true)
+
+            // Mood emotion filter
+            val emotionObj = Emotion.fromCode(shayari.emotion)
             val matchesEmotion = emotion == null ||
                     shayari.emotion.equals(emotion.code, ignoreCase = true) ||
                     shayari.emotion.equals(emotion.englishLabel, ignoreCase = true) ||
-                    Emotion.fromCode(shayari.emotion) == emotion
+                    emotionObj == emotion
 
-            val emotionObj = Emotion.fromCode(shayari.emotion)
-            val matchesQuery = query.isBlank() ||
-                    shayari.lines.contains(query, ignoreCase = true) ||
-                    shayari.author.contains(query, ignoreCase = true) ||
-                    shayari.penName.contains(query, ignoreCase = true) ||
-                    shayari.translationEnglish.contains(query, ignoreCase = true) ||
-                    shayari.translationHindi.contains(query, ignoreCase = true) ||
-                    shayari.translationOdia.contains(query, ignoreCase = true) ||
-                    shayari.emotion.contains(query, ignoreCase = true) ||
-                    emotionObj.englishLabel.contains(query, ignoreCase = true) ||
-                    emotionObj.hindiLabel.contains(query, ignoreCase = true) ||
-                    emotionObj.odiaLabel.contains(query, ignoreCase = true)
+            // Multi-mode Query matching based on SearchScope
+            val matchesQuery = if (query.isBlank()) {
+                true
+            } else {
+                when (scope) {
+                    SearchScope.POET -> {
+                        shayari.author.contains(query, ignoreCase = true) ||
+                        shayari.penName.contains(query, ignoreCase = true)
+                    }
+                    SearchScope.TITLE_VERSE -> {
+                        shayari.lines.contains(query, ignoreCase = true) ||
+                        shayari.translationEnglish.contains(query, ignoreCase = true) ||
+                        shayari.translationHindi.contains(query, ignoreCase = true) ||
+                        shayari.translationOdia.contains(query, ignoreCase = true)
+                    }
+                    SearchScope.LANGUAGE -> {
+                        shayari.language.contains(query, ignoreCase = true) ||
+                        (query.equals("urdu", ignoreCase = true) && (shayari.language.equals("urdu", ignoreCase = true) || shayari.author.contains("Ghalib", ignoreCase = true)))
+                    }
+                    SearchScope.ALL -> {
+                        shayari.lines.contains(query, ignoreCase = true) ||
+                        shayari.author.contains(query, ignoreCase = true) ||
+                        shayari.penName.contains(query, ignoreCase = true) ||
+                        shayari.language.contains(query, ignoreCase = true) ||
+                        shayari.category.contains(query, ignoreCase = true) ||
+                        shayari.tags.contains(query, ignoreCase = true) ||
+                        shayari.translationEnglish.contains(query, ignoreCase = true) ||
+                        shayari.translationHindi.contains(query, ignoreCase = true) ||
+                        shayari.translationOdia.contains(query, ignoreCase = true) ||
+                        shayari.emotion.contains(query, ignoreCase = true) ||
+                        emotionObj.englishLabel.contains(query, ignoreCase = true) ||
+                        emotionObj.hindiLabel.contains(query, ignoreCase = true) ||
+                        emotionObj.odiaLabel.contains(query, ignoreCase = true)
+                    }
+                }
+            }
 
-            matchesLang && matchesEmotion && matchesQuery
+            matchesLang && matchesSearchLang && matchesPoetFilter && matchesEmotion && matchesQuery
         }
     }.stateIn(
         scope = viewModelScope,
@@ -252,10 +332,50 @@ class MainViewModel(private val repository: ShayariRepository) : ViewModel() {
         selectedEmotion.value = null
         selectedLanguage.value = Language.ALL
         searchQuery.value = ""
+        selectedSearchPoet.value = null
+        selectedSearchLanguage.value = "all"
     }
 
     fun onSearchQueryChanged(query: String) {
         searchQuery.value = query
+    }
+
+    fun onSearchScopeSelected(scope: SearchScope) {
+        searchScope.value = scope
+    }
+
+    fun onSearchPoetSelected(poet: String?) {
+        selectedSearchPoet.value = if (selectedSearchPoet.value == poet) null else poet
+    }
+
+    fun onSearchLanguageSelected(lang: String) {
+        selectedSearchLanguage.value = lang
+    }
+
+    fun clearAllSearchFilters() {
+        searchQuery.value = ""
+        selectedSearchPoet.value = null
+        selectedSearchLanguage.value = "all"
+        selectedEmotion.value = null
+        selectedLanguage.value = Language.ALL
+    }
+
+    fun addRecentSearch(query: String) {
+        val trimmed = query.trim()
+        if (trimmed.isNotBlank()) {
+            val list = recentSearches.value.toMutableList()
+            list.remove(trimmed)
+            list.add(0, trimmed)
+            recentSearches.value = list.take(10)
+        }
+    }
+
+    fun removeRecentSearch(query: String) {
+        recentSearches.value = recentSearches.value.filter { it != query }
+    }
+
+    fun clearRecentSearches() {
+        recentSearches.value = emptyList()
     }
 
     fun toggleLike(shayari: Shayari) {
@@ -280,6 +400,91 @@ class MainViewModel(private val repository: ShayariRepository) : ViewModel() {
         viewModelScope.launch {
             repository.checkAndUpdateDailyTrending(forceRefresh = true)
             com.example.widget.ShayariDailyWidgetProvider.updateAllWidgets(context)
+        }
+    }
+
+    val isVaultSyncing = MutableStateFlow(false)
+    val vaultSyncProgressState = MutableStateFlow(VaultSyncProgressState())
+
+    fun syncOfflineVault(context: Context, isConnectivityRegained: Boolean = false) {
+        viewModelScope.launch {
+            if (isVaultSyncing.value) return@launch
+            isVaultSyncing.value = true
+            try {
+                val result = repository.syncOfflineVaultWithLiveProgress(isConnectivityRegained) { state ->
+                    vaultSyncProgressState.value = state
+                }
+                result.onSuccess { count ->
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(
+                            context.applicationContext,
+                            "Offline vault successfully synchronized with the cloud database! ☁️✨ ($count verses verified)",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                    // Auto-hide progress animation after 8 seconds of celebration
+                    kotlinx.coroutines.delay(8000)
+                    if (!isVaultSyncing.value) {
+                        vaultSyncProgressState.value = VaultSyncProgressState()
+                    }
+                }.onFailure { err ->
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(
+                            context.applicationContext,
+                            "Cloud sync failed: ${err.message ?: "Network error"}",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                    vaultSyncProgressState.value = vaultSyncProgressState.value.copy(
+                        isSyncing = false,
+                        errorMessage = err.message
+                    )
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(
+                        context.applicationContext,
+                        "Cloud sync error: ${e.message}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            } finally {
+                isVaultSyncing.value = false
+            }
+        }
+    }
+
+    fun dismissVaultSyncProgress() {
+        vaultSyncProgressState.value = VaultSyncProgressState()
+    }
+
+    private var isNetworkMonitoringInitialized = false
+
+    fun initNetworkConnectivityMonitoring(context: Context) {
+        if (isNetworkMonitoringInitialized) return
+        isNetworkMonitoringInitialized = true
+        try {
+            val cm = context.applicationContext.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager ?: return
+            val request = NetworkRequest.Builder()
+                .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                .build()
+            cm.registerNetworkCallback(request, object : ConnectivityManager.NetworkCallback() {
+                private var wasDisconnected = false
+
+                override fun onLost(network: Network) {
+                    wasDisconnected = true
+                }
+
+                override fun onAvailable(network: Network) {
+                    if (wasDisconnected) {
+                        wasDisconnected = false
+                        // Device regained connectivity! Automatically sync offline vault with live progress animation
+                        syncOfflineVault(context, isConnectivityRegained = true)
+                    }
+                }
+            })
+        } catch (e: Exception) {
+            android.util.Log.w("MainViewModel", "Network callback registration note: ${e.message}")
         }
     }
 
@@ -319,8 +524,12 @@ class MainViewModel(private val repository: ShayariRepository) : ViewModel() {
         }
     }
 
-    fun toggleOfflineSimulation() {
+    fun toggleOfflineSimulation(context: Context? = null) {
+        val willRegainConnectivity = isOfflineSimulated.value
         isOfflineSimulated.value = !isOfflineSimulated.value
+        if (willRegainConnectivity && context != null) {
+            syncOfflineVault(context, isConnectivityRegained = true)
+        }
     }
 
     // Moderation Management

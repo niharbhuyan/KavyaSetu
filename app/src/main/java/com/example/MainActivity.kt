@@ -1,12 +1,14 @@
 package com.example
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -29,11 +31,14 @@ import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Create
+import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.FolderSpecial
 import androidx.compose.material.icons.filled.FormatSize
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.SystemUpdate
@@ -108,11 +113,24 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            ShayariTheme(darkTheme = true) {
+            val context = LocalContext.current
+            var isDarkTheme by remember {
+                val prefs = context.getSharedPreferences("kavyasetu_theme_prefs", Context.MODE_PRIVATE)
+                mutableStateOf(prefs.getBoolean("is_dark_theme", true))
+            }
+
+            ShayariTheme(darkTheme = isDarkTheme) {
                 MainAppContainer(
                     audioReciter = audioReciter!!,
                     incomingDeepLinkId = pendingDeepLinkShayariId.value,
                     incomingOpenStreak = pendingOpenStreak.value,
+                    isDarkTheme = isDarkTheme,
+                    onToggleDarkTheme = {
+                        val newMode = !isDarkTheme
+                        isDarkTheme = newMode
+                        val prefs = context.getSharedPreferences("kavyasetu_theme_prefs", Context.MODE_PRIVATE)
+                        prefs.edit().putBoolean("is_dark_theme", newMode).apply()
+                    },
                     onDeepLinkConsumed = { pendingDeepLinkShayariId.value = null },
                     onOpenStreakConsumed = { pendingOpenStreak.value = false }
                 )
@@ -150,6 +168,8 @@ fun MainAppContainer(
     audioReciter: AudioReciter,
     incomingDeepLinkId: String? = null,
     incomingOpenStreak: Boolean = false,
+    isDarkTheme: Boolean = true,
+    onToggleDarkTheme: () -> Unit = {},
     onDeepLinkConsumed: () -> Unit = {},
     onOpenStreakConsumed: () -> Unit = {}
 ) {
@@ -221,6 +241,7 @@ fun MainAppContainer(
             // Auto-check for app updates on app launch seamlessly
             viewModel.checkForAppUpdate(context, force = false)
         }
+        viewModel.initNetworkConnectivityMonitoring(context)
     }
 
     LaunchedEffect(currentNavigationTab) {
@@ -230,6 +251,7 @@ fun MainAppContainer(
             2 -> "offline"
             3 -> "moderation"
             4 -> "profile"
+            5 -> "explore_search"
             else -> "unknown"
         }
         com.example.analytics.KavyaAnalytics.trackScreenView(screenName)
@@ -286,6 +308,18 @@ fun MainAppContainer(
                         ) {
                             Text("🔥", fontSize = 18.sp)
                         }
+                    }
+
+                    // Universal Search & Discovery Hub (Local Database)
+                    IconButton(
+                        onClick = { currentNavigationTab = 5 },
+                        modifier = Modifier.testTag("appbar_search_action")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Search Poetry & Shayari",
+                            tint = if (currentNavigationTab == 5) VelvetRose else AntiqueGold
+                        )
                     }
 
                     // Offline Vault shortcut with badge
@@ -348,6 +382,18 @@ fun MainAppContainer(
                         Icon(
                             imageVector = Icons.Default.FormatSize,
                             contentDescription = "Reading Display Settings",
+                            tint = AntiqueGold
+                        )
+                    }
+
+                    // 1-Tap Accessibility Theme Toggle (Switch between Dark & Light themes)
+                    IconButton(
+                        onClick = onToggleDarkTheme,
+                        modifier = Modifier.testTag("appbar_theme_toggle_action")
+                    ) {
+                        Icon(
+                            imageVector = if (isDarkTheme) Icons.Default.LightMode else Icons.Default.DarkMode,
+                            contentDescription = if (isDarkTheme) "Switch to Light Theme" else "Switch to Dark Theme",
                             tint = AntiqueGold
                         )
                     }
@@ -533,7 +579,8 @@ fun MainAppContainer(
                 0 -> FeedScreen(
                     viewModel = viewModel,
                     audioReciter = audioReciter,
-                    onNavigateToAiStudio = { currentNavigationTab = 1 }
+                    onNavigateToAiStudio = { currentNavigationTab = 1 },
+                    onNavigateToSearch = { currentNavigationTab = 5 }
                 )
                 1 -> AiStudioScreen(
                     viewModel = viewModel,
@@ -552,6 +599,14 @@ fun MainAppContainer(
                     audioReciter = audioReciter,
                     onNavigateToAiStudio = { currentNavigationTab = 1 }
                 )
+                5 -> {
+                    BackHandler { currentNavigationTab = 0 }
+                    ExploreScreen(
+                        viewModel = viewModel,
+                        audioReciter = audioReciter,
+                        onNavigateToAiStudio = { currentNavigationTab = 1 }
+                    )
+                }
             }
 
             // Deep Link Details Dialog
@@ -624,6 +679,8 @@ fun MainAppContainer(
                     initialFontSizeSp = poetryFontSizeSp,
                     initialLineHeightMult = poetryLineHeightMult,
                     initialFontFamily = poetryFontFamilyType,
+                    isDarkTheme = isDarkTheme,
+                    onToggleTheme = onToggleDarkTheme,
                     onDismiss = { showSettingsDialog = false },
                     onApplySettings = { newSize, newMult, newFont ->
                         viewModel.updatePoetryDisplaySettings(context, newSize, newMult, newFont)

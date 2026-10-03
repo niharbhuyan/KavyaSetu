@@ -12,6 +12,8 @@ import com.example.data.model.Language
 import com.example.data.model.Shayari
 import com.example.data.model.UserActivityItem
 import com.example.data.model.UserProfile
+import com.example.data.model.VaultItemUploadStatus
+import com.example.data.model.VaultSyncProgressState
 import com.example.data.remote.FirebaseService
 import com.example.data.remote.GeminiClient
 import kotlinx.coroutines.Dispatchers
@@ -106,6 +108,22 @@ class ShayariRepository(
 
     val dailyPick: Flow<Shayari?> = dao.getDailyPick().map { it?.toDomain() }
 
+    // Search and Filtering across Local Database
+    fun searchShayaris(query: String): Flow<List<Shayari>> =
+        dao.searchShayaris(query).map { list -> list.map { it.toDomain() } }
+
+    fun searchShayarisByPoet(poet: String): Flow<List<Shayari>> =
+        dao.searchShayarisByPoet(poet).map { list -> list.map { it.toDomain() } }
+
+    fun searchShayarisByLanguage(language: String): Flow<List<Shayari>> =
+        dao.searchShayarisByLanguage(language).map { list -> list.map { it.toDomain() } }
+
+    fun searchShayarisMultiFilter(query: String, poet: String, language: String): Flow<List<Shayari>> =
+        dao.searchShayarisMultiFilter(query, poet, language).map { list -> list.map { it.toDomain() } }
+
+    val distinctPoets: Flow<List<String>> = dao.getDistinctPoets()
+    val distinctLanguages: Flow<List<String>> = dao.getDistinctLanguages()
+
     fun getUserProfile(uid: String): Flow<UserProfile?> =
         dao.getUserProfile(uid).map { it?.toDomain() }
 
@@ -153,6 +171,164 @@ class ShayariRepository(
         val downloadTime = if (newDownloaded) System.currentTimeMillis() else null
         dao.updateDownloadStatus(shayari.id, newDownloaded, downloadTime)
         shayari.copy(isDownloaded = newDownloaded, downloadedAt = downloadTime)
+    }
+
+    suspend fun syncOfflineVaultWithCloud(): Result<Int> = withContext(Dispatchers.IO) {
+        try {
+            val savedShayaris = dao.getSavedShayaris().firstOrNull() ?: emptyList()
+            var count = 0
+            for (shayariEntity in savedShayaris) {
+                val synced = firebaseService.syncShayariToFirestore(shayariEntity.toDomain())
+                if (synced) count++
+            }
+            // Fetch any new community / remote items from cloud to local DB
+            val remoteList = firebaseService.fetchRemoteShayaris()
+            if (remoteList.isNotEmpty()) {
+                val entities = remoteList.map { ShayariEntity.fromDomain(it) }
+                dao.insertShayaris(entities)
+            }
+            recordActivity(
+                ActivityType.CLOUD_SYNC,
+                "Offline Vault Synchronized",
+                "Successfully synchronized ${savedShayaris.size} offline vault poems with the cloud database."
+            )
+            Result.success(savedShayaris.size)
+        } catch (e: Exception) {
+            Log.e("ShayariRepository", "Failed to sync offline vault: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
+
+    suspend fun syncOfflineVaultWithLiveProgress(
+        isConnectivityRegained: Boolean,
+        onProgressUpdate: suspend (state: VaultSyncProgressState) -> Unit
+    ): Result<Int> = withContext(Dispatchers.IO) {
+        try {
+            val savedEntities = dao.getSavedShayaris().firstOrNull() ?: emptyList()
+            val total = savedEntities.size
+            if (total == 0) {
+                try {
+                    val remoteList = firebaseService.fetchRemoteShayaris()
+                    if (remoteList.isNotEmpty()) {
+                        dao.insertShayaris(remoteList.map { ShayariEntity.fromDomain(it) })
+                    }
+                } catch (ignored: Exception) {}
+                onProgressUpdate(
+                    VaultSyncProgressState(
+                        isSyncing = false,
+                        isConnectivityRegained = isConnectivityRegained,
+                        isCompleted = true,
+                        totalItems = 0,
+                        successCount = 0
+                    )
+                )
+                return@withContext Result.success(0)
+            }
+
+            val itemStatusList = savedEntities.map { entity ->
+                val s = entity.toDomain()
+                VaultItemUploadStatus(
+                    shayariId = s.id,
+                    title = s.lines.lines().firstOrNull()?.take(45) ?: s.lines.take(45),
+                    poet = s.poet,
+                    language = s.language,
+                    progress = 0f,
+                    isUploaded = false
+                )
+            }.toMutableList()
+
+            onProgressUpdate(
+                VaultSyncProgressState(
+                    isSyncing = true,
+                    isConnectivityRegained = isConnectivityRegained,
+                    currentItemIndex = 0,
+                    totalItems = total,
+                    currentItemTitle = itemStatusList[0].title,
+                    overallProgress = 0f,
+                    items = itemStatusList.toList(),
+                    isCompleted = false
+                )
+            )
+
+            var uploadedCount = 0
+            for (i in 0 until total) {
+                val current = itemStatusList[i]
+                val shayari = savedEntities[i].toDomain()
+
+                // Step 1: Starting item upload animation
+                itemStatusList[i] = current.copy(progress = 0.25f)
+                val overallStart = (i + 0.25f) / total.toFloat()
+                onProgressUpdate(
+                    VaultSyncProgressState(
+                        isSyncing = true,
+                        isConnectivityRegained = isConnectivityRegained,
+                        currentItemIndex = i,
+                        totalItems = total,
+                        currentItemTitle = current.title,
+                        overallProgress = overallStart,
+                        items = itemStatusList.toList()
+                    )
+                )
+                kotlinx.coroutines.delay(100)
+
+                // Step 2: Uploading mid-way
+                itemStatusList[i] = current.copy(progress = 0.70f)
+                val overallMid = (i + 0.70f) / total.toFloat()
+                onProgressUpdate(
+                    VaultSyncProgressState(
+                        isSyncing = true,
+                        isConnectivityRegained = isConnectivityRegained,
+                        currentItemIndex = i,
+                        totalItems = total,
+                        currentItemTitle = current.title,
+                        overallProgress = overallMid,
+                        items = itemStatusList.toList()
+                    )
+                )
+
+                val success = firebaseService.syncShayariToFirestore(shayari)
+                kotlinx.coroutines.delay(100)
+
+                // Step 3: Finished item upload
+                itemStatusList[i] = current.copy(progress = 1.0f, isUploaded = success, isFailed = !success)
+                if (success) uploadedCount++
+                val overallEnd = (i + 1f) / total.toFloat()
+                onProgressUpdate(
+                    VaultSyncProgressState(
+                        isSyncing = i < total - 1,
+                        isConnectivityRegained = isConnectivityRegained,
+                        currentItemIndex = i,
+                        totalItems = total,
+                        currentItemTitle = current.title,
+                        overallProgress = overallEnd,
+                        items = itemStatusList.toList(),
+                        isCompleted = i == total - 1,
+                        successCount = uploadedCount
+                    )
+                )
+                kotlinx.coroutines.delay(60)
+            }
+
+            // Sync remote catalog to local Room DB
+            try {
+                val remoteList = firebaseService.fetchRemoteShayaris()
+                if (remoteList.isNotEmpty()) {
+                    dao.insertShayaris(remoteList.map { ShayariEntity.fromDomain(it) })
+                }
+            } catch (e: Exception) {
+                Log.w("ShayariRepository", "Remote catalog sync note: ${e.message}")
+            }
+
+            recordActivity(
+                ActivityType.CLOUD_SYNC,
+                "Offline Vault Synchronized",
+                "Uploaded $uploadedCount offline vault couplets to Firestore on connectivity restore."
+            )
+            Result.success(total)
+        } catch (e: Exception) {
+            Log.e("ShayariRepository", "Live vault sync error: ${e.message}", e)
+            Result.failure(e)
+        }
     }
 
     suspend fun downloadAllFavorites() = withContext(Dispatchers.IO) {

@@ -58,7 +58,7 @@ fun ShayariTheme(
     content: @Composable () -> Unit,
 ) {
     val raatMehfilConfig by com.example.data.local.RaatMehfilManager.themeConfig.collectAsState()
-    val isNocturnal = darkTheme || raatMehfilConfig.isNightModeForced || raatMehfilConfig.midnightHourActive
+    val isNocturnal = darkTheme
 
     val baseScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
@@ -69,7 +69,7 @@ fun ShayariTheme(
         else -> LightColorScheme
     }
 
-    val finalColorScheme = if (raatMehfilConfig.amberCandleGlow) {
+    val finalColorScheme = if (isNocturnal && raatMehfilConfig.amberCandleGlow) {
         baseScheme.copy(
             primary = Color(0xFFF3D279),
             background = Color(0xFF140F0A),

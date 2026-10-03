@@ -168,5 +168,4 @@ configurations.all {
     exclude(group = "com.google.android.gms", module = "play-services-ads-identifier")
     exclude(group = "androidx.privacysandbox.ads")
     exclude(group = "com.google.android.gms", module = "play-services-appset")
-    // exclude firebase-measurement-connector
 }

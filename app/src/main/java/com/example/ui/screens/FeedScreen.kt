@@ -31,8 +31,10 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.SignalWifiOff
+import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material.icons.filled.Widgets
@@ -99,6 +101,7 @@ fun FeedScreen(
     viewModel: MainViewModel,
     audioReciter: AudioReciter,
     onNavigateToAiStudio: () -> Unit,
+    onNavigateToSearch: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -130,6 +133,7 @@ fun FeedScreen(
     var showRiazMetronome by remember { mutableStateOf(false) }
     var showDailyStreakDialog by remember { mutableStateOf(false) }
     val vmShowDailyStreak by viewModel.showDailyStreakDialog.collectAsStateWithLifecycle()
+    val updateInfo by viewModel.appUpdateInfo.collectAsStateWithLifecycle()
 
     if (showDailyStreakDialog || vmShowDailyStreak) {
         com.example.ui.components.DailyPoeticStreakDialog(
@@ -286,6 +290,51 @@ fun FeedScreen(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        // Universal Local Database Search Bar Trigger
+        item(key = "feed_search_trigger_bar") {
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.65f),
+                border = BorderStroke(1.dp, AntiqueGold.copy(alpha = 0.35f)),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onNavigateToSearch() }
+                    .testTag("feed_search_trigger_bar")
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 13.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "Search Local Database",
+                        tint = AntiqueGold,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Text(
+                        text = "Search verses, poets (Ghalib, Faiz...), or language...",
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                        modifier = Modifier.weight(1f)
+                    )
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = AntiqueGold.copy(alpha = 0.22f),
+                        border = BorderStroke(0.5.dp, AntiqueGold.copy(alpha = 0.45f))
+                    ) {
+                        Text(
+                            text = "Room DB",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = AntiqueGold,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
+                        )
+                    }
+                }
+            }
+        }
+
         // Offline Active Alert
         if (isOfflineSimulated) {
             item(key = "offline_sim_banner") {
@@ -324,6 +373,90 @@ fun FeedScreen(
                             contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
                         ) {
                             Text("Go Online", fontSize = 12.sp, color = AntiqueGold)
+                        }
+                    }
+                }
+            }
+        }
+
+        // Automated In-App Update Notice Banner
+        if (updateInfo?.isUpdateAvailable == true) {
+            val nonNullInfo = updateInfo!!
+            item(key = "auto_update_banner") {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { viewModel.checkForAppUpdate(context, force = true) }
+                        .testTag("feed_auto_update_banner"),
+                    shape = RoundedCornerShape(16.dp),
+                    color = Color(0xFF14241B),
+                    border = BorderStroke(1.2.dp, Color(0xFF10B981).copy(alpha = 0.6f)),
+                    shadowElevation = 4.dp
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Surface(
+                                shape = CircleShape,
+                                color = Color(0xFF10B981).copy(alpha = 0.2f),
+                                border = BorderStroke(1.5.dp, Color(0xFF10B981)),
+                                modifier = Modifier.size(38.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        imageVector = Icons.Default.SystemUpdate,
+                                        contentDescription = null,
+                                        tint = Color(0xFF10B981),
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
+                            Column {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Text(
+                                        text = "Update Available: ${nonNullInfo.latestVersionName}",
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF10B981)
+                                    )
+                                    Surface(
+                                        shape = RoundedCornerShape(4.dp),
+                                        color = Color(0xFF10B981).copy(alpha = 0.2f)
+                                    ) {
+                                        Text(
+                                            text = "Auto-OTA",
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color(0xFF34D399),
+                                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
+                                        )
+                                    }
+                                }
+                                Text(
+                                    text = "Tap to review What's New & auto-update seamlessly",
+                                    fontSize = 11.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                        Button(
+                            onClick = { viewModel.checkForAppUpdate(context, force = true) },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)),
+                            shape = RoundedCornerShape(8.dp),
+                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                            modifier = Modifier.height(32.dp)
+                        ) {
+                            Text("Update", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.Black)
                         }
                     }
                 }

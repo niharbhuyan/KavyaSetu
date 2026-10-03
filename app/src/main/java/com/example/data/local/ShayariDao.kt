@@ -84,6 +84,59 @@ interface ShayariDao {
     @Query("SELECT COUNT(*) FROM shayari_posts")
     suspend fun getCount(): Int
 
+    // --- Local Database Search Queries ---
+    @Query("""
+        SELECT * FROM shayari_posts 
+        WHERE moderationStatus = 'APPROVED' 
+        AND (
+            lines LIKE '%' || :query || '%' 
+            OR author LIKE '%' || :query || '%' 
+            OR penName LIKE '%' || :query || '%' 
+            OR language LIKE '%' || :query || '%'
+            OR category LIKE '%' || :query || '%'
+            OR tags LIKE '%' || :query || '%'
+            OR translationEnglish LIKE '%' || :query || '%'
+            OR translationHindi LIKE '%' || :query || '%'
+            OR translationOdia LIKE '%' || :query || '%'
+        )
+        ORDER BY timestamp DESC
+    """)
+    fun searchShayaris(query: String): Flow<List<ShayariEntity>>
+
+    @Query("""
+        SELECT * FROM shayari_posts 
+        WHERE moderationStatus = 'APPROVED' 
+        AND (author LIKE '%' || :poetQuery || '%' OR penName LIKE '%' || :poetQuery || '%')
+        ORDER BY timestamp DESC
+    """)
+    fun searchShayarisByPoet(poetQuery: String): Flow<List<ShayariEntity>>
+
+    @Query("""
+        SELECT * FROM shayari_posts 
+        WHERE moderationStatus = 'APPROVED' 
+        AND LOWER(language) = LOWER(:langQuery)
+        ORDER BY timestamp DESC
+    """)
+    fun searchShayarisByLanguage(langQuery: String): Flow<List<ShayariEntity>>
+
+    @Query("""
+        SELECT * FROM shayari_posts 
+        WHERE moderationStatus = 'APPROVED' 
+        AND (
+            (:query = '' OR lines LIKE '%' || :query || '%' OR translationEnglish LIKE '%' || :query || '%' OR translationHindi LIKE '%' || :query || '%' OR translationOdia LIKE '%' || :query || '%')
+            AND (:poet = '' OR author LIKE '%' || :poet || '%' OR penName LIKE '%' || :poet || '%')
+            AND (:lang = 'all' OR LOWER(language) = LOWER(:lang))
+        )
+        ORDER BY timestamp DESC
+    """)
+    fun searchShayarisMultiFilter(query: String, poet: String, lang: String): Flow<List<ShayariEntity>>
+
+    @Query("SELECT DISTINCT author FROM shayari_posts WHERE moderationStatus = 'APPROVED' AND author != '' ORDER BY author ASC")
+    fun getDistinctPoets(): Flow<List<String>>
+
+    @Query("SELECT DISTINCT language FROM shayari_posts WHERE moderationStatus = 'APPROVED' AND language != '' ORDER BY language ASC")
+    fun getDistinctLanguages(): Flow<List<String>>
+
     // User Profile Queries
     @Query("SELECT * FROM user_profiles WHERE uid = :uid LIMIT 1")
     fun getUserProfile(uid: String): Flow<UserProfileEntity?>

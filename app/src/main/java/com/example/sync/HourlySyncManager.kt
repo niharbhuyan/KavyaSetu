@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.SystemClock
 import android.util.Log
+import android.widget.Toast
 import com.example.data.local.AppDatabase
 import com.example.data.remote.FirebaseService
 import com.example.data.repository.ShayariOfTheDayManager
@@ -15,6 +16,7 @@ import com.example.widget.ShayariDailyWidgetProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * Hourly Auto-Update & Auto-Sync Engine for Kavya Setu.
@@ -125,7 +127,24 @@ object HourlySyncManager {
             Log.w(TAG, "Feature state refresh error: ${e.message}")
         }
 
-        // 5. Automated Background In-App Updates Check
+        // 5. Synchronize Offline Vault with Cloud Database
+        try {
+            val syncResult = repository.syncOfflineVaultWithCloud()
+            syncResult.onSuccess { count ->
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(
+                        context.applicationContext,
+                        "Offline vault successfully synchronized with the cloud database! ☁️✨ ($count verses verified)",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+                Log.d(TAG, "Offline vault successfully synchronized with cloud database ($count verses)")
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Vault cloud sync note: ${e.message}")
+        }
+
+        // 6. Automated Background In-App Updates Check
         try {
             com.example.update.AppUpdateManager.performSilentBackgroundUpdateCheck(context)
             Log.d(TAG, "Hourly auto-update check executed")

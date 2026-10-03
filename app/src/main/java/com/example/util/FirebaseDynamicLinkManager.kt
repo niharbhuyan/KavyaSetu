@@ -125,6 +125,13 @@ object FirebaseDynamicLinkManager {
             return
         }
 
+        // Only invoke Firebase Dynamic Links SDK if intent actually contains URI data or is ACTION_VIEW
+        val uri = intent.data
+        if (uri == null && intent.action != Intent.ACTION_VIEW) {
+            // Standard app launch from launcher/task — skip external measurement binding
+            return
+        }
+
         // 2. Resolve via Firebase Dynamic Links SDK
         try {
             FirebaseDynamicLinks.getInstance()

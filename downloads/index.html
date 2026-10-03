@@ -18,6 +18,24 @@
       --text: #f0f6fc;
       --text-muted: #8b949e;
       --accent-green: #10b981;
+      --secondary-bg: #21262d;
+      --secondary-text: #c9d1d9;
+      --download-card-bg: rgba(245, 158, 11, 0.08);
+      --box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
+    }
+    [data-theme="light"] {
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --card-border: #e2e8f0;
+      --primary: #d97706;
+      --primary-hover: #b45309;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --accent-green: #059669;
+      --secondary-bg: #f1f5f9;
+      --secondary-text: #334155;
+      --download-card-bg: rgba(217, 119, 6, 0.07);
+      --box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
     }
     * {
       box-sizing: border-box;
@@ -34,6 +52,7 @@
       align-items: center;
       justify-content: center;
       padding: 24px 16px;
+      transition: background-color 0.25s ease, color 0.25s ease;
     }
     .container {
       max-width: 640px;
@@ -42,7 +61,27 @@
       border: 1px solid var(--card-border);
       border-radius: 20px;
       padding: 36px 28px;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
+      box-shadow: var(--box-shadow);
+      transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+    }
+    .theme-toggle-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--secondary-bg);
+      color: var(--text);
+      border: 1px solid var(--card-border);
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .theme-toggle-btn:hover {
+      background: var(--primary);
+      color: #000;
+      transform: translateY(-1px);
     }
     .badge {
       display: inline-flex;
@@ -67,7 +106,7 @@
     h1 {
       font-size: 28px;
       font-weight: 800;
-      color: #fff;
+      color: var(--text);
       margin-bottom: 8px;
       letter-spacing: -0.5px;
     }
@@ -78,7 +117,7 @@
       line-height: 1.5;
     }
     .download-card {
-      background: rgba(245, 158, 11, 0.08);
+      background: var(--download-card-bg);
       border: 1px solid rgba(245, 158, 11, 0.25);
       border-radius: 16px;
       padding: 24px;
@@ -901,9 +940,15 @@
       </div>
     </div>
 
-    <div class="badge">
-      <span class="badge-dot"></span>
-      Signed & Production Ready
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 8px;">
+      <div class="badge" style="margin-bottom: 0;">
+        <span class="badge-dot"></span>
+        Signed & Production Ready
+      </div>
+      <button id="theme-toggle-btn" onclick="toggleTheme()" class="theme-toggle-btn" aria-label="Toggle light or dark theme" title="Toggle Light/Dark Theme">
+        <span id="theme-icon-dark" style="display: none; align-items: center; gap: 6px;">🌙 Dark Mode</span>
+        <span id="theme-icon-light" style="display: inline-flex; align-items: center; gap: 6px;">☀️ Light Theme</span>
+      </button>
     </div>
     <h1>Kavya Setu (काव्य सेतु)</h1>
     <p class="subtitle">Latest release Android App Bundle (AAB) compiled with R8 shrinking, Proguard optimizations, and release upload keystore signing.</p>
@@ -920,11 +965,12 @@
         <div class="cert-fingerprint" style="color: #3fb950; font-weight: 700; background: rgba(0,0,0,0.4); padding: 6px 10px; border-radius: 6px; margin: 4px 0;">
           SHA1: B0:BE:79:11:81:49:33:29:81:F0:AA:96:AC:68:0C:54:23:AA:EA:F8
         </div>
-        <div style="font-size: 12px; color: #f0f6fc; margin-top: 8px; background: rgba(245, 158, 11, 0.2); padding: 10px 12px; border-radius: 8px; border-left: 4px solid #f59e0b; line-height: 1.5;">
-          <strong>CRITICAL FIX FOR THE RED SCREENSHOT ERROR:</strong><br>
-          1. In Google Play Console, look at top right: click <strong>"Discard draft release"</strong> to clear the stuck session.<br>
-          2. Download <strong>KavyaSetu-v1.2.6-B0BE-VERIFIED-OCT01.aab</strong> below (use the Green In-Browser Downloader for guaranteed complete download).<br>
-          3. Tap <strong>"Create new release"</strong> and upload it!
+        <div style="font-size: 13px; color: #f0f6fc; margin-top: 8px; background: rgba(239, 68, 68, 0.15); padding: 12px 14px; border-radius: 8px; border-left: 4px solid #ef4444; line-height: 1.6;">
+          <strong style="color: #f87171;">⚠️ IMPORTANT INSTRUCTIONS FOR PHONE UPLOAD:</strong><br>
+          1. In Google Play Console: tap <strong style="color: #fbbf24;">"Discard draft release"</strong> at top-right to clear the failed error state.<br>
+          2. Tap the <strong>Green Download Button</strong> below. If Chrome displays <em>"File might be harmful"</em>, tap <strong>"Download anyway"</strong>.<br>
+          3. <span style="color: #fbbf24;">⚠️ DO NOT use AI Studio's top menu "Export AAB"</span> — that button signs with AI Studio's generic test key (96:56:AE:2A...). You must download the verified bundle (14.7 MB) directly from this page!<br>
+          4. When selecting the file in Play Console, choose <strong style="color: #4ade80;">KavyaSetu-RELEASE-V10-B0BE-LATEST.aab</strong>.
         </div>
       </div>
     </div>
@@ -937,7 +983,7 @@
           <polyline points="7 10 12 15 17 10"></polyline>
           <line x1="12" y1="15" x2="12" y2="3"></line>
         </svg>
-        <span id="download-btn-text">Download KavyaSetu-v1.2.6-B0BE-VERIFIED-OCT01.aab (14.7 MB)</span>
+        <span id="download-btn-text">Download KavyaSetu-RELEASE-V10-B0BE-LATEST.aab (14.7 MB)</span>
       </button>
 
       <!-- DOWNLOAD PROGRESS BAR -->
@@ -952,9 +998,22 @@
         <div id="dl-bytes-label" style="font-size: 11px; color: #8b949e; margin-top: 4px;">0 MB / 14.7 MB</div>
       </div>
 
+      <!-- SOCIAL SHARE BUTTON (WEB SHARE API) -->
+      <button id="social-share-btn" onclick="shareKavyaSetu()" class="btn-share" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 12px; padding: 12px 20px; background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="18" cy="5" r="3"></circle>
+          <circle cx="6" cy="12" r="3"></circle>
+          <circle cx="18" cy="19" r="3"></circle>
+          <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+          <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+        </svg>
+        <span id="share-btn-text">Share Kavya Setu (काव्य सेतु) Release</span>
+      </button>
+      <div id="share-toast" style="display: none; margin-top: 8px; font-size: 12px; color: #3fb950; text-align: center; font-weight: 600;"></div>
+
       <div style="display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap;">
-        <a href="/KavyaSetu-v1.2.6-B0BE-VERIFIED-OCT01.aab" download="KavyaSetu-v1.2.6-B0BE-VERIFIED-OCT01.aab" class="btn-secondary" style="flex: 1; text-align: center; justify-content: center;">
-          ⚡ Direct Download Fallback
+        <a href="/KavyaSetu-RELEASE-V10-B0BE-LATEST.aab" download="KavyaSetu-RELEASE-V10-B0BE-LATEST.aab" class="btn-secondary" style="flex: 1; text-align: center; justify-content: center;">
+          ⚡ Direct Download Link
         </a>
         <a href="/release_upload_certificate.pem" download="release_upload_certificate.pem" class="btn-secondary" style="flex: 1; text-align: center; justify-content: center; border-color: rgba(46, 160, 67, 0.4);">
           🛡️ Upload Key Cert (.pem)
@@ -962,7 +1021,7 @@
       </div>
 
       <div style="display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;">
-        <a href="/KavyaSetu-v1.2.6-FINAL-KEY-B416.aab" target="_blank" rel="noopener" class="btn-secondary" style="flex: 1; text-align: center; justify-content: center;">
+        <a href="/KavyaSetu-RELEASE-V10-B0BE-LATEST.aab" target="_blank" rel="noopener" class="btn-secondary" style="flex: 1; text-align: center; justify-content: center;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
             <polyline points="15 3 21 3 21 9"></polyline>
@@ -1800,7 +1859,7 @@
       percentLabel.textContent = '0%';
       text.textContent = 'Downloading to device memory...';
 
-      const fileName = 'KavyaSetu-v1.2.6-B0BE-VERIFIED-OCT01.aab';
+      const fileName = 'KavyaSetu-RELEASE-V10-B0BE-LATEST.aab';
       const fileUrl = '/' + fileName;
 
       try {
@@ -1851,6 +1910,86 @@
         text.textContent = 'Download ' + fileName;
       }
     }
+
+    // Web Share API Implementation for Social Sharing
+    async function shareKavyaSetu() {
+      const shareData = {
+        title: 'Kavya Setu (काव्य सेतु) - Release Downloads',
+        text: '✨ Download the official signed Android App Bundle (AAB) & APK for Kavya Setu (काव्य सेतु) – The Hindi Poetry & Shayari platform!',
+        url: window.location.href,
+      };
+
+      const toast = document.getElementById('share-toast');
+
+      if (navigator.share) {
+        try {
+          await navigator.share(shareData);
+          if (toast) {
+            toast.textContent = '✅ Shared successfully!';
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 3000);
+          }
+        } catch (err) {
+          if (err.name !== 'AbortError') {
+            fallbackShare(shareData.url);
+          }
+        }
+      } else {
+        fallbackShare(shareData.url);
+      }
+    }
+
+    function fallbackShare(url) {
+      const toast = document.getElementById('share-toast');
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(() => {
+          if (toast) {
+            toast.textContent = '📋 Link copied to clipboard!';
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 3000);
+          }
+        }).catch(() => {
+          prompt('Copy this link to share:', url);
+        });
+      } else {
+        prompt('Copy this link to share:', url);
+      }
+    }
+
+    // Accessible Theme Switcher (Dark Mode / Light Theme)
+    function initTheme() {
+      try {
+        const savedTheme = localStorage.getItem('kavya-portal-theme') || 'dark';
+        applyTheme(savedTheme);
+      } catch (e) {
+        applyTheme('dark');
+      }
+    }
+
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute('data-theme') || 'dark';
+      const next = current === 'dark' ? 'light' : 'dark';
+      applyTheme(next);
+      try {
+        localStorage.setItem('kavya-portal-theme', next);
+      } catch (e) {}
+    }
+
+    function applyTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      const iconDark = document.getElementById('theme-icon-dark');
+      const iconLight = document.getElementById('theme-icon-light');
+      if (theme === 'light') {
+        if (iconDark) iconDark.style.display = 'inline-flex';
+        if (iconLight) iconLight.style.display = 'none';
+      } else {
+        if (iconDark) iconDark.style.display = 'none';
+        if (iconLight) iconLight.style.display = 'inline-flex';
+      }
+    }
+
+    // Initialize theme on script evaluation
+    initTheme();
   </script>
 
     <div style="background: #1e1e2f; border: 2px solid #4CAF50; border-radius: 12px; padding: 20px; margin: 20px auto; max-width: 700px; color: #fff; font-family: sans-serif;">
